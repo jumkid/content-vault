@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.nio.channels.FileChannel;
 import java.util.Optional;
 
@@ -43,13 +44,36 @@ public class MediaContentController {
 
     @GetMapping("/plain/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public String getPlain(@PathVariable("id") String id){
+    public String getPlain(@PathVariable("id") String id, @RequestParam(required = false) Boolean ignoreTitle,
+                           @RequestParam(required = false) Boolean ignoreContent){
         MediaFile mediaFile = fileService.getMediaFile(id);
+        StringBuilder sb = new StringBuilder();
+        boolean addedTitle = false;
         if (mediaFile != null) {
-            return mediaFile.getContent();
+            if (ignoreTitle == null || !ignoreTitle){
+                sb.append(mediaFile.getTitle());
+                addedTitle = true;
+            }
+            if (ignoreContent == null || !ignoreContent) {
+                if (addedTitle) sb.append("\n\n");
+                sb.append(mediaFile.getContent());
+            }
+
+            return sb.toString();
         } else {
             throw new FileNotfoundException(id);
         }
+    }
+
+    @PostMapping("/plain")
+    @ResponseStatus(HttpStatus.OK)
+    public MediaFile addPlain(@NotBlank @RequestParam String title, @RequestParam(required = false) String content) {
+        MediaFile mediaFile = MediaFile.builder()
+                .title(title).content(content)
+                .size(title.length() + (content == null ? 0 : content.length()))
+                .mimeType(MediaType.TEXT_PLAIN_VALUE)
+                .build();
+        return fileService.addMediaFile(mediaFile, null);
     }
 
     @GetMapping(value = "/html/{id}", produces = MediaType.TEXT_HTML_VALUE)

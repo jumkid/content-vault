@@ -50,9 +50,12 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
 
     private final RestHighLevelClient esClient;
 
+    private final MediaFileMapper mediaFileMapper;
+
     @Autowired
-    public ESContentStorage(RestHighLevelClient esClient) {
+    public ESContentStorage(RestHighLevelClient esClient, MediaFileMapper mediaFileMapper) {
         this.esClient = esClient;
+        this.mediaFileMapper = mediaFileMapper;
     }
 
     @Override
@@ -74,6 +77,8 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
                     .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
                     .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
                     .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
+                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
+                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
                     .field(BLOB.value(), bytes)
                     .endObject();
             IndexRequest request = new IndexRequest(MODULE_MFILE).source(builder);
@@ -88,7 +93,7 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
             return mediaFileMetadata;
         } catch (IOException ioe) {
             log.error("failed to create index {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", MediaFileMapper.INSTANCE.metadataToDTO(mediaFileMetadata));
+            throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", mediaFileMapper.metadataToDTO(mediaFileMetadata));
         }
     }
 
@@ -204,7 +209,7 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
             });
 
         } catch (IOException ioe) {
-            log.error("failed to search media files {} ", ioe.getMessage());
+            log.error("failed to search media files: {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to fetch all media files from Elasticsearch, please contact system administrator.");
         }
 

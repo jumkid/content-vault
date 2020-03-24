@@ -12,8 +12,10 @@ package com.jumkid.vault;
  *
  */
 
+import com.jumkid.vault.service.mapper.MediaFileMapper;
 import lombok.extern.slf4j.Slf4j;
 
+import org.mapstruct.factory.Mappers;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -49,5 +51,8 @@ public class FileVaultApplication implements CommandLineRunner {
     public RestTemplate restTemplateBean(){
         return new RestTemplate();
     }
+
+    @Bean(name = "mediaFileMapper")
+    public MediaFileMapper mediaFileMapperBean() { return Mappers.getMapper( MediaFileMapper.class ); }
 
 }

@@ -35,7 +35,7 @@ public class MediaFileMetadata {
 
 	private String content;
 
-	private Boolean activated;
+	private Boolean activated = true;
 
 	private String logicalPath;
 

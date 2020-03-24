@@ -27,10 +27,13 @@ public class MediaUploadDownloadController {
 
     private final ResponseMediaFileWriter responseMFileWriter;
 
+    private final MediaFileMapper mediaFileMapper;
+
     @Autowired
-    public MediaUploadDownloadController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter) {
+    public MediaUploadDownloadController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter, MediaFileMapper mediaFileMapper) {
         this.fileService = fileService;
         this.responseMFileWriter = responseMFileWriter;
+        this.mediaFileMapper = mediaFileMapper;
     }
 
     @PostMapping("/upload")
@@ -66,7 +69,7 @@ public class MediaUploadDownloadController {
                 responseMFileWriter.writeForDownload(mediaFileMetadata, bytes, response);
             }
         } catch (IOException ioe) {
-            throw new FileStoreServiceException("Failed to download file", MediaFileMapper.INSTANCE.metadataToDTO(mediaFileMetadata));
+            throw new FileStoreServiceException("Failed to download file", mediaFileMapper.metadataToDTO(mediaFileMetadata));
         }
     }
 
