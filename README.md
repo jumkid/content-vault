@@ -7,7 +7,7 @@ Type the command below
 
 <code>cd c:/git</code>
 
-<code>git clone https://github.com/jumkid/file-vault.git</code>
+<code>git clone https://github.com/jumkid/content-vault.git</code>
 
 # Prerequisites
 Please install jdk 11 on your local machine. And type to following command to verify it
