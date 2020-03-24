@@ -1,5 +1,5 @@
-# File vault
-a file service provides media file storage on local file system as well as cloud-based file system. It also provide media accessing API and streaming services
+# Content Vault
+a content service provides media file storage on local file system as well as cloud-based file system. It also provides media accessing API and streaming service
 
 # Get Start
 Please clone or download this project to your local. Say C:/git/media-server
