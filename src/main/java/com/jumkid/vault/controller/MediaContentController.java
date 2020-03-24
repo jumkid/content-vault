@@ -94,13 +94,15 @@ public class MediaContentController {
 
             if(mediaFile.getMimeType().startsWith("audio") || mediaFile.getMimeType().startsWith("video")){
                 log.debug("stream media content");
-                Optional<FileChannel> optional = fileService.getFileChannel(id);
-                if (optional.isPresent()) {
-                    response = responseMFileWriter.stream(mediaFile, optional.get(), request, response);
-                } else {
-                    log.error("File channel is blank. There is nothing to stream");
-                    throw new FileNotfoundException(id);
+                try (FileChannel fc = fileService.getFileChannel(id)) {
+                    if (fc != null) {
+                        response = responseMFileWriter.stream(mediaFile, fc, request, response);
+                    } else {
+                        log.error("File channel is blank. There is nothing to stream");
+                        throw new FileNotfoundException(id);
+                    }
                 }
+
             } else {
                 Optional<byte[]> optional = fileService.getFileSource(id);
                 if (optional.isPresent()) {

@@ -135,10 +135,10 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public Optional<FileChannel> getFileChannel(String id) {
+    public FileChannel getFileChannel(String id) {
         log.debug("Retrieve file channel by given id {}", id);
         MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
-	    return getFileStorage().getFileRandomAccess(mediaFileMetadata);
+	    return getFileStorage().getFileRandomAccess(mediaFileMetadata).orElseThrow();
     }
 
     @Override

@@ -69,7 +69,7 @@ public interface MediaFileService {
      * @param id media file identity
      * @return FileChannel
      */
-    Optional<FileChannel> getFileChannel(String id);
+    FileChannel getFileChannel(String id);
 
     /**
      *

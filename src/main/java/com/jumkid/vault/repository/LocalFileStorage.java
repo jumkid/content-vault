@@ -94,9 +94,6 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 			try {
 				sbc.write(ByteBuffer.wrap(bytes));
-
-				//mediaFile.setSize(new Long(bytes.length));
-
 			} catch (IOException ioe) {
 				ioe.printStackTrace();
 			} finally{
@@ -121,16 +118,15 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	private FileChannel getFileChannel(MediaFileMetadata mediaFile) {
-		try {
-			Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId());
-			
-			if (!Files.exists(path)) {
-				log.info("file {} is not found.", path);
-				return null;
-			}
-			@SuppressWarnings("resource")
-			FileInputStream fin = new FileInputStream(new File(path.toString()));
 
+		Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId());
+
+		if (!Files.exists(path)) {
+			log.info("file {} is not found.", path);
+			return null;
+		}
+
+		try (FileInputStream fin = new FileInputStream(new File(path.toString()))) {
 			return fin.getChannel();
 		} catch (Exception e) {
 			throw new FileStoreServiceException(e.getMessage());
@@ -147,19 +143,17 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	 * @throws FileStoreServiceException
 	 */
 	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) {
-		try{
+
 			Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId());
 			
 			if(!Files.exists(path)){
 				log.info("file {} is not found.", path);
 				return null;
 			}
-			@SuppressWarnings("resource")
+		try {
 			RandomAccessFile aFile = new RandomAccessFile(path.toString(), "rw");
-
 			return aFile.getChannel();
-			
-		}catch(Exception e){
+		} catch (Exception e) {
 			throw new FileStoreServiceException(e.getMessage());
 			//move to trash if 
 		}
@@ -171,7 +165,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		try {
 			if(!Files.exists(path)) return false;
 
-			if(Files.deleteIfExists(path)){
+			if(Files.deleteIfExists(path)) {
 				deleteThumbnail(mediaFile);
 			}
 			return true;
