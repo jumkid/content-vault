@@ -109,20 +109,18 @@ public class HadoopFileStorage implements FileStorage<MediaFileMetadata> {
     }
 
     @Override
-    public boolean deleteFile(MediaFileMetadata mediaFileMetadata) {
+    public void deleteFile(MediaFileMetadata mediaFileMetadata) {
         try (FileSystem fs = FileSystem.get(conf)) {
 
             Path path = new Path(mediaFileMetadata.getLogicalPath());
             if(!fs.exists(path)) {
                 log.error("the path of target file to be deleted does not exist");
-                return false;
             }
 
-            return fs.delete(path, true);
+            fs.delete(path, true);
 
         } catch (IOException ioe) {
             log.error("Failed to delete media file {}", ioe.getMessage());
-            return false;
         }
     }
 }

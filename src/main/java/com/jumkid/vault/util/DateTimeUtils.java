@@ -95,7 +95,7 @@ public class DateTimeUtils {
     }
 
     public static LocalDateTime stringToLocalDatetime(String datetime) {
-        return parseDate(datetime);
+        return datetime != null ? parseDate(datetime) : null;
     }
 
     public static Date createDate(int year, int month, int day) {

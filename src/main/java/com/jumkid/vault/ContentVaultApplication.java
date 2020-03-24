@@ -35,15 +35,15 @@ import java.util.Arrays;
 
 @Slf4j
 @SpringBootApplication
-public class FileVaultApplication implements CommandLineRunner {
+public class ContentVaultApplication implements CommandLineRunner {
 
     public static void main(String[] args) {
-        SpringApplication.run(FileVaultApplication.class, args);
+        SpringApplication.run(ContentVaultApplication.class, args);
     }
 
     @Override
     public void run(String... args) {
-        log.info("File Vault Application started with command-line arguments: {} . \n To kill this application, press Ctrl + C.",
+        log.info("Content Vault Application started with command-line arguments: {} . \n To kill this application, press Ctrl + C.",
                 Arrays.toString(args));
     }
 

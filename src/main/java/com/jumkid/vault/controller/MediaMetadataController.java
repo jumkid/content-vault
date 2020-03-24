@@ -2,6 +2,7 @@ package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.exception.FileNotfoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,12 @@ public class MediaMetadataController {
     @ResponseStatus(HttpStatus.OK)
     public MediaFile updateMetadata(@PathVariable("id") String id, @NotNull @RequestBody MediaFile mediaFile){
         return fileService.updateMediaFile(id, mediaFile, null);
+    }
+
+    @DeleteMapping("{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMetadata(@PathVariable("id") String id) {
+        fileService.deleteMediaFile(id);
     }
 
 }

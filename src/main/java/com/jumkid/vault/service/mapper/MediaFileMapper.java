@@ -5,6 +5,8 @@ import com.jumkid.vault.model.MediaFileMetadata;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel="spring")
 public interface MediaFileMapper {
 
@@ -13,5 +15,7 @@ public interface MediaFileMapper {
 
     @Mapping(source = "uuid", target = "id")
     MediaFileMetadata dtoToMetadata(MediaFile dto);
+
+    List<MediaFile> metadataListToDTOList(List<MediaFileMetadata> metadataList);
 
 }

@@ -75,7 +75,7 @@ public interface MediaFileService {
      *
      * @param id media file identity
      */
-    boolean deleteMediaFile(String id);
+    void deleteMediaFile(String id);
 
     /**
      * Get all media files

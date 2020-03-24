@@ -14,27 +14,25 @@ package com.jumkid.vault.repository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.jumkid.vault.enums.SystemDirectoryName;
 import com.jumkid.vault.model.MediaFileMetadata;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class FilePathManager {
 
 	static final String DELIMITER = "/";
+
 	private static final String FORMAT_YYYYMMDD = "yyyyMMdd";
 
-	enum ReservedPath {
-		TRASH("trash");
+	@Getter
+	@Value("${vault.data.home}")
+	private String dataHomePath;
 
-		private String value;
-
-		ReservedPath(String value) { this.value = value; }
-
-		public String getValue() { return value; }
-	}
-
-	public String getTrashPath() {
-		return DELIMITER + ReservedPath.TRASH.value;
+	String getTrashPath() {
+		return DELIMITER + SystemDirectoryName.TRASH.value();
 	}
 
 	/**

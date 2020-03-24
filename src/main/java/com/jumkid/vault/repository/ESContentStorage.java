@@ -35,6 +35,8 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -59,6 +61,70 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
     }
 
     @Override
+    public List<MediaFileMetadata> getAll() {
+        List<MediaFileMetadata> results = new ArrayList<>();
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.searchType(SearchType.DEFAULT);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.query(QueryBuilders.termQuery(ACTIVATED.value(), true));
+        searchRequest.source(sourceBuilder);
+
+        try {
+            SearchResponse response = esClient.search(searchRequest, RequestOptions.DEFAULT);
+            response.getHits().iterator().forEachRemaining( hitDoc -> {
+                MediaFileMetadata mediaFileMetadata = sourceToMetadata(hitDoc.getSourceAsMap());
+                mediaFileMetadata.setId(hitDoc.getId());
+                results.add(mediaFileMetadata);
+            });
+
+        } catch (IOException ioe) {
+            log.error("failed to search media files: {} ", ioe.getMessage());
+            throw new FileStoreServiceException("Not able to fetch all media files from Elasticsearch, please contact system administrator.");
+        }
+
+        return results;
+    }
+
+    @Override
+    public MediaFileMetadata getMetadata(String id) {
+
+        GetRequest request = new GetRequest(MODULE_MFILE).id(id);
+
+        try {
+            GetResponse getResponse = esClient.get(request, RequestOptions.DEFAULT);
+            if(!getResponse.isExists()) {
+                return null;
+            }
+
+            MediaFileMetadata mediaFileMetadata = sourceToMetadata(getResponse.getSource());
+            mediaFileMetadata.setId(getResponse.getId());
+            return mediaFileMetadata;
+        } catch (IOException ioe) {
+            log.error("failed to get media file {} ", ioe.getMessage());
+            throw new FileStoreServiceException("Not able to get media file from Elasticsearch, please contact system administrator.");
+        }
+
+    }
+
+    private MediaFileMetadata sourceToMetadata(Map<String, Object> sourceMap) {
+        return MediaFileMetadata.builder()
+                .title(sourceMap.get(TITLE.value()) !=null ? sourceMap.get(TITLE.value()).toString() : null)
+                .filename(sourceMap.get(FILENAME.value()) !=null ? sourceMap.get(FILENAME.value()).toString() : null)
+                .mimeType(sourceMap.get(MIMETYPE.value()) !=null ? sourceMap.get(MIMETYPE.value()).toString() : null)
+                .size(sourceMap.get(SIZE.value()) != null ? (Integer)sourceMap.get(SIZE.value()) : null)
+                .content(sourceMap.get(CONTENT.value()) !=null ? sourceMap.get(CONTENT.value()).toString() : null)
+                .logicalPath((String)sourceMap.get(LOGICALPATH.value()))
+                .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
+                .module((String)sourceMap.get(MODULE.value()))
+                .creationDate(sourceMap.get(CREATION_DATE.value()) != null ? DateTimeUtils.stringToLocalDatetime(sourceMap.get(CREATION_DATE.value()).toString()) : null)
+                .createdBy(sourceMap.get(CREATED_BY.value()) != null ? sourceMap.get(CREATED_BY.value()).toString() : null)
+                .modifiedBy((String)sourceMap.get(MODIFIED_BY.value()))
+                .modificationDate(DateTimeUtils.stringToLocalDatetime((String)sourceMap.get(CREATION_DATE.value())))
+                .build();
+    }
+
+    @Override
     public MediaFileMetadata saveMetadata(MediaFileMetadata mediaFileMetadata) {
         return saveMetadata(null, mediaFileMetadata);
     }
@@ -74,6 +140,7 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
                     .field(MODULE.value(), mediaFileMetadata.getModule())
                     .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
                     .field(CONTENT.value(), mediaFileMetadata.getContent())
+                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
                     .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
                     .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
                     .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
@@ -95,39 +162,6 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
             log.error("failed to create index {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", mediaFileMapper.metadataToDTO(mediaFileMetadata));
         }
-    }
-
-    @Override
-    public MediaFileMetadata getMetadata(String id) {
-
-        GetRequest request = new GetRequest(MODULE_MFILE).id(id);
-
-        try {
-            GetResponse getResponse = esClient.get(request, RequestOptions.DEFAULT);
-            if(!getResponse.isExists()) {
-                return null;
-            }
-
-            return MediaFileMetadata.builder()
-                    .id(getResponse.getId())
-                    .createdBy((String)getResponse.getSource().get(CREATED_BY.value()))
-                    .creationDate(DateTimeUtils.stringToLocalDatetime((String)getResponse.getSource().get(CREATION_DATE.value())))
-                    .modifiedBy((String)getResponse.getSource().get(MODIFIED_BY.value()))
-                    .modificationDate(DateTimeUtils.stringToLocalDatetime((String)getResponse.getSource().get(CREATION_DATE.value())))
-                    .mimeType((String)getResponse.getSource().get(MIMETYPE.value()))
-                    .module((String)getResponse.getSource().get(MODULE.value()))
-                    .content((String)getResponse.getSource().get(CONTENT.value()))
-                    .activated((Boolean)getResponse.getSource().get(ACTIVATED.value()))
-                    .filename((String)getResponse.getSource().get(FILENAME.value()))
-                    .title((String)getResponse.getSource().get(TITLE.value()))
-                    .size((Integer)getResponse.getSource().get(SIZE.value()))
-                    .logicalPath((String)getResponse.getSource().get(LOGICALPATH.value()))
-                    .build();
-        } catch (IOException ioe) {
-            log.error("failed to get media file {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to get media file from Elasticsearch, please contact system administrator.");
-        }
-
     }
 
     @Override
@@ -169,10 +203,16 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
                     .startObject()
                     .field(TITLE.value(), mediaFileMetadata.getTitle())
                     .field(FILENAME.value(), mediaFileMetadata.getFilename())
-                    .field(CONTENT.value(), mediaFileMetadata.getContent())
-                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
                     .field(SIZE.value(), mediaFileMetadata.getSize())
+                    .field(MODULE.value(), mediaFileMetadata.getModule())
+                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
+                    .field(CONTENT.value(), mediaFileMetadata.getContent())
                     .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
+                    .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
+                    .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
+                    .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
+                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
+                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
                     .endObject());
 
             esClient.update(updateRequest, RequestOptions.DEFAULT);
@@ -181,39 +221,6 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
         }
 
         return mediaFileMetadata;
-    }
-
-    @Override
-    public List<MediaFileMetadata> getAll() {
-        List<MediaFileMetadata> results = new ArrayList<>();
-
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.searchType(SearchType.DEFAULT);
-
-        try {
-            SearchResponse response = esClient.search(searchRequest, RequestOptions.DEFAULT);
-            response.getHits().iterator().forEachRemaining( hitDoc -> {
-                Map<String, Object> sourceMap = hitDoc.getSourceAsMap();
-                MediaFileMetadata mfile = MediaFileMetadata.builder()
-                        .id(hitDoc.getId())
-                        .title(sourceMap.get(TITLE.value()) !=null ? sourceMap.get(TITLE.value()).toString() : null)
-                        .filename(sourceMap.get(FILENAME.value()) !=null ? sourceMap.get(FILENAME.value()).toString() : null)
-                        .mimeType(sourceMap.get(MIMETYPE.value()) !=null ? sourceMap.get(MIMETYPE.value()).toString() : null)
-                        .size(sourceMap.get(SIZE.value()) != null ? (Integer)sourceMap.get(SIZE.value()) : null)
-                        .creationDate(sourceMap.get(CREATION_DATE.value()) != null ? DateTimeUtils.stringToLocalDatetime(sourceMap.get(CREATION_DATE.value()).toString()) : null)
-                        .createdBy(sourceMap.get(CREATED_BY.value()) != null ? sourceMap.get(CREATED_BY.value()).toString() : null)
-                        .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
-                        .content(sourceMap.get(CONTENT.value()) !=null ? sourceMap.get(CONTENT.value()).toString() : null)
-                        .build();
-                results.add(mfile);
-            });
-
-        } catch (IOException ioe) {
-            log.error("failed to search media files: {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to fetch all media files from Elasticsearch, please contact system administrator.");
-        }
-
-        return results;
     }
 
 }

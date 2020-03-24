@@ -49,7 +49,7 @@ public interface FileStorage<T> {
 	 * @param t metadata
 	 * @throws FileStoreServiceException exception of media storage service
 	 */
-	boolean deleteFile(T t);
+	void deleteFile(T t);
 
 	/**
 	 * Get file thumbnail from repository

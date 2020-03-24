@@ -18,10 +18,10 @@ import java.util.*;
 import com.jumkid.share.util.DateTimeUtils;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.exception.FileNotfoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.FileSearch;
 import com.jumkid.vault.repository.FileStorage;
-import com.jumkid.vault.service.mapper.ListMediaFileMapper;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.factory.Mappers;
@@ -45,7 +45,6 @@ public class MediaFileServiceImpl implements MediaFileService {
 	private static final String STORAGE_MODE_HADOOP = "hadoop";
 
 	private final MediaFileMapper mediaFileMapper = Mappers.getMapper( MediaFileMapper.class );
-	private final ListMediaFileMapper listMediaFileMapper = Mappers.getMapper( ListMediaFileMapper.class );
 
 	@Autowired
 	public MediaFileServiceImpl(FileSearch<MediaFileMetadata> esContentStorage,
@@ -142,23 +141,29 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public boolean deleteMediaFile(String id) {
+    public void deleteMediaFile(String id) {
         MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
         if(mediaFileMetadata != null) {
-            if(fileSearch.deleteMetadata(id)) {
-                return getFileStorage().deleteFile(mediaFileMetadata);
+            mediaFileMetadata.setActivated(false);
+            fileSearch.updateMetadata(mediaFileMetadata);
+            try {
+                getFileStorage().deleteFile(mediaFileMetadata);
+            } catch (Exception e) {
+                //roll back metadata status
+                mediaFileMetadata.setActivated(true);
+                fileSearch.updateMetadata(mediaFileMetadata);
+                throw new FileStoreServiceException("failed to delete media file");
             }
         } else {
             throw new FileNotfoundException(id);
         }
-        return false;
     }
 
     @Override
     public List<MediaFile> getAll() {
         List<MediaFileMetadata> mediaFileMetadataList = fileSearch.getAll();
         if (mediaFileMetadataList == null) return Collections.emptyList();
-        else return listMediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
+        else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
 
     private boolean isRandomAccess(MediaFileMetadata mFile){

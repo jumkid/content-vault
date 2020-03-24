@@ -1,7 +1,6 @@
 package com.jumkid.vault.exception;
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.model.MediaFileMetadata;
 import lombok.Getter;
 
 @Getter

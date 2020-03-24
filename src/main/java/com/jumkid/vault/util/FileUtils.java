@@ -2,10 +2,15 @@ package com.jumkid.vault.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 public class FileUtils {
@@ -34,6 +39,16 @@ public class FileUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static void deleteDirectoryStream(final Path path) {
+        try (final Stream<Path> pathStream = Files.walk(path)) {
+            pathStream.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException ioe) {
+            log.error("failed to delete directory {} ", path.toString());
+        }
     }
 
 }

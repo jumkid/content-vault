@@ -9,10 +9,10 @@
         <relativePath/>
     </parent>
     <groupId>com.jumkid.vault</groupId>
-    <artifactId>file-vault</artifactId>
+    <artifactId>content-vault</artifactId>
     <version>0.0.1.SNAPSHORT</version>
-    <name>file service</name>
-    <description>file storing and managing spring boot application</description>
+    <name>content media services</name>
+    <description>content storing and managing spring boot application</description>
 
     <properties>
         <java.version>11</java.version>

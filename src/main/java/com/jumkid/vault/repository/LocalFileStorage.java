@@ -22,12 +22,12 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 import java.util.UUID;
 
 import com.jumkid.vault.enums.ThumbnailInfo;
+import com.jumkid.vault.exception.FileNotfoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.util.FileUtils;
@@ -53,9 +53,12 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 	private final FilePathManager filePathManager;
 
+	private final FileTrashManager fileTrashManager;
+
 	@Autowired
-	public LocalFileStorage(FilePathManager filePathManager) {
+	public LocalFileStorage(FilePathManager filePathManager, FileTrashManager fileTrashManager) {
 		this.filePathManager = filePathManager;
+		this.fileTrashManager = fileTrashManager;
 	}
 
 	@Override
@@ -160,20 +163,22 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public boolean deleteFile(MediaFileMetadata mediaFile) {
-		Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId());
-		try {
-			if(!Files.exists(path)) return false;
+	public void deleteFile(MediaFileMetadata mediaFile) {
+		if (mediaFile.getLogicalPath() == null) return;
 
-			if(Files.deleteIfExists(path)) {
-				deleteThumbnail(mediaFile);
-			}
-			return true;
-		} catch(IOException e) {
-			log.warn("failed to remove file {}", path);
-			this.moveToTrash(path);
+		Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath());
+		if(!Files.exists(path)) {
+			throw new FileNotfoundException(mediaFile.getId());
 		}
-		return false;
+
+		fileTrashManager.moveToTrash(path, mediaFile.getId());
+		try {
+			FileUtils.deleteDirectoryStream(path);
+		} catch (Exception e) {
+			log.error("failed to delete file {} {}", path.toString(), e.getMessage());
+			throw new FileStoreServiceException(mediaFile.getId());
+		}
+
 	}
 
 	@Override
@@ -236,19 +241,11 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 			Path path_s = getThumbnailPath(mediaFile, ThumbnailInfo.SMALL_SUFFIX.value() + ThumbnailInfo.EXTENSION.value());
 			Path path_l = getThumbnailPath(mediaFile, ThumbnailInfo.LARGE_SUFFIX.value() + ThumbnailInfo.EXTENSION.value());
 			
-			try{
-
+			try {
 				Files.deleteIfExists(path_s);
 				Files.deleteIfExists(path_l);
-				
-			}catch(IOException e){
-				if(Files.exists(path_s)) {
-					this.moveToTrash(path_s);
-				}
-				if(Files.exists(path_l)) {
-					this.moveToTrash(path_l);
-				}
-				log.warn("Failed to remove file. {}", e.getMessage());
+			} catch (IOException e) {
+				log.warn("Failed to remove thumbnail. {}", e.getMessage());
 			}
 			
 		}
@@ -257,16 +254,6 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	
 	private Path getThumbnailPath(MediaFileMetadata mediaFile, String suffix){
 		return Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId() + suffix);
-	}
-	
-	private void moveToTrash(Path filePath) throws FileStoreServiceException{
-		//move file to trash
-		Path trashPath = Paths.get(dataHomePath, filePathManager.getTrashPath());
-		try{
-			Files.move(filePath, trashPath, StandardCopyOption.ATOMIC_MOVE);
-		}catch(IOException ioe){
-			throw new FileStoreServiceException("Failed to remove file "+filePath);
-		}
 	}
 
 	private String getFileUuid(byte[] bytes, MediaFileMetadata mfile){
