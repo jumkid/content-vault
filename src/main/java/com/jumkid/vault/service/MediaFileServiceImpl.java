@@ -194,5 +194,7 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (dto.getActivated() == null) dto.setActivated(true);
 
     }
+
+    public void setStorageMode(String storageMode) { this.storageMode = storageMode; }
 	
 }

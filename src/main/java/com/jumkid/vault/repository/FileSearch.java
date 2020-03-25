@@ -35,7 +35,7 @@ public interface FileSearch<T> {
      * @param bytes file binary
      * @param t generic type of file
      */
-    T saveMetadata(byte[] bytes, T t);
+    T saveMetadata(T t, byte[] bytes);
 
     /**
      * Get type from repository by given identifier

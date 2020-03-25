@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 @Data
-@EqualsAndHashCode(of = {"uuid"}, callSuper = false)
+@EqualsAndHashCode(of = {"uuid", "title"}, callSuper = false)
 public class MediaFile extends GenericDTO {
 
     private String uuid;

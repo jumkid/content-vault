@@ -140,11 +140,11 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
 
     @Override
     public MediaFileMetadata saveMetadata(MediaFileMetadata mediaFileMetadata) {
-        return saveMetadata(null, mediaFileMetadata);
+        return saveMetadata(mediaFileMetadata, null);
     }
 
     @Override
-    public MediaFileMetadata saveMetadata(byte[] bytes, MediaFileMetadata mediaFileMetadata) {
+    public MediaFileMetadata saveMetadata(MediaFileMetadata mediaFileMetadata, byte[] bytes) {
         try {
             XContentBuilder builder = XContentFactory.cborBuilder();
             builder.startObject()
