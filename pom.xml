@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.jumkid.vault</groupId>
     <artifactId>content-vault</artifactId>
-    <version>0.0.1.SNAPSHORT</version>
+    <version>1.0.0</version>
     <name>content media services</name>
     <description>content storing and managing spring boot application</description>
 
