@@ -166,6 +166,14 @@ public class MediaFileServiceImpl implements MediaFileService {
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
 
+    @Override
+    public List<MediaFile> getTrash() {
+        List<MediaFileMetadata> mediaFileMetadataList = fileSearch.getTrash();
+        if (mediaFileMetadataList == null) return Collections.emptyList();
+        else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
+    }
+
+
     private boolean isRandomAccess(MediaFileMetadata mFile){
         return mFile.getMimeType().startsWith("video") || mFile.getMimeType().startsWith("audio");
     }

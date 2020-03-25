@@ -62,14 +62,28 @@ public class ESContentStorage implements FileSearch<MediaFileMetadata> {
 
     @Override
     public List<MediaFileMetadata> getAll() {
-        List<MediaFileMetadata> results = new ArrayList<>();
-
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.searchType(SearchType.DEFAULT);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.query(QueryBuilders.termQuery(ACTIVATED.value(), true));
         searchRequest.source(sourceBuilder);
 
+        return searchMetadata(searchRequest);
+    }
+
+    @Override
+    public List<MediaFileMetadata> getTrash() {
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.searchType(SearchType.DEFAULT);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.query(QueryBuilders.termQuery(ACTIVATED.value(), false));
+        searchRequest.source(sourceBuilder);
+
+        return searchMetadata(searchRequest);
+    }
+
+    private List<MediaFileMetadata> searchMetadata(SearchRequest searchRequest) {
+        List<MediaFileMetadata> results = new ArrayList<>();
         try {
             SearchResponse response = esClient.search(searchRequest, RequestOptions.DEFAULT);
             response.getHits().iterator().forEachRemaining( hitDoc -> {

@@ -10,6 +10,8 @@ package com.jumkid.vault.repository;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
+import com.jumkid.vault.model.MediaFileMetadata;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -67,8 +69,15 @@ public interface FileSearch<T> {
     /**
      * Get all media files from repository
      *
-     * @return List of generic type
+     * @return List of type
      */
     List<T> getAll();
+
+    /**
+     * Get all trashed metadata from repository
+     *
+     * @return List of type
+     */
+    List<T> getTrash();
 
 }

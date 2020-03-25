@@ -84,4 +84,10 @@ public interface MediaFileService {
      */
     List<MediaFile> getAll();
 
+    /**
+     * Get all trashed media files
+     *
+     * @return List of mediaFile
+     */
+    List<MediaFile> getTrash();
 }
