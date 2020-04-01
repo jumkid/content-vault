@@ -1,6 +1,7 @@
 package com.jumkid.vault.security;
 
 import com.jumkid.share.security.TokenRequestFilter;
+import com.jumkid.share.security.jwt.TokenUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -9,8 +10,8 @@ import org.springframework.web.client.RestTemplate;
 public class CommonRequestFilter extends TokenRequestFilter {
 
     @Autowired
-    public CommonRequestFilter(RestTemplate restTemplate) {
-        super(restTemplate);
+    public CommonRequestFilter(RestTemplate restTemplate, TokenUser tokenUser) {
+        super(restTemplate, tokenUser);
     }
 
 }

@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class MediaFileServiceImplTest {
 
+    private final int DEFAULT_SIZE = 100;
+
     @Mock
     private ESContentStorage esContentStorage;
     @Mock
@@ -53,7 +55,7 @@ public class MediaFileServiceImplTest {
     public void shouldAddMediaFileWithBytes() {
         final MediaFile mediaFile = generateMediaFile();
         final MediaFileMetadata mediaFileMetadata = generateMediaFileMetadata();
-        byte[] bytes = new byte[100];
+        byte[] bytes = new byte[DEFAULT_SIZE];
         when(esContentStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(eq(bytes), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(esContentStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
@@ -66,7 +68,7 @@ public class MediaFileServiceImplTest {
         return MediaFile.builder()
                 .title("test").filename("test file").uuid("1")
                 .mimeType("plain/text").activated(true)
-                .content("test content").size(100)
+                .content("test content").size(DEFAULT_SIZE)
                 .creationDate(now).modificationDate(now)
                 .build();
     }
@@ -75,7 +77,7 @@ public class MediaFileServiceImplTest {
         return MediaFileMetadata.builder()
                 .title("test").filename("test file").id("1")
                 .mimeType("plain/text").activated(true)
-                .content("test content").size(100)
+                .content("test content").size(DEFAULT_SIZE)
                 .module("mfile").logicalPath("/foo")
                 .creationDate(now).modificationDate(now)
                 .build();
