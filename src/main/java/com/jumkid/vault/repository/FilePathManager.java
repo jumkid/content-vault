@@ -27,10 +27,6 @@ public class FilePathManager {
 
 	private static final String FORMAT_YYYYMMDD = "yyyyMMdd";
 
-	@Getter
-	@Value("${vault.data.home}")
-	private String dataHomePath;
-
 	String getTrashPath() {
 		return DELIMITER + SystemDirectoryName.TRASH.value();
 	}
