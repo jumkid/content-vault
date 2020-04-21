@@ -23,6 +23,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class FilePathManager {
 
+	@Value("${vault.data.home}")
+	@Getter
+	private String dataHomePath;
+
 	static final String DELIMITER = "/";
 
 	private static final String FORMAT_YYYYMMDD = "yyyyMMdd";

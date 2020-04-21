@@ -42,9 +42,6 @@ import org.springframework.stereotype.Repository;
 @Repository("localFileStorage")
 public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
-	@Value("${vault.data.home}")
-	private String dataHomePath;
-
 	@Value("${vault.thumbnail.small}")
 	private int thumbnailSmall;
 
@@ -82,23 +79,21 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		try{
 			mediaFile.setLogicalPath(logicalPath);
 
-			Path dirPath = Paths.get(dataHomePath, logicalPath);
-			Path path = Paths.get(dataHomePath, logicalPath, getFileUuid(bytes, mediaFile));
+			Path dirPath = Paths.get(filePathManager.getDataHomePath(), logicalPath);
+			Path path = Paths.get(filePathManager.getDataHomePath(), logicalPath, getFileUuid(bytes, mediaFile));
 
 			SeekableByteChannel sbc = null;
 			if(Files.exists(path)){   //replace the existing file if it exists
-				sbc = Files.newByteChannel(path, StandardOpenOption.WRITE,
-						StandardOpenOption.TRUNCATE_EXISTING);
+				sbc = Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 			}else{
 				if(!Files.exists(dirPath)) Files.createDirectories(dirPath);
-				sbc = Files.newByteChannel(path, StandardOpenOption.WRITE,
-						StandardOpenOption.CREATE_NEW);
+				sbc = Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
 			}
 
 			try {
 				sbc.write(ByteBuffer.wrap(bytes));
 			} catch (IOException ioe) {
-				ioe.printStackTrace();
+				log.error("failed to write file bytes: {}", ioe.getMessage());
 			} finally{
 				sbc.close();
 			}
@@ -122,14 +117,15 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 	private FileChannel getFileChannel(MediaFileMetadata mediaFile) {
 
-		Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId());
+		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId());
 
 		if (!Files.exists(path)) {
 			log.info("file {} is not found.", path);
 			return null;
 		}
 
-		try (FileInputStream fin = new FileInputStream(new File(path.toString()))) {
+		try {
+			FileInputStream fin = new FileInputStream(new File(path.toString()));
 			return fin.getChannel();
 		} catch (Exception e) {
 			throw new FileStoreServiceException(e.getMessage());
@@ -147,12 +143,13 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	 */
 	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) {
 
-			Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId());
-			
-			if(!Files.exists(path)){
-				log.info("file {} is not found.", path);
-				return null;
-			}
+		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId());
+
+		if(!Files.exists(path)){
+			log.info("file {} is not found.", path);
+			return null;
+		}
+
 		try {
 			RandomAccessFile aFile = new RandomAccessFile(path.toString(), "rw");
 			return aFile.getChannel();
@@ -166,7 +163,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	public void deleteFile(MediaFileMetadata mediaFile) {
 		if (mediaFile.getLogicalPath() == null) return;
 
-		Path path = Paths.get(dataHomePath, mediaFile.getLogicalPath());
+		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath());
 		if(!Files.exists(path)) {
 			throw new FileNotfoundException(mediaFile.getId());
 		}
@@ -183,7 +180,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 	@Override
 	public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, boolean large) {
-
+		String dataHomePath = filePathManager.getDataHomePath();
 		String logicalPath = mediaFileMetadata.getLogicalPath();
 		String filePath = null;
 		if(mediaFileMetadata.getMimeType().startsWith("image")) {
@@ -253,7 +250,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 	
 	private Path getThumbnailPath(MediaFileMetadata mediaFile, String suffix){
-		return Paths.get(dataHomePath, mediaFile.getLogicalPath(), mediaFile.getId() + suffix);
+		return Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId() + suffix);
 	}
 
 	private String getFileUuid(byte[] bytes, MediaFileMetadata mfile){
