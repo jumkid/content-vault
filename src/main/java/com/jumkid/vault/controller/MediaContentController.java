@@ -117,7 +117,7 @@ public class MediaContentController {
         } finally {
             try{
                 response.flushBuffer();
-            }catch(Exception e){
+            } catch (Exception e) {
                 log.error("failed to get file resource {}", e.getMessage());
             }
         }

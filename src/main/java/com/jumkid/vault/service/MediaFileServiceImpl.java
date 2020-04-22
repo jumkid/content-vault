@@ -152,7 +152,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                 //roll back metadata status
                 mediaFileMetadata.setActivated(true);
                 fileSearch.updateMetadata(mediaFileMetadata);
-                throw new FileStoreServiceException("failed to delete media file");
+                throw new FileStoreServiceException(e.getMessage());
             }
         } else {
             throw new FileNotfoundException(id);
