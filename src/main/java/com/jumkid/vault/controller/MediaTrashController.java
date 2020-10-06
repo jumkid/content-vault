@@ -26,7 +26,7 @@ public class MediaTrashController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<MediaFile> getAll(){
+    public List<MediaFile> getAllTrash(){
         return fileService.getTrash();
     }
 

@@ -1,0 +1,252 @@
+openapi: 3.0.0
+info:
+  version: 'v1'
+  title: 'content-vault API'
+  description: 'content-vault RESTFul api for openapi 3.0 in swagger'
+  termsOfService: https://jumkid.com/terms-of-use
+  
+  contact:
+    name: Chooli Yip
+    url: jumkid.com
+    email: chooli.yip@gmail.com
+    
+  license:
+    name: Jumkid Public License
+    url: http://license.jumkid.com
+     
+
+# Added by API Auto Mocking Plugin
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/jumkid/content-vault/v1
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/jumkid/Sample_3/0.0.1.SNAPSHORT
+  - description: Live production
+    url: http://api.jumkid.com
+
+tags:
+  - name: test
+    description: 'API for testing'
+  
+  - name: production
+    description: 'API for production'    
+
+paths:
+  /metadata:
+    get:
+      tags: ['test', 'production']
+      operationId: "getAllMetadata"
+      description: get all metadata for media files
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaFile'
+
+  /metadata/{id}:
+    get:
+      description: get single metadata for media file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+                
+    put:
+      description: update metadata for media file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+      requestBody:
+        description: metadata json object
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/MediaFile'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'          
+                
+    delete:
+      description: delete single metadata for media file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+      responses:
+        204:
+          description: successfully delete the metadata by givn id
+      
+  /content/html/{id}:
+    get:
+      description: get html content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /content/plain/{id}:
+      get:
+        description: get plain content
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: mediafile identifier
+            schema:
+              type: string
+          - name: ignoreTitle
+            in: query
+            required: false
+            description: if the response body should ignore the title
+            schema:
+              type: boolean
+        responses:
+          200:
+            description: successfully fetch content in plain format
+            content:
+              test/plain:
+                schema:
+                  type: string      
+    
+  /content/plain:
+    post:
+      description: save a new plain content
+      parameters: 
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: content
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+                    
+  /content/stream/{id}:
+    get:
+      description: stream content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+      responses:
+        default:
+          description: binary stream as response
+          
+  /file/upload:
+    post:
+      description: file upload
+      requestBody:
+        content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  file:
+                    type: string
+                    format: binary
+          
+      responses:
+        202:
+          description: save a new content in plain format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+
+  /file/download/{id}:
+    get:
+      description: download file with the identifier
+      parameters: 
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+      responses:
+        default:
+          description: binary file as response
+  
+  /trash:
+    get:
+      description: fetch all deleted files in the trash
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaFile'
+              
+components:
+  schemas:
+    
+    MediaFile:
+      description: Model of media file
+      properties:
+        id:
+          type: string
+          example: "1mWG-nQBWmmN0po1BUoG"
+        filename:
+          type: string
+          example: "foo.txt"
+        mimeType:
+          type: string
+          example: "text/plain"
+        size:
+          type: integer
+          description: file size in byte
+        title:
+          type: string
+        content:
+          type: string
+        activated:
+          type: boolean

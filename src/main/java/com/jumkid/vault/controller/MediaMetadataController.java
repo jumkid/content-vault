@@ -25,7 +25,7 @@ public class MediaMetadataController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<MediaFile> getAll(){
+    public List<MediaFile> getAllMetadata(){
         return fileService.getAll();
     }
 
