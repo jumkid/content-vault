@@ -50,6 +50,8 @@ paths:
 
   /metadata/{id}:
     get:
+      tags: ['test', 'production']
+      operationId: 'getMetadata'
       description: get single metadata for media file
       parameters:
         - name: id
