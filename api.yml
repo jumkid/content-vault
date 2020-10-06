@@ -26,16 +26,16 @@ servers:
     url: http://api.jumkid.com
 
 tags:
-  - name: test
-    description: 'API for testing'
+  - name: v1
+    description: 'API for version 1.0.0'
   
-  - name: production
-    description: 'API for production'    
+  - name: test
+    description: 'API for test'    
 
 paths:
   /metadata:
     get:
-      tags: ['test', 'production']
+      tags: ['v1']
       operationId: "getAllMetadata"
       description: get all metadata for media files
       responses:
@@ -50,7 +50,7 @@ paths:
 
   /metadata/{id}:
     get:
-      tags: ['test', 'production']
+      tags: ['v1']
       operationId: 'getMetadata'
       description: get single metadata for media file
       parameters:
@@ -69,8 +69,8 @@ paths:
                 $ref: '#/components/schemas/MediaFile'
                 
     put:
+      tags: ['v1']
       operationId: 'updateMetadata'
-      tags: ['test', 'production']
       description: update metadata for media file
       parameters:
         - name: id
@@ -94,8 +94,8 @@ paths:
                 $ref: '#/components/schemas/MediaFile'          
                 
     delete:
+      tags: ['v1']
       operationId: 'deleteMetadata'
-      tags: ['test', 'production']
       description: delete single metadata for media file
       parameters:
         - name: id
@@ -110,8 +110,8 @@ paths:
       
   /content/html/{id}:
     get:
+      tags: ['v1']
       operationId: 'getHtml'
-      tags: ['test', 'production']
       description: get html content
       parameters:
         - name: id
@@ -130,8 +130,8 @@ paths:
 
   /content/plain/{id}:
       get:
+        tags: ['v1']
         operationId: 'getPlain'
-        tags: ['test', 'production']
         description: get plain content
         parameters:
           - name: id
@@ -156,8 +156,8 @@ paths:
     
   /content/plain:
     post:
+      tags: ['v1']
       operationId: 'addPlain'
-      tags: ['test', 'production']
       description: save a new plain content
       parameters: 
         - name: title
@@ -178,8 +178,8 @@ paths:
                     
   /content/stream/{id}:
     get:
+      tags: ['v1']
       operationId: 'stream'
-      tags: ['test', 'production']
       description: stream content
       parameters:
         - name: id
@@ -194,8 +194,8 @@ paths:
           
   /file/upload:
     post:
+      tags: ['v1']
       operationId: 'upload'
-      tags: ['test', 'production']
       description: file upload
       requestBody:
         content:
@@ -217,8 +217,8 @@ paths:
 
   /file/download/{id}:
     get:
+      tags: ['v1']
       operationId: 'download'
-      tags: ['test', 'production']
       description: download file with the identifier
       parameters: 
         - name: id
@@ -233,8 +233,8 @@ paths:
   
   /trash:
     get:
+      tags: ['v1']
       operationId: 'getAllTrash'
-      tags: ['test', 'production']
       description: fetch all deleted files in the trash
       responses:
         '200':
