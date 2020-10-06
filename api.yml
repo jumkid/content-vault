@@ -61,7 +61,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -69,6 +69,8 @@ paths:
                 $ref: '#/components/schemas/MediaFile'
                 
     put:
+      operationId: 'updateMetadata'
+      tags: ['test', 'production']
       description: update metadata for media file
       parameters:
         - name: id
@@ -84,7 +86,7 @@ paths:
             schema:
                 $ref: '#/components/schemas/MediaFile'
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -92,6 +94,8 @@ paths:
                 $ref: '#/components/schemas/MediaFile'          
                 
     delete:
+      operationId: 'deleteMetadata'
+      tags: ['test', 'production']
       description: delete single metadata for media file
       parameters:
         - name: id
@@ -101,11 +105,13 @@ paths:
           schema:
             type: string
       responses:
-        204:
+        '204':
           description: successfully delete the metadata by givn id
       
   /content/html/{id}:
     get:
+      operationId: 'getHtml'
+      tags: ['test', 'production']
       description: get html content
       parameters:
         - name: id
@@ -115,7 +121,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: OK
           content:
             text/html:
@@ -124,6 +130,8 @@ paths:
 
   /content/plain/{id}:
       get:
+        operationId: 'getPlain'
+        tags: ['test', 'production']
         description: get plain content
         parameters:
           - name: id
@@ -139,7 +147,7 @@ paths:
             schema:
               type: boolean
         responses:
-          200:
+          '200':
             description: successfully fetch content in plain format
             content:
               test/plain:
@@ -148,6 +156,8 @@ paths:
     
   /content/plain:
     post:
+      operationId: 'addPlain'
+      tags: ['test', 'production']
       description: save a new plain content
       parameters: 
         - name: title
@@ -159,7 +169,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -168,6 +178,8 @@ paths:
                     
   /content/stream/{id}:
     get:
+      operationId: 'stream'
+      tags: ['test', 'production']
       description: stream content
       parameters:
         - name: id
@@ -177,11 +189,13 @@ paths:
           schema:
             type: string
       responses:
-        default:
+        '200':
           description: binary stream as response
           
   /file/upload:
     post:
+      operationId: 'upload'
+      tags: ['test', 'production']
       description: file upload
       requestBody:
         content:
@@ -194,7 +208,7 @@ paths:
                     format: binary
           
       responses:
-        202:
+        '202':
           description: save a new content in plain format
           content:
             application/json:
@@ -203,6 +217,8 @@ paths:
 
   /file/download/{id}:
     get:
+      operationId: 'download'
+      tags: ['test', 'production']
       description: download file with the identifier
       parameters: 
         - name: id
@@ -212,14 +228,16 @@ paths:
           schema:
             type: string
       responses:
-        default:
+        '200':
           description: binary file as response
   
   /trash:
     get:
+      operationId: 'getAllTrash'
+      tags: ['test', 'production']
       description: fetch all deleted files in the trash
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
