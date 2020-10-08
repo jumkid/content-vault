@@ -1,57 +1,55 @@
 openapi: 3.0.0
 info:
-  version: 'v1'
-  title: 'content-vault API'
-  description: 'content-vault RESTFul api for openapi 3.0 in swagger'
-  termsOfService: https://jumkid.com/terms-of-use
-  
+  version: v1
+  title: content-vault API
+  description: content-vault RESTFul api for openapi 3.0 in swagger
+  termsOfService: 'https://jumkid.com/terms-of-use'
   contact:
     name: Chooli Yip
     url: jumkid.com
     email: chooli.yip@gmail.com
-    
   license:
     name: Jumkid Public License
-    url: http://license.jumkid.com
-     
+    url: 'http://license.jumkid.com'
 
-# Added by API Auto Mocking Plugin
 servers:
-  # Added by API Auto Mocking Plugin
   - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/jumkid/content-vault/v1
+    url: 'https://virtserver.swaggerhub.com/jumkid/content-vault/v1'
   - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/jumkid/Sample_3/0.0.1.SNAPSHORT
+    url: 'https://virtserver.swaggerhub.com/jumkid/Sample_3/0.0.1.SNAPSHORT'
   - description: Live production
-    url: http://api.jumkid.com
+    url: 'http://api.jumkid.com'
 
 tags:
   - name: v1
-    description: 'API for version 1.0.0'
-  
+    description: API for version 1.0.0
   - name: test
-    description: 'API for test'    
+    description: API for test
+
+security:
+  - bearerAuth: []
 
 paths:
   /metadata:
     get:
-      tags: ['v1']
-      operationId: "getAllMetadata"
+      tags:
+        - v1
+      operationId: getAllMetadata
       description: get all metadata for media files
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: 
+              schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
-
-  /metadata/{id}:
+  '/metadata/{id}':
     get:
-      tags: ['v1']
-      operationId: 'getMetadata'
+      tags:
+        - v1
+      operationId: getMetadata
       description: get single metadata for media file
       parameters:
         - name: id
@@ -67,10 +65,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-                
     put:
-      tags: ['v1']
-      operationId: 'updateMetadata'
+      tags:
+        - v1
+      operationId: updateMetadata
       description: update metadata for media file
       parameters:
         - name: id
@@ -84,18 +82,18 @@ paths:
         content:
           application/json:
             schema:
-                $ref: '#/components/schemas/MediaFile'
+              $ref: '#/components/schemas/MediaFile'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MediaFile'          
-                
+                $ref: '#/components/schemas/MediaFile'
     delete:
-      tags: ['v1']
-      operationId: 'deleteMetadata'
+      tags:
+        - v1
+      operationId: deleteMetadata
       description: delete single metadata for media file
       parameters:
         - name: id
@@ -107,11 +105,11 @@ paths:
       responses:
         '204':
           description: successfully delete the metadata by givn id
-      
-  /content/html/{id}:
+  '/content/html/{id}':
     get:
-      tags: ['v1']
-      operationId: 'getHtml'
+      tags:
+        - v1
+      operationId: getHtml
       description: get html content
       parameters:
         - name: id
@@ -127,39 +125,39 @@ paths:
             text/html:
               schema:
                 type: string
-
-  /content/plain/{id}:
-      get:
-        tags: ['v1']
-        operationId: 'getPlain'
-        description: get plain content
-        parameters:
-          - name: id
-            in: path
-            required: true
-            description: mediafile identifier
-            schema:
-              type: string
-          - name: ignoreTitle
-            in: query
-            required: false
-            description: if the response body should ignore the title
-            schema:
-              type: boolean
-        responses:
-          '200':
-            description: successfully fetch content in plain format
-            content:
-              test/plain:
-                schema:
-                  type: string      
-    
+  '/content/plain/{id}':
+    get:
+      tags:
+        - v1
+      operationId: getPlain
+      description: get plain content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
+        - name: ignoreTitle
+          in: query
+          required: false
+          description: if the response body should ignore the title
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: successfully fetch content in plain format
+          content:
+            test/plain:
+              schema:
+                type: string
   /content/plain:
     post:
-      tags: ['v1']
-      operationId: 'addPlain'
+      tags:
+        - v1
+      operationId: addPlain
       description: save a new plain content
-      parameters: 
+      parameters:
         - name: title
           in: query
           schema:
@@ -175,11 +173,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-                    
-  /content/stream/{id}:
+      summary: Add plain content
+  '/content/stream/{id}':
     get:
-      tags: ['v1']
-      operationId: 'stream'
+      tags:
+        - v1
+      operationId: stream
       description: stream content
       parameters:
         - name: id
@@ -191,22 +190,21 @@ paths:
       responses:
         '200':
           description: binary stream as response
-          
   /file/upload:
     post:
-      tags: ['v1']
-      operationId: 'upload'
+      tags:
+        - v1
+      operationId: upload
       description: file upload
       requestBody:
         content:
-            multipart/form-data:
-              schema:
-                type: object
-                properties:
-                  file:
-                    type: string
-                    format: binary
-          
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         '202':
           description: save a new content in plain format
@@ -214,13 +212,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-
-  /file/download/{id}:
+  '/file/download/{id}':
     get:
-      tags: ['v1']
-      operationId: 'download'
+      tags:
+        - v1
+      operationId: download
       description: download file with the identifier
-      parameters: 
+      parameters:
         - name: id
           in: path
           required: true
@@ -230,11 +228,11 @@ paths:
       responses:
         '200':
           description: binary file as response
-  
   /trash:
     get:
-      tags: ['v1']
-      operationId: 'getAllTrash'
+      tags:
+        - v1
+      operationId: getAllTrash
       description: fetch all deleted files in the trash
       responses:
         '200':
@@ -245,22 +243,20 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
-              
 components:
   schemas:
-    
     MediaFile:
       description: Model of media file
       properties:
         id:
           type: string
-          example: "1mWG-nQBWmmN0po1BUoG"
+          example: 1mWG-nQBWmmN0po1BUoG
         filename:
           type: string
-          example: "foo.txt"
+          example: foo.txt
         mimeType:
           type: string
-          example: "text/plain"
+          example: text/plain
         size:
           type: integer
           description: file size in byte
@@ -270,3 +266,9 @@ components:
           type: string
         activated:
           type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -17,7 +17,7 @@ import java.util.*;
 
 import com.jumkid.share.util.DateTimeUtils;
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.exception.FileNotfoundException;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.FileSearch;
@@ -37,7 +37,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Value("${vault.storage.mode}")
     private String storageMode;
 
-	private FileSearch<MediaFileMetadata> fileSearch;
+	private final FileSearch<MediaFileMetadata> fileSearch;
 
 	private final Map<String, FileStorage<MediaFileMetadata>> storageRegistry = new HashMap<>();
 
@@ -100,7 +100,7 @@ public class MediaFileServiceImpl implements MediaFileService {
             }
             return mediaFileMapper.metadataToDTO(mediaFileMetadata);
         } else {
-            throw new FileNotfoundException(uuid);
+            throw new FileNotFoundException(uuid);
         }
     }
 
@@ -111,7 +111,7 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (mediaFileMetadata != null) {
             return mediaFileMapper.metadataToDTO(mediaFileMetadata);
         } else {
-            throw new FileNotfoundException(id);
+            throw new FileNotFoundException(id);
         }
 	}
 
@@ -122,7 +122,7 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (mediaFileMetadata != null) {
             return mediaFileMetadata;
         } else {
-            throw new FileNotfoundException(id);
+            throw new FileNotFoundException(id);
         }
     }
 
@@ -155,7 +155,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                 throw new FileStoreServiceException(e.getMessage());
             }
         } else {
-            throw new FileNotfoundException(id);
+            throw new FileNotFoundException(id);
         }
     }
 

@@ -12,7 +12,7 @@ package com.jumkid.vault.controller;
  */
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.exception.FileNotfoundException;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.service.MediaFileService;
 import com.jumkid.vault.util.ResponseMediaFileWriter;
 import lombok.extern.slf4j.Slf4j;
@@ -49,20 +49,16 @@ public class MediaContentController {
         MediaFile mediaFile = fileService.getMediaFile(id);
         StringBuilder sb = new StringBuilder();
         boolean addedTitle = false;
-        if (mediaFile != null) {
-            if (ignoreTitle == null || !ignoreTitle){
-                sb.append(mediaFile.getTitle());
-                addedTitle = true;
-            }
-            if (ignoreContent == null || !ignoreContent) {
-                if (addedTitle) sb.append("\n\n");
-                sb.append(mediaFile.getContent());
-            }
-
-            return sb.toString();
-        } else {
-            throw new FileNotfoundException(id);
+        if (ignoreTitle == null || !ignoreTitle){
+            sb.append(mediaFile.getTitle());
+            addedTitle = true;
         }
+        if (ignoreContent == null || !ignoreContent) {
+            if (addedTitle) sb.append("\n\n");
+            sb.append(mediaFile.getContent());
+        }
+
+        return sb.toString();
     }
 
     @PostMapping("/plain")
@@ -83,7 +79,7 @@ public class MediaContentController {
         if (optional.isPresent()) {
             return new String(optional.get());
         } else {
-            throw new FileNotfoundException(id);
+            throw new FileNotFoundException(id);
         }
     }
 
@@ -99,7 +95,7 @@ public class MediaContentController {
                         response = responseMFileWriter.stream(mediaFile, fc, request, response);
                     } else {
                         log.error("File channel is blank. There is nothing to stream");
-                        throw new FileNotfoundException(id);
+                        throw new FileNotFoundException(id);
                     }
                 }
 
@@ -109,7 +105,7 @@ public class MediaContentController {
                     response = responseMFileWriter.write(mediaFile, optional.get(), response);
                 } else {
                     log.error("File channel is blank. There is nothing to stream");
-                    throw new FileNotfoundException(id);
+                    throw new FileNotFoundException(id);
                 }
             }
         } catch (Exception e) {

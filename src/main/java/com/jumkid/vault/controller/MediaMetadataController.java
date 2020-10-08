@@ -1,7 +1,7 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.exception.FileNotfoundException;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class MediaMetadataController {
         if (mediaFile != null) {
             return mediaFile;
         } else {
-            throw new FileNotfoundException(id);
+            throw new FileNotFoundException(id);
         }
     }
 

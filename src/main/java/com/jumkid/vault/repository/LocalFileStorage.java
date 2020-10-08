@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.jumkid.vault.enums.ThumbnailInfo;
-import com.jumkid.vault.exception.FileNotfoundException;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.util.FileUtils;
@@ -165,7 +165,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath());
 		if(!Files.exists(path)) {
-			throw new FileNotfoundException(mediaFile.getId());
+			throw new FileNotFoundException(mediaFile.getId());
 		}
 
 		fileTrashManager.moveToTrash(path, mediaFile.getId());
