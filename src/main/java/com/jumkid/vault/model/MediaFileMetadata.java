@@ -12,12 +12,12 @@ package com.jumkid.vault.model;
  */
 
 import com.jumkid.vault.util.Constants;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Builder
 @EqualsAndHashCode(of = {"id", "title", "filename"}, callSuper = false)

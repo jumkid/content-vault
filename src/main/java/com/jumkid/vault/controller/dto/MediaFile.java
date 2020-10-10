@@ -4,9 +4,11 @@ import com.jumkid.share.controller.dto.GenericDTO;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
 @Data
 @EqualsAndHashCode(of = {"uuid", "title"}, callSuper = false)
 public class MediaFile extends GenericDTO {

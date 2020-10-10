@@ -37,7 +37,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Value("${vault.storage.mode}")
     private String storageMode;
 
-	private final FileSearch<MediaFileMetadata> fileSearch;
+	private final FileSearch<MediaFileMetadata> metadataStorage;
 
 	private final Map<String, FileStorage<MediaFileMetadata>> storageRegistry = new HashMap<>();
 
@@ -47,12 +47,12 @@ public class MediaFileServiceImpl implements MediaFileService {
 	private final MediaFileMapper mediaFileMapper = Mappers.getMapper( MediaFileMapper.class );
 
 	@Autowired
-	public MediaFileServiceImpl(FileSearch<MediaFileMetadata> esContentStorage,
+	public MediaFileServiceImpl(FileSearch<MediaFileMetadata> metadataStorage,
                                 FileStorage<MediaFileMetadata> hadoopFileStorage,
                                 FileStorage<MediaFileMetadata> localFileStorage) {
         storageRegistry.put(STORAGE_MODE_LOCAL, localFileStorage);
         storageRegistry.put(STORAGE_MODE_HADOOP, hadoopFileStorage);
-	    this.fileSearch = esContentStorage;
+	    this.metadataStorage = metadataStorage;
 	}
 
 	private FileStorage<MediaFileMetadata> getFileStorage() {
@@ -66,21 +66,21 @@ public class MediaFileServiceImpl implements MediaFileService {
 
         MediaFileMetadata mediaFileMetadata = mediaFileMapper.dtoToMetadata(mediaFile);
 	    if(bytes == null || bytes.length == 0) {
-	        mediaFileMetadata = fileSearch.saveMetadata(mediaFileMetadata);
+	        mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
         } else {
             //firstly save metadata to get indexed doc with id
-            mediaFileMetadata = fileSearch.saveMetadata(mediaFileMetadata);
+            mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
             //second save file binary to file system
             mediaFileMetadata = getFileStorage().saveFile(bytes, mediaFileMetadata);
             //finally update the logical path to metadata
-            mediaFileMetadata = fileSearch.updateMetadata(mediaFileMetadata);
+            mediaFileMetadata = metadataStorage.updateMetadata(mediaFileMetadata);
         }
         return mediaFileMapper.metadataToDTO(mediaFileMetadata);
     }
 
     @Override
     public MediaFile updateMediaFile(String uuid, MediaFile mediaFile, byte[] bytes) {
-        MediaFileMetadata oldMetadata = fileSearch.getMetadata(uuid);
+        MediaFileMetadata oldMetadata = metadataStorage.getMetadata(uuid);
         if (oldMetadata != null) {
             normalizeDTO(uuid, mediaFile, oldMetadata);
 
@@ -90,12 +90,12 @@ public class MediaFileServiceImpl implements MediaFileService {
             if (bytes == null || bytes.length == 0) {
                 if (mediaFileMetadata.getLogicalPath() != null) getFileStorage().deleteFile(mediaFileMetadata);
                 mediaFileMetadata.setLogicalPath(null);
-                fileSearch.updateMetadata(mediaFileMetadata);
+                metadataStorage.updateMetadata(mediaFileMetadata);
                 log.debug("save file metadata. {}", mediaFileMetadata);
             } else {
                 mediaFileMetadata = getFileStorage().saveFile(bytes, mediaFileMetadata);
                 log.debug("save file binary. {}", mediaFileMetadata);
-                mediaFileMetadata = fileSearch.updateMetadata(mediaFileMetadata);
+                mediaFileMetadata = metadataStorage.updateMetadata(mediaFileMetadata);
                 log.debug("save file metadata. {}", mediaFileMetadata);
             }
             return mediaFileMapper.metadataToDTO(mediaFileMetadata);
@@ -107,7 +107,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Override
 	public MediaFile getMediaFile(String id) {
     	log.debug("Retrieve media file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
         if (mediaFileMetadata != null) {
             return mediaFileMapper.metadataToDTO(mediaFileMetadata);
         } else {
@@ -118,7 +118,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Override
     public MediaFileMetadata getMediaFileMetadata(String id) {
         log.debug("Retrieve media file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
         if (mediaFileMetadata != null) {
             return mediaFileMetadata;
         } else {
@@ -129,29 +129,29 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Override
     public Optional<byte[]> getFileSource(String id) {
         log.debug("Retrieve source file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
         return getFileStorage().getFileBinary(mediaFileMetadata);
     }
 
     @Override
     public FileChannel getFileChannel(String id) {
         log.debug("Retrieve file channel by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
 	    return getFileStorage().getFileRandomAccess(mediaFileMetadata).orElseThrow();
     }
 
     @Override
     public void deleteMediaFile(String id) {
-        MediaFileMetadata mediaFileMetadata = fileSearch.getMetadata(id);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
         if(mediaFileMetadata != null) {
             mediaFileMetadata.setActivated(false);
-            fileSearch.updateMetadata(mediaFileMetadata);
+            metadataStorage.updateMetadata(mediaFileMetadata);
             try {
                 getFileStorage().deleteFile(mediaFileMetadata);
             } catch (Exception e) {
                 //roll back metadata status
                 mediaFileMetadata.setActivated(true);
-                fileSearch.updateMetadata(mediaFileMetadata);
+                metadataStorage.updateMetadata(mediaFileMetadata);
                 throw new FileStoreServiceException(e.getMessage());
             }
         } else {
@@ -161,14 +161,14 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Override
     public List<MediaFile> getAll() {
-        List<MediaFileMetadata> mediaFileMetadataList = fileSearch.getAll();
+        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.getAll();
         if (mediaFileMetadataList == null) return Collections.emptyList();
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
 
     @Override
     public List<MediaFile> getTrash() {
-        List<MediaFileMetadata> mediaFileMetadataList = fileSearch.getTrash();
+        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.getTrash();
         if (mediaFileMetadataList == null) return Collections.emptyList();
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
