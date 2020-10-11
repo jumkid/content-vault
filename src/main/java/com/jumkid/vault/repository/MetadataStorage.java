@@ -47,15 +47,15 @@ import static com.jumkid.vault.enums.MediaFileField.*;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Slf4j
-@Repository("esContentStorage")
-public class ESContentStorage implements FileSearch<MediaFileMetadata> {
+@Repository("metadataStorage")
+public class MetadataStorage implements FileSearch<MediaFileMetadata> {
 
     private final RestHighLevelClient esClient;
 
     private final MediaFileMapper mediaFileMapper;
 
     @Autowired
-    public ESContentStorage(RestHighLevelClient esClient, MediaFileMapper mediaFileMapper) {
+    public MetadataStorage(RestHighLevelClient esClient, MediaFileMapper mediaFileMapper) {
         this.esClient = esClient;
         this.mediaFileMapper = mediaFileMapper;
     }

@@ -1,7 +1,8 @@
 package com.jumkid.vault;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumkid.vault.model.MediaFileMetadata;
-import com.jumkid.vault.repository.ESContentStorage;
+import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +42,7 @@ public class WebAPITests {
     private MockMvc mockMvc;
 
     @MockBean
-    private ESContentStorage esContentStorage;
+    private MetadataStorage metadataStorage;
 
     @MockBean
     private LocalFileStorage localFileStorage;
@@ -55,7 +56,7 @@ public class WebAPITests {
         try {
             mediaFileMetadata = buildMetadata();
 
-            when(esContentStorage.getMetadata(DUMMY_ID)).thenReturn(mediaFileMetadata);
+            when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(mediaFileMetadata);
             when(localFileStorage.getFileBinary(mediaFileMetadata))
                     .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
         } catch (Exception e) {
@@ -117,9 +118,9 @@ public class WebAPITests {
 
     @Test
     public void whenGivenFile_shouldUploadFile() throws Exception {
-        when(esContentStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        when(esContentStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
 
@@ -130,7 +131,7 @@ public class WebAPITests {
 
     @Test
     public void shouldGetListOfMetadata() throws Exception {
-        when(esContentStorage.getAll()).thenReturn(buildListOfMetadata());
+        when(metadataStorage.getAll()).thenReturn(buildListOfMetadata());
 
         mockMvc.perform(get("/metadata"))
                 .andExpect(status().isOk())
@@ -148,8 +149,20 @@ public class WebAPITests {
                 .andExpect(jsonPath("$.title").value("test.title"));
     }
 
+    @Test
     public void whenGivenMetadata_shouldUpdateMetadata() throws Exception {
+        mockMvc.perform(put("/metadata/"+DUMMY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
+                .andExpect(jsonPath("$.title").value("test.title"));
+    }
 
+    @Test
+    public void whenGivenId_shouldDeleteMetadata() throws Exception {
+        mockMvc.perform(delete("/metadata/"+DUMMY_ID))
+                .andExpect(status().isNoContent());
     }
 
     private MediaFileMetadata buildMetadata() throws IOException {

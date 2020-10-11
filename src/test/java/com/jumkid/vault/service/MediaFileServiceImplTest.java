@@ -2,7 +2,7 @@ package com.jumkid.vault.service;
 
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.model.MediaFileMetadata;
-import com.jumkid.vault.repository.ESContentStorage;
+import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.HadoopFileStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class MediaFileServiceImplTest {
     private final int DEFAULT_SIZE = 100;
 
     @Mock
-    private ESContentStorage esContentStorage;
+    private MetadataStorage metadataStorage;
     @Mock
     private HadoopFileStorage hadoopFileStorage;
     @Mock
@@ -37,7 +37,7 @@ public class MediaFileServiceImplTest {
 
     @Before
     public void setup(){
-        mediaFileService = new MediaFileServiceImpl(esContentStorage, hadoopFileStorage, localFileStorage);
+        mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage);
         mediaFileService.setStorageMode("local");
         now = LocalDateTime.now();
     }
@@ -45,7 +45,7 @@ public class MediaFileServiceImplTest {
     @Test
     public void shouldAddMediaFileWithoutBytes() {
         final MediaFile mediaFile = generateMediaFile();
-        when(esContentStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(generateMediaFileMetadata());
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(generateMediaFileMetadata());
         MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, null);
 
         Assertions.assertThat(savedMediaFile).isEqualTo(generateMediaFile());
@@ -56,9 +56,9 @@ public class MediaFileServiceImplTest {
         final MediaFile mediaFile = generateMediaFile();
         final MediaFileMetadata mediaFileMetadata = generateMediaFileMetadata();
         byte[] bytes = new byte[DEFAULT_SIZE];
-        when(esContentStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(eq(bytes), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        when(esContentStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, bytes);
 
         Assertions.assertThat(savedMediaFile).isEqualTo(generateMediaFile());
