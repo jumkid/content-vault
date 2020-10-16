@@ -75,7 +75,7 @@ public class MediaFileServiceImpl implements MediaFileService {
             //finally update the logical path to metadata
             mediaFileMetadata = metadataStorage.updateMetadata(mediaFileMetadata);
         }
-        return mediaFileMapper.metadataToDTO(mediaFileMetadata);
+        return mediaFileMapper.metadataToDto(mediaFileMetadata);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                 mediaFileMetadata = metadataStorage.updateMetadata(mediaFileMetadata);
                 log.debug("save file metadata. {}", mediaFileMetadata);
             }
-            return mediaFileMapper.metadataToDTO(mediaFileMetadata);
+            return mediaFileMapper.metadataToDto(mediaFileMetadata);
         } else {
             throw new FileNotFoundException(uuid);
         }
@@ -109,7 +109,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     	log.debug("Retrieve media file by given id {}", id);
         MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
         if (mediaFileMetadata != null) {
-            return mediaFileMapper.metadataToDTO(mediaFileMetadata);
+            return mediaFileMapper.metadataToDto(mediaFileMetadata);
         } else {
             throw new FileNotFoundException(id);
         }

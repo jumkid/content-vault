@@ -13,10 +13,8 @@ info:
     url: 'http://license.jumkid.com'
 
 servers:
-  - description: SwaggerHub API Auto Mocking
-    url: 'https://virtserver.swaggerhub.com/jumkid/content-vault/v1'
-  - description: SwaggerHub API Auto Mocking
-    url: 'https://virtserver.swaggerhub.com/jumkid/Sample_3/0.0.1.SNAPSHORT'
+  - description: Testing
+    url: 'http://test.jumkid.com'
   - description: Live production
     url: 'http://api.jumkid.com'
 
@@ -45,7 +43,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
-  '/metadata/{id}':
+
+  /metadata/{id}:
     get:
       tags:
         - v1
@@ -105,7 +104,28 @@ paths:
       responses:
         '204':
           description: successfully delete the metadata by givn id
-  '/content/html/{id}':
+  
+  /content:
+    post:
+      tags:
+        - v1
+      operationId: addContent
+      description: save a new full content
+      requestBody:
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+      summary: Add full content  
+
+  /content/html/{id}:
     get:
       tags:
         - v1
@@ -125,7 +145,8 @@ paths:
             text/html:
               schema:
                 type: string
-  '/content/plain/{id}':
+
+  /content/plain/{id}:
     get:
       tags:
         - v1
@@ -151,6 +172,7 @@ paths:
             test/plain:
               schema:
                 type: string
+
   /content/plain:
     post:
       tags:
@@ -160,6 +182,7 @@ paths:
       parameters:
         - name: title
           in: query
+          required: true
           schema:
             type: string
         - name: content
@@ -174,7 +197,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
       summary: Add plain content
-  '/content/stream/{id}':
+
+  /content/stream/{id}:
     get:
       tags:
         - v1
@@ -190,6 +214,7 @@ paths:
       responses:
         '200':
           description: binary stream as response
+
   /file/upload:
     post:
       tags:
@@ -212,7 +237,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-  '/file/download/{id}':
+
+  /file/download/{id}:
     get:
       tags:
         - v1
@@ -228,6 +254,7 @@ paths:
       responses:
         '200':
           description: binary file as response
+
   /trash:
     get:
       tags:
@@ -243,6 +270,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
+                  
 components:
   schemas:
     MediaFile:
@@ -266,6 +294,26 @@ components:
           type: string
         activated:
           type: boolean
+        props:
+          type: array
+          items:
+            description: list of additional properties
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+              dataType:
+                $ref: '#/components/schemas/MediaFilePropType'
+        tags:
+          type: array
+          items:
+            description: list of tags
+            type: string        
+
+    MediaFilePropType:
+      type: string
+      enum: ["integer", "string", "boolean", "float", "datetime"]               
 
   securitySchemes:
     bearerAuth:

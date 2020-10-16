@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.nio.channels.FileChannel;
 import java.util.Optional;
 
@@ -40,6 +41,12 @@ public class MediaContentController {
     public MediaContentController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter) {
         this.fileService = fileService;
         this.responseMFileWriter = responseMFileWriter;
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public MediaFile addContent(@NotNull @RequestBody MediaFile mediaFile){
+        return fileService.addMediaFile(mediaFile, null);
     }
 
     @GetMapping("/plain/{id}")

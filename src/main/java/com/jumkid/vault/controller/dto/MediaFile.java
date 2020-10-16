@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @Data
@@ -27,12 +28,17 @@ public class MediaFile extends GenericDTO {
 
     private Boolean activated;
 
+    private List<Prop> props;
+
+    private List<String> tags;
+
     /**
      * This constructor is for lombok builder only since it is subclass of generic DTO
      *
      */
     @Builder
-    public MediaFile(String uuid, String filename, String mimeType, Integer size, String title, String content, Boolean activated,
+    public MediaFile(String uuid, String filename, String mimeType, Integer size, String title, String content,
+                     Boolean activated, List<Prop> props, List<String> tags,
                      String createdBy, LocalDateTime creationDate, String modifiedBy, LocalDateTime modificationDate) {
         super(createdBy, creationDate, modifiedBy, modificationDate);
         this.uuid = uuid;
@@ -42,5 +48,7 @@ public class MediaFile extends GenericDTO {
         this.size = size;
         this.content = content;
         this.activated = activated;
+        this.props = props;
+        this.tags = tags;
     }
 }

@@ -14,7 +14,9 @@ public enum MediaFileField {
     CONTENT("content"),
     ACTIVATED("activated"),
     BLOB("blob"),
-    LOGICALPATH("logicalPath");
+    LOGICALPATH("logicalPath"),
+    PROPS("props"),
+    TAGS("tags");
 
     private final String value;
 

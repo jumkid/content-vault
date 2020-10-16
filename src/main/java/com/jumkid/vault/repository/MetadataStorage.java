@@ -12,10 +12,13 @@ package com.jumkid.vault.repository;
  *
  */
 
+import com.jumkid.vault.enums.MediaFilePropField;
+import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import static com.jumkid.vault.util.Constants.*;
 
+import com.jumkid.vault.model.MediaFileProp;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
 import com.jumkid.vault.util.DateTimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -122,7 +125,7 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
     }
 
     private MediaFileMetadata sourceToMetadata(Map<String, Object> sourceMap) {
-        return MediaFileMetadata.builder()
+        MediaFileMetadata mediaFileMetadata =  MediaFileMetadata.builder()
                 .title(sourceMap.get(TITLE.value()) !=null ? sourceMap.get(TITLE.value()).toString() : null)
                 .filename(sourceMap.get(FILENAME.value()) !=null ? sourceMap.get(FILENAME.value()).toString() : null)
                 .mimeType(sourceMap.get(MIMETYPE.value()) !=null ? sourceMap.get(MIMETYPE.value()).toString() : null)
@@ -130,12 +133,27 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                 .content(sourceMap.get(CONTENT.value()) !=null ? sourceMap.get(CONTENT.value()).toString() : null)
                 .logicalPath((String)sourceMap.get(LOGICALPATH.value()))
                 .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
+                .tags((List<String>) sourceMap.get(TAGS.value()))
                 .module((String)sourceMap.get(MODULE.value()))
                 .creationDate(sourceMap.get(CREATION_DATE.value()) != null ? DateTimeUtils.stringToLocalDatetime(sourceMap.get(CREATION_DATE.value()).toString()) : null)
                 .createdBy(sourceMap.get(CREATED_BY.value()) != null ? sourceMap.get(CREATED_BY.value()).toString() : null)
                 .modifiedBy((String)sourceMap.get(MODIFIED_BY.value()))
                 .modificationDate(DateTimeUtils.stringToLocalDatetime((String)sourceMap.get(CREATION_DATE.value())))
                 .build();
+
+        if (sourceMap.get(PROPS.value()) != null) {
+            List<HashMap> propsLst = (List<HashMap>)sourceMap.get(PROPS.value());
+            List<MediaFileProp> props = new ArrayList<>();
+            for (HashMap propsMap : propsLst) {
+                props.add(MediaFileProp.builder()
+                        .name((String)propsMap.get(MediaFilePropField.NAME.value()))
+                        .value((String)propsMap.get(MediaFilePropField.VALUE.value()))
+                        .dataType(MediaFilePropType.fromValue(((String)propsMap.get(MediaFilePropField.DATATYPE.value()))))
+                        .build());
+            }
+            mediaFileMetadata.setProps(props);
+        }
+        return mediaFileMetadata;
     }
 
     @Override
@@ -156,6 +174,16 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                     .field(CONTENT.value(), mediaFileMetadata.getContent())
                     .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
                     .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
+                    .array(TAGS.value(), mediaFileMetadata.getTags().toArray())
+                    .startArray(PROPS.value());
+                        for (MediaFileProp prop : mediaFileMetadata.getProps()) {
+                            builder.startObject()
+                                    .field(MediaFilePropField.NAME.value(), prop.getName())
+                                    .field(MediaFilePropField.VALUE.value(), prop.getValue())
+                                    .field(MediaFilePropField.DATATYPE.value(), prop.getDataType().getValue())
+                                    .endObject();
+                        }
+                    builder.endArray()
                     .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
                     .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
                     .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
@@ -164,8 +192,8 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                     .endObject();
             IndexRequest request = new IndexRequest(MODULE_MFILE).source(builder);
             request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-//            request.opType(DocWriteRequest.OpType.CREATE);
-//            request.setPipeline("pipeline");
+            //request.opType(DocWriteRequest.OpType.CREATE);
+            //request.setPipeline("pipeline");
 
             //Synchronous execution
             IndexResponse response = esClient.index(request, RequestOptions.DEFAULT);
@@ -174,7 +202,7 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
             return mediaFileMetadata;
         } catch (IOException ioe) {
             log.error("failed to create index {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", mediaFileMapper.metadataToDTO(mediaFileMetadata));
+            throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", mediaFileMapper.metadataToDto(mediaFileMetadata));
         }
     }
 
@@ -223,6 +251,7 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                     .field(CONTENT.value(), mediaFileMetadata.getContent())
                     .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
                     .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
+                    .array(TAGS.value(), mediaFileMetadata.getTags())
                     .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
                     .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
                     .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())

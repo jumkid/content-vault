@@ -15,6 +15,7 @@ import com.jumkid.vault.util.Constants;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -48,5 +49,9 @@ public class MediaFileMetadata {
 	private LocalDateTime modificationDate;
 
 	private String modifiedBy;
+
+	private List<MediaFileProp> props;
+
+	private List<String> tags;
 
 }

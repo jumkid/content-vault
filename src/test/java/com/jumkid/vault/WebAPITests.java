@@ -1,7 +1,9 @@
 package com.jumkid.vault;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.model.MediaFileMetadata;
+import com.jumkid.vault.model.MediaFileProp;
 import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
 import org.junit.Assert;
@@ -63,6 +65,31 @@ public class WebAPITests {
             Assert.fail();
         }
 
+    }
+
+    @Test
+    public void whenGivenMetadata_shouldSaveContentWithPros() throws Exception {
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+
+        mockMvc.perform(post("/content")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(mediaFileMetadata.getTitle()))
+                .andExpect(jsonPath("$.props[0].name").value(mediaFileMetadata.getProps().get(0).name));
+    }
+
+    @Test
+    public void whenGivenTitleAndContent_shouldSaveSimpleContent() throws Exception{
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+
+        mockMvc.perform(post("/content/plain")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .param("title", mediaFileMetadata.getTitle())
+                    .param("content", mediaFileMetadata.getContent()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(mediaFileMetadata.getTitle()))
+                .andExpect(jsonPath("$.content").value(mediaFileMetadata.getContent()));
     }
 
     @Test
@@ -168,7 +195,11 @@ public class WebAPITests {
     private MediaFileMetadata buildMetadata() throws IOException {
         return MediaFileMetadata.builder()
                 .id(DUMMY_ID).title("test.title").filename("upload-test.html")
-                .content("<p>test.content</p>").size(Long.valueOf(resource.getFile().length()).intValue())
+                .content("<p>test.content</p>")
+                .size(Long.valueOf(resource.getFile().length()).intValue())
+                .props(List.of(MediaFileProp.builder()
+                        .name("author").value("mr. nobody").dataType(MediaFilePropType.STRING)
+                        .build()))
                 .build();
     }
 
@@ -178,6 +209,9 @@ public class WebAPITests {
         MediaFileMetadata mediaFileMetadata2 = MediaFileMetadata.builder()
                 .id("dummy-id-1").title("test.title.1")
                 .content("<p>test.content.1</p>")
+                .props(List.of(MediaFileProp.builder()
+                        .name("comment").value("I like this").dataType(MediaFilePropType.STRING)
+                        .build()))
                 .build();
 
         metadataLst.add(mediaFileMetadata1);

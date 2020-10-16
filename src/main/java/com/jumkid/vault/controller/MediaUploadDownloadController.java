@@ -69,7 +69,7 @@ public class MediaUploadDownloadController {
                 responseMFileWriter.writeForDownload(mediaFileMetadata, bytes, response);
             }
         } catch (IOException ioe) {
-            throw new FileStoreServiceException("Failed to download file", mediaFileMapper.metadataToDTO(mediaFileMetadata));
+            throw new FileStoreServiceException("Failed to download file", mediaFileMapper.metadataToDto(mediaFileMetadata));
         }
     }
 

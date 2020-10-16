@@ -3,6 +3,7 @@ package com.jumkid.vault.controller;
 import com.jumkid.share.controller.response.CustomErrorResponse;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
+import com.jumkid.vault.exception.InvalidFieldException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -28,6 +29,13 @@ public class AdviceController {
     public CustomErrorResponse handle(FileStoreServiceException ex) {
         log.info("File storage service encounter something wrong {}.", ex.getMessage());
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidFieldException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public CustomErrorResponse handle(InvalidFieldException ife) {
+        log.info("Invalid field value {}", ife.getMessage());
+        return new CustomErrorResponse(Calendar.getInstance().getTime(), ife.getMessage());
     }
 
 }
