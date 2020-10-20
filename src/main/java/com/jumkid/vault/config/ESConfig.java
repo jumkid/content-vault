@@ -11,6 +11,10 @@ package com.jumkid.vault.config;
  */
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,11 +36,14 @@ public class ESConfig {
     @Value("${elasticsearch.host}")
     private String esHost;
 
-    @Value("${elasticsearch.port1}")
-    private int esPort1;
+    @Value("${elasticsearch.port}")
+    private int esPort;
 
-    @Value("${elasticsearch.port2}")
-    private int esPort2;
+    @Value("${elasticsearch.user.name}")
+    private String esUserName;
+
+    @Value("${elasticsearch.user.password}")
+    private String esUserPassword;
 
     @Value("${elasticsearch.cluster.name}")
     private String esClusterName;
@@ -44,15 +51,16 @@ public class ESConfig {
     @Bean
     public RestHighLevelClient esClient(){
 
-//        Settings esSettings = Settings.builder()
-//                .put("cluster.name", esClusterName)
-//                .build();
+        final CredentialsProvider credentialsProvider =
+                new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials(esUserName, esUserPassword));
 
         try {
             return new RestHighLevelClient(RestClient.builder(
-                    new HttpHost(InetAddress.getByName(esHost), esPort1, "http"),
-                    new HttpHost(InetAddress.getByName(esHost), esPort2, "http")
-                    ));
+                    new HttpHost(InetAddress.getByName(esHost), esPort, "http")
+                    ).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
+                            .setDefaultCredentialsProvider(credentialsProvider)));
         } catch (UnknownHostException uhe) {
             log.error("Failed to connect elasticsearch host {} ", esHost);
             return null;
