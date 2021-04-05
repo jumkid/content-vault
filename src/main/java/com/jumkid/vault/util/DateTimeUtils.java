@@ -1,5 +1,7 @@
 package com.jumkid.vault.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,9 +18,10 @@ import java.util.concurrent.TimeUnit;
  *
  * @author chooliyip
  **/
+@Slf4j
 public class DateTimeUtils {
 
-    public static final CopyOnWriteArrayList<DateTimeFormatter> DATE_FORMATTERS = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<DateTimeFormatter> DATE_FORMATTERS = new CopyOnWriteArrayList<>();
 
     static {
         DATE_FORMATTERS.add(DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC));
@@ -27,7 +30,7 @@ public class DateTimeUtils {
     }
 
     // ISO_8601
-    public static String toISOString(LocalDateTime dateTime) {
+    private static String toISOString(LocalDateTime dateTime) {
         Objects.requireNonNull(dateTime, "dateTime");
 
         return DateTimeFormatter.ISO_INSTANT.format(ZonedDateTime.of(dateTime, ZoneOffset.UTC));
@@ -51,7 +54,7 @@ public class DateTimeUtils {
         return toISOString(toLocalDateTime(date));
     }
 
-    public static LocalDateTime toLocalDateTime(Date date) {
+    private static LocalDateTime toLocalDateTime(Date date) {
         Objects.requireNonNull(date, "date");
 
         return date.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime();
@@ -63,13 +66,13 @@ public class DateTimeUtils {
         return toDate(date.atStartOfDay());
     }
 
-    public static Date toDate(LocalDateTime dateTime) {
+    private static Date toDate(LocalDateTime dateTime) {
         Objects.requireNonNull(dateTime, "dateTime");
 
         return Date.from(dateTime.atZone(ZoneOffset.UTC).toInstant());
     }
 
-    public static LocalDateTime parseDate(String date) {
+    private static LocalDateTime parseDate(String date) {
         Objects.requireNonNull(date, "date");
 
         for (DateTimeFormatter formatter : DATE_FORMATTERS) {
@@ -82,7 +85,8 @@ public class DateTimeUtils {
                 } else {
                     return LocalDateTime.parse(date, formatter);
                 }
-            } catch (java.time.format.DateTimeParseException ignored) {
+            } catch (java.time.format.DateTimeParseException dpe) {
+                log.error(dpe.getMessage());
             }
         }
 
@@ -106,7 +110,7 @@ public class DateTimeUtils {
         return createDate(year, month, day, hours, min, sec, 0);
     }
 
-    public static Date createDate(int year, int month, int day, int hours, int min, int sec, int millis) {
+    private static Date createDate(int year, int month, int day, int hours, int min, int sec, int millis) {
         long nanos = TimeUnit.MILLISECONDS.toNanos(millis);
         LocalDateTime localDateTime = LocalDateTime.of(year, month, day, hours, min, sec, (int) nanos);
         return DateTimeUtils.toDate(localDateTime);

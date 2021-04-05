@@ -9,6 +9,9 @@ import com.jumkid.vault.util.ResponseMediaFileWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,11 +52,23 @@ public class MediaUploadDownloadController {
                     .mimeType(file.getContentType())
                     .build();
 
+            setUserInfo(mediaFile);
+
             mediaFile = fileService.addMediaFile(mediaFile, file.getBytes());
             log.info("media file {} uploaded", mediaFile.getFilename());
             return mediaFile;
         } catch (IOException ioe) {
             throw new FileStoreServiceException("Failed to update file", mediaFile);
+        }
+    }
+
+    private void setUserInfo(MediaFile mediaFile) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+            mediaFile.setCreatedBy(userDetails.getUsername());
+        } else {
+            mediaFile.setCreatedBy(auth.getPrincipal().toString());
         }
     }
 

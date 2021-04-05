@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -57,7 +58,7 @@ public class MediaFileServiceImplTest {
         final MediaFileMetadata mediaFileMetadata = generateMediaFileMetadata();
         byte[] bytes = new byte[DEFAULT_SIZE];
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        when(localFileStorage.saveFile(eq(bytes), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(localFileStorage.saveFile(eq(bytes), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
         when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, bytes);
 

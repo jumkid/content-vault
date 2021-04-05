@@ -12,6 +12,7 @@ package com.jumkid.vault.repository;
 import java.nio.channels.FileChannel;
 import java.util.Optional;
 
+import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 
@@ -24,7 +25,7 @@ public interface FileStorage<T> {
 	 * @param bytes
 	 * @param t
 	 */
-	T saveFile(byte[] bytes, T t);
+	Optional<T> saveFile(byte[] bytes, T t);
 
 	/**
 	 * Get file from repository
@@ -55,8 +56,8 @@ public interface FileStorage<T> {
 	 * Get file thumbnail from repository
 	 *
 	 * @param t metadata
-	 * @param large
+	 * @param thumbnailNamespace thumbnail size option
 	 * @throws FileStoreServiceException exception of media storage service
 	 */
-	Optional<byte[]> getThumbnail(T t, boolean large);
+	Optional<byte[]> getThumbnail(T t, ThumbnailNamespace thumbnailNamespace);
 }

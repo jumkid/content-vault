@@ -12,6 +12,7 @@ package com.jumkid.vault.repository;
  *
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumkid.vault.enums.MediaFilePropField;
 import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.exception.FileStoreServiceException;
@@ -36,8 +37,8 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Slf4j
 @Repository("metadataStorage")
-public class MetadataStorage implements FileSearch<MediaFileMetadata> {
+public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     private final RestHighLevelClient esClient;
 
@@ -134,6 +135,7 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                 .logicalPath((String)sourceMap.get(LOGICALPATH.value()))
                 .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
                 .tags((List<String>) sourceMap.get(TAGS.value()))
+                .children(linkToReferencedMetadata((List<MediaFileMetadata>) sourceMap.get(CHILDREN.value())))
                 .module((String)sourceMap.get(MODULE.value()))
                 .creationDate(sourceMap.get(CREATION_DATE.value()) != null ? DateTimeUtils.stringToLocalDatetime(sourceMap.get(CREATION_DATE.value()).toString()) : null)
                 .createdBy(sourceMap.get(CREATED_BY.value()) != null ? sourceMap.get(CREATED_BY.value()).toString() : null)
@@ -142,18 +144,29 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                 .build();
 
         if (sourceMap.get(PROPS.value()) != null) {
-            List<HashMap> propsLst = (List<HashMap>)sourceMap.get(PROPS.value());
+            List<HashMap<String, String>> propsLst = (List<HashMap<String, String>>)sourceMap.get(PROPS.value());
             List<MediaFileProp> props = new ArrayList<>();
-            for (HashMap propsMap : propsLst) {
+            for (HashMap<String, String> propsMap : propsLst) {
                 props.add(MediaFileProp.builder()
-                        .name((String)propsMap.get(MediaFilePropField.NAME.value()))
-                        .value((String)propsMap.get(MediaFilePropField.VALUE.value()))
-                        .dataType(MediaFilePropType.fromValue(((String)propsMap.get(MediaFilePropField.DATATYPE.value()))))
+                        .name(propsMap.get(MediaFilePropField.NAME.value()))
+                        .value(propsMap.get(MediaFilePropField.VALUE.value()))
+                        .dataType(MediaFilePropType.fromValue((propsMap.get(MediaFilePropField.DATATYPE.value()))))
                         .build());
             }
             mediaFileMetadata.setProps(props);
         }
         return mediaFileMetadata;
+    }
+
+    private List<MediaFileMetadata> linkToReferencedMetadata(List<MediaFileMetadata> mediaFileMetadataList) {
+        if (mediaFileMetadataList == null) return Collections.emptyList();
+        List<MediaFileMetadata>  newMetadataList = new ArrayList<>();
+        for (MediaFileMetadata mediaFileMetadata : mediaFileMetadataList) {
+            String childId = mediaFileMetadata.getId();
+            MediaFileMetadata metadata = this.getMetadata(childId);
+            newMetadataList.add(Objects.requireNonNullElse(metadata, mediaFileMetadata));
+        }
+        return newMetadataList;
     }
 
     @Override
@@ -174,16 +187,13 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                     .field(CONTENT.value(), mediaFileMetadata.getContent())
                     .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
                     .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
-                    .array(TAGS.value(), mediaFileMetadata.getTags().toArray())
+                    .array(TAGS.value(), mediaFileMetadata.getTags() != null ? mediaFileMetadata.getTags().toArray() : null)
                     .startArray(PROPS.value());
-                        for (MediaFileProp prop : mediaFileMetadata.getProps()) {
-                            builder.startObject()
-                                    .field(MediaFilePropField.NAME.value(), prop.getName())
-                                    .field(MediaFilePropField.VALUE.value(), prop.getValue())
-                                    .field(MediaFilePropField.DATATYPE.value(), prop.getDataType().getValue())
-                                    .endObject();
-                        }
-                    builder.endArray()
+            buildProps(builder, mediaFileMetadata.getProps());
+            builder.endArray()
+                    .startArray(CHILDREN.value());
+            buildChildren(builder, mediaFileMetadata.getChildren());
+            builder.endArray()
                     .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
                     .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
                     .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
@@ -192,8 +202,6 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
                     .endObject();
             IndexRequest request = new IndexRequest(MODULE_MFILE).source(builder);
             request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-            //request.opType(DocWriteRequest.OpType.CREATE);
-            //request.setPipeline("pipeline");
 
             //Synchronous execution
             IndexResponse response = esClient.index(request, RequestOptions.DEFAULT);
@@ -203,6 +211,72 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
         } catch (IOException ioe) {
             log.error("failed to create index {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", mediaFileMapper.metadataToDto(mediaFileMetadata));
+        }
+    }
+
+    @Override
+    public MediaFileMetadata updateMetadata(MediaFileMetadata mediaFileMetadata) {
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.index(MODULE_MFILE);
+        updateRequest.id(mediaFileMetadata.getId());
+
+        try {
+            XContentBuilder builder = jsonBuilder();
+            builder
+                    .startObject()
+                    .field(TITLE.value(), mediaFileMetadata.getTitle())
+                    .field(FILENAME.value(), mediaFileMetadata.getFilename())
+                    .field(SIZE.value(), mediaFileMetadata.getSize())
+                    .field(MODULE.value(), mediaFileMetadata.getModule())
+                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
+                    .field(CONTENT.value(), mediaFileMetadata.getContent())
+                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
+                    .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
+                    .array(TAGS.value(), mediaFileMetadata.getTags())
+                    .startArray(PROPS.value());
+            buildProps(builder, mediaFileMetadata.getProps());
+            builder.endArray()
+                    .startArray(CHILDREN.value());
+            buildChildren(builder, mediaFileMetadata.getChildren());
+            builder.endArray()
+                    .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
+                    .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
+                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
+                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
+                    .endObject();
+
+            updateRequest.doc(builder);
+
+            esClient.update(updateRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            log.error("failed to update metadata {}", e.getMessage());
+        }
+
+        return mediaFileMetadata;
+    }
+
+    private void buildProps(XContentBuilder builder, List<MediaFileProp> props) throws IOException{
+        if (props != null) {
+            for (MediaFileProp prop : props) {
+                builder.startObject()
+                        .field(MediaFilePropField.NAME.value(), prop.getName())
+                        .field(MediaFilePropField.VALUE.value(), prop.getValue())
+                        .field(MediaFilePropField.DATATYPE.value(), prop.getDataType() != null ?
+                                prop.getDataType().getValue() : MediaFilePropType.STRING.getValue())
+                        .endObject();
+            }
+        }
+    }
+
+    private void buildChildren(XContentBuilder builder, List<MediaFileMetadata> children) throws IOException{
+        if (children != null) {
+            XContentParser parser;
+            for (MediaFileMetadata metadata : children) {
+                parser = JsonXContent.jsonXContent
+                        .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE,
+                                new ObjectMapper().writeValueAsString(metadata));
+                builder.copyCurrentStructure(parser);
+            }
         }
     }
 
@@ -232,38 +306,6 @@ public class MetadataStorage implements FileSearch<MediaFileMetadata> {
             log.error("failed to delete media file {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to delete media file id[" + id + "] from Elasticsearch, please contact system administrator.");
         }
-    }
-
-    @Override
-    public MediaFileMetadata updateMetadata(MediaFileMetadata mediaFileMetadata) {
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.index(MODULE_MFILE);
-        updateRequest.id(mediaFileMetadata.getId());
-
-        try {
-            updateRequest.doc(jsonBuilder()
-                    .startObject()
-                    .field(TITLE.value(), mediaFileMetadata.getTitle())
-                    .field(FILENAME.value(), mediaFileMetadata.getFilename())
-                    .field(SIZE.value(), mediaFileMetadata.getSize())
-                    .field(MODULE.value(), mediaFileMetadata.getModule())
-                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
-                    .field(CONTENT.value(), mediaFileMetadata.getContent())
-                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
-                    .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
-                    .array(TAGS.value(), mediaFileMetadata.getTags())
-                    .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
-                    .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
-                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
-                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
-                    .endObject());
-
-            esClient.update(updateRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            log.error("failed to update metadata {}", e.getMessage());
-        }
-
-        return mediaFileMetadata;
     }
 
 }

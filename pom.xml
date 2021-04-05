@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.2.5.RELEASE</version>
+        <version>2.4.0</version>
         <relativePath/>
     </parent>
     <groupId>com.jumkid.vault</groupId>
@@ -20,13 +20,16 @@
         <spring-cloud.version>Hoxton.SR3</spring-cloud.version>
         <org.mapstruct.version>1.4.1.Final</org.mapstruct.version>
         <org.projectlombok.version>1.18.12</org.projectlombok.version>
+        <junit.version>4.13.1</junit.version>
         <jaxb.version>2.3.0</jaxb.version>
         <elasticsearch.version>7.9.2</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.11</thumbnailator.version>
+        <tika.version>1.24.1</tika.version>
+        <grabzit.version>3.4.5.1</grabzit.version>
 
         <!-- jumkid modules -->
-        <sharejar.version>1.0</sharejar.version>
+        <sharejar.version>1.0.1</sharejar.version>
     </properties>
 
     <dependencies>
@@ -42,15 +45,19 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
         <dependency>
@@ -83,20 +90,31 @@
             <version>${jaxb.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.sun.xml.bind</groupId>
+            <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-core</artifactId>
             <version>${jaxb.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
             <version>${jaxb.version}</version>
         </dependency>
 
         <!-- TEST -->
         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -112,10 +130,28 @@
             <version>${hadoop.client.version}</version>
         </dependency>
 
+        <!-- file libs -->
         <dependency>
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>${thumbnailator.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parsers</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>it.grabz.grabzit</groupId>
+            <artifactId>grabzit</artifactId>
+            <version>${grabzit.version}</version>
         </dependency>
 
     </dependencies>
@@ -138,7 +174,8 @@
                 <filtering>true</filtering>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>application.properties</include>
+                    <include>*.txt</include>
+                    <include>*.properties</include>
                     <include>/static</include>
                 </includes>
             </resource>

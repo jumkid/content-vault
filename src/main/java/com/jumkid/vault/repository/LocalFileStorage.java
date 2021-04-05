@@ -26,7 +26,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.jumkid.vault.enums.ThumbnailInfo;
+import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
@@ -47,6 +47,8 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
     @Value("${vault.thumbnail.large}")
 	private int thumbnailLarge;
+
+    private static String thumbnailFileFormat = "PNG";
 
 	private final FilePathManager filePathManager;
 
@@ -70,19 +72,19 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public MediaFileMetadata saveFile(byte[] bytes, MediaFileMetadata mediaFile) {
+	public Optional<MediaFileMetadata> saveFile(byte[] bytes, MediaFileMetadata mediaFile) {
 		
-		if(bytes==null) return null;
+		if(bytes == null) return Optional.empty();
 
 		String logicalPath = filePathManager.getFullPath(mediaFile);
 
+		SeekableByteChannel sbc = null;
 		try{
 			mediaFile.setLogicalPath(logicalPath);
 
 			Path dirPath = Paths.get(filePathManager.getDataHomePath(), logicalPath);
 			Path path = Paths.get(filePathManager.getDataHomePath(), logicalPath, getFileUuid(bytes, mediaFile));
 
-			SeekableByteChannel sbc = null;
 			if(Files.exists(path)){   //replace the existing file if it exists
 				sbc = Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 			}else{
@@ -90,28 +92,30 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 				sbc = Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
 			}
 
-			try {
-				sbc.write(ByteBuffer.wrap(bytes));
-			} catch (IOException ioe) {
-				log.error("failed to write file bytes: {}", ioe.getMessage());
-			} finally{
-				sbc.close();
-			}
+			sbc.write(ByteBuffer.wrap(bytes));
 
 			//generate thumbnail for image
 			if(mediaFile.getMimeType().startsWith("image/")){
 				generateThumbnail(path);
 			}
 
-			return mediaFile;
-
+			return Optional.of(mediaFile);
 		} catch (FileAlreadyExistsException fae) {
 			log.error("file is already exists. {} ", fae.getMessage());
+		} catch (IOException ioe) {
+			log.error("failed to write file bytes: {}", ioe.getMessage());
 		} catch(Exception e){
 			throw new FileStoreServiceException(e.getMessage());
+		} finally {
+			try {
+				assert sbc != null;
+				sbc.close();
+			} catch (IOException ioe) {
+				log.error(ioe.getMessage());
+			}
 		}
 		
-		return null;
+		return Optional.empty();
 		
 	}
 
@@ -133,13 +137,12 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		}
 		
 	}
-	
+
 	/**
 	 * Get file from repository with random accessing
-	 * 
+	 *
 	 * @param mediaFile
 	 * @return
-	 * @throws FileStoreServiceException
 	 */
 	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) {
 
@@ -179,12 +182,13 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, boolean large) {
+	public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
 		String dataHomePath = filePathManager.getDataHomePath();
 		String logicalPath = mediaFileMetadata.getLogicalPath();
 		String filePath = null;
 		if(mediaFileMetadata.getMimeType().startsWith("image")) {
-			filePath = String.format("%s%s/%s%s%s", dataHomePath, logicalPath, mediaFileMetadata.getId(), large ? ThumbnailInfo.LARGE_SUFFIX : ThumbnailInfo.SMALL_SUFFIX, ThumbnailInfo.EXTENSION);
+			filePath = String.format("%s%s/%s%s.%s", dataHomePath, logicalPath, mediaFileMetadata.getId(),
+					thumbnailNamespace.equals(ThumbnailNamespace.LARGE) ? ThumbnailNamespace.LARGE_SUFFIX : ThumbnailNamespace.SMALL_SUFFIX, thumbnailFileFormat);
 		} else if(mediaFileMetadata.getMimeType().startsWith("video")) {
 			filePath = dataHomePath + "/misc/icon_video.png";
 		} else if(mediaFileMetadata.getMimeType().startsWith("audio")) {
@@ -222,25 +226,25 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		
 		Thumbnails.of(new File(path))
 				.size(thumbnailSmall, thumbnailSmall)
-				.outputFormat("PNG")
-				.toFile(new File(path + ThumbnailInfo.SMALL_SUFFIX));
+				.outputFormat(thumbnailFileFormat)
+				.toFile(new File(path + ThumbnailNamespace.SMALL_SUFFIX));
 		
 		Thumbnails.of(new File(path))
 				.size(thumbnailLarge, thumbnailLarge)
-				.outputFormat("PNG")
-				.toFile(new File(path + ThumbnailInfo.LARGE_SUFFIX));
+				.outputFormat(thumbnailFileFormat)
+				.toFile(new File(path + ThumbnailNamespace.LARGE_SUFFIX));
 		
 	}
 	
 	private void deleteThumbnail(MediaFileMetadata mediaFile) {
 		
 		if(mediaFile.getMimeType().startsWith("image")){
-			Path path_s = getThumbnailPath(mediaFile, ThumbnailInfo.SMALL_SUFFIX.value() + ThumbnailInfo.EXTENSION.value());
-			Path path_l = getThumbnailPath(mediaFile, ThumbnailInfo.LARGE_SUFFIX.value() + ThumbnailInfo.EXTENSION.value());
+			Path pathS = getThumbnailPath(mediaFile, ThumbnailNamespace.SMALL_SUFFIX.value() + "." + thumbnailFileFormat);
+			Path pathL = getThumbnailPath(mediaFile, ThumbnailNamespace.LARGE_SUFFIX.value() + "." + thumbnailFileFormat);
 			
 			try {
-				Files.deleteIfExists(path_s);
-				Files.deleteIfExists(path_l);
+				Files.deleteIfExists(pathS);
+				Files.deleteIfExists(pathL);
 			} catch (IOException e) {
 				log.warn("Failed to remove thumbnail. {}", e.getMessage());
 			}

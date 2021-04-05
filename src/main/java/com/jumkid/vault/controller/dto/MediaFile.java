@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class MediaFile extends GenericDTO {
 
     private Integer size;
 
+    @NotBlank
     private String title;
 
     private String content;
@@ -31,6 +33,8 @@ public class MediaFile extends GenericDTO {
     private List<Prop> props;
 
     private List<String> tags;
+
+    private List<MediaFile> children;
 
     /**
      * This constructor is for lombok builder only since it is subclass of generic DTO

@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  version: v1
+  title: activity-service API
+  description: activity-service RESTFul api for openapi 3.0 in
+  termsOfService: 'https://jumkid.com/terms-of-use'
+  contact:
+    name: Chooli Yip
+    url: jumkid.com
+    email: chooli.yip@gmail.com
+  license:
+    name: Jumkid Public License
+    url: 'http://license.jumkid.com'
+
+servers:
+  - description: Testing
+    url: 'http://test.jumkid.com'
+  - description: Live production
+    url: 'http://api.jumkid.com'
+
+tags:
+  - name: v1
+    description: API for version 1.0.0
+  - name: test
+    description: API for test
+
+components:
+  schemas:
+    LocalDateTime:
+      description: local datetime object
+      properties:
+        year:
+          type: integer
+          format: int32
+          nullable: false
+        monthValue:
+          type: integer
+          format: int32
+          nullable: false
+        month:
+          $ref: '#/components/schemas/Month'
+        dayOfMonth:
+          type: integer
+          format: int32
+          nullable: false
+        dayOfYear:
+          type: integer
+          format: int32
+          nullable: false
+        dayOfWeek:
+          $ref: '#/components/schemas/DayOfWeek'
+        hour:
+          type: integer
+          format: int32
+          nullable: false
+        minute:
+          type: integer
+          format: int32
+          nullable: false
+        second:
+          type: integer
+          format: int32
+          nullable: false
+        nano:
+          type: integer
+          format: int32
+          nullable: false
+    Month:
+      type: string
+      enum:
+        - JANUARY
+        - FEBRUARY
+        - MARCH
+        - APRIL
+        - MAY
+        - JUNE
+        - JULY
+        - AUGUST
+        - SEPTEMBER
+        - OCTOBER
+        - NOVEMBER
+        - DECEMBER
+    DayOfWeek:
+      type: string
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY

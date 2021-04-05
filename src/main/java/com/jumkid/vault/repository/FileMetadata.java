@@ -10,8 +10,6 @@ package com.jumkid.vault.repository;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
-import com.jumkid.vault.model.MediaFileMetadata;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -20,7 +18,7 @@ import java.util.Optional;
  *
  * @author chooliyip
  **/
-public interface FileSearch<T> {
+public interface FileMetadata<T> {
 
     /**
      * Persist file metadata in search repository
@@ -28,7 +26,6 @@ public interface FileSearch<T> {
      * @param t generic type of file
      */
     T saveMetadata(T t);
-
     /**
      * Persist file metadata and binary in repository
      *

@@ -12,6 +12,7 @@ package com.jumkid.vault.controller;
  */
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.service.MediaFileService;
 import com.jumkid.vault.util.ResponseMediaFileWriter;
@@ -19,10 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.nio.channels.FileChannel;
@@ -45,7 +50,8 @@ public class MediaContentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public MediaFile addContent(@NotNull @RequestBody MediaFile mediaFile){
+    public MediaFile addContent(@NotNull @Valid @RequestBody MediaFile mediaFile){
+        setCreationInfo(mediaFile);
         return fileService.addMediaFile(mediaFile, null);
     }
 
@@ -76,6 +82,7 @@ public class MediaContentController {
                 .size(title.length() + (content == null ? 0 : content.length()))
                 .mimeType(MediaType.TEXT_PLAIN_VALUE)
                 .build();
+        setCreationInfo(mediaFile);
         return fileService.addMediaFile(mediaFile, null);
     }
 
@@ -125,6 +132,34 @@ public class MediaContentController {
             }
         }
 
+    }
+
+    @GetMapping(value="/thumbnail/{id}")
+    public void thumbnail(@PathVariable("id") String id,
+                          @RequestParam(value = "size", required = false) ThumbnailNamespace thumbnailNamespace,
+                          HttpServletResponse response){
+        if (thumbnailNamespace == null) thumbnailNamespace = ThumbnailNamespace.SMALL;
+        Optional<byte[]> optional = fileService.getThumbnail(id, thumbnailNamespace);
+        if (optional.isPresent()) {
+            MediaFile mediaFile = MediaFile.builder()
+                                            .uuid(id)
+                                            .mimeType("image/png")
+                                            .build();
+            responseMFileWriter.write(mediaFile, optional.get(), response);
+        } else {
+            log.warn("File thumbnail {} is unavailable", id);
+            throw new FileNotFoundException(id);
+        }
+    }
+
+    private void setCreationInfo(MediaFile mediaFile) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+            mediaFile.setCreatedBy(userDetails.getUsername());
+        } else {
+            mediaFile.setCreatedBy(auth.getPrincipal().toString());
+        }
     }
 
 }

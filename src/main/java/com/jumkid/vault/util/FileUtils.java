@@ -17,6 +17,8 @@ public class FileUtils {
 
     private static final String ERROR_MSG = "Failed to read file channel to byte array. {}";
 
+    private FileUtils() {}
+
     public static Optional<byte[]> fileChannelToBytes(FileChannel fc) {
         if (fc != null) {
             try {

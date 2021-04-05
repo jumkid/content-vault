@@ -64,20 +64,18 @@ public class ResponseMediaFileWriter {
     }
 
     public String readTextfile(FileChannel fc) throws IOException{
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         ByteBuffer byteBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
-        try {
-            while(fc.read(byteBuffer)!=-1){
+        try (fc) {
+            while (fc.read(byteBuffer) != -1) {
                 byteBuffer.flip();
-                while (byteBuffer.hasRemaining()){
+                while (byteBuffer.hasRemaining()) {
                     sb.append(Charset.forName(Constants.DEFAULT_ENCODING).decode(byteBuffer));
                 }
                 byteBuffer.clear();
             }
         } catch (Exception e) {
             log.error("failed to read media file {}", e.getMessage());
-        } finally {
-            fc.close();
         }
         return sb.toString();
     }
@@ -289,7 +287,7 @@ public class ResponseMediaFileWriter {
         // Prepare streams.
         OutputStream output = null;
 
-        try {
+        try (fc) {
             // Open streams.
             output = response.getOutputStream();
 
@@ -350,9 +348,6 @@ public class ResponseMediaFileWriter {
                 sos.println();
                 sos.println("--" + MULTIPART_BOUNDARY + "--");
             }
-        } finally {
-            // Gently close streams.
-            fc.close();
         }
 
         return response;

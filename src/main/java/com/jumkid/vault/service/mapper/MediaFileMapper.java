@@ -8,7 +8,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Mapper(uses = MediaFilePropMapper.class)
@@ -42,11 +41,47 @@ public interface MediaFileMapper {
             mediaFile.setProps(props);
         }
 
+        if (metadata.getChildren() != null) {
+            List<MediaFile> children = new ArrayList<>();
+            for (MediaFileMetadata mediaFileMetadata : metadata.getChildren()) {
+                children.add(this.metadataToDto(mediaFileMetadata));
+            }
+            mediaFile.setChildren(children);
+        }
+
         return mediaFile;
     }
 
     @Mapping(source = "uuid", target = "id")
-    MediaFileMetadata dtoToMetadata(MediaFile dto);
+    default MediaFileMetadata dtoToMetadata(MediaFile dto) {
+        MediaFileMetadata metadata = MediaFileMetadata.builder()
+                    .id(dto.getUuid())
+                    .mimeType(dto.getMimeType())
+                    .size(dto.getSize())
+                    .title(dto.getTitle())
+                    .content(dto.getContent())
+                    .filename(dto.getFilename())
+                    .activated(dto.getActivated())
+                    .tags(dto.getTags())
+                    .creationDate(dto.getCreationDate())
+                    .modificationDate(dto.getModificationDate())
+                    .createdBy(dto.getCreatedBy())
+                    .modifiedBy(dto.getModifiedBy())
+                    .build();
+
+        if (dto.getChildren() != null) {
+            List<MediaFileMetadata> children = new ArrayList<>();
+            int idx = 0;
+            for (MediaFile mediaFile : dto.getChildren()) {
+                MediaFileMetadata child = this.dtoToMetadata(mediaFile);
+                child.setId(String.valueOf(idx++));
+                children.add(child);
+            }
+            metadata.setChildren(children);
+        }
+
+        return metadata;
+    }
 
     List<MediaFile> metadataListToDTOList(List<MediaFileMetadata> metadataList);
 

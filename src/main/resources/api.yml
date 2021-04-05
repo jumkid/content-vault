@@ -211,9 +211,31 @@ paths:
           description: mediafile identifier
           schema:
             type: string
+        - name: size
+          in: query
+          description: size option
+          schema:
+            $ref: '#/components/schemas/ThumbnailSize'
       responses:
         '200':
           description: binary stream as response
+
+  /content/thumbnail/{id}:
+    get:
+      tags:
+        - v1
+      operationId: thumbnail
+      description: get thumbnail image by given content id
+      parameters:
+         - name: id
+           in: path
+           required: true
+           description: mediafile identifier
+           schema:
+             type: string
+      responses:
+        '200':
+          description: binary as response
 
   /file/upload:
     post:
@@ -255,6 +277,35 @@ paths:
         '200':
           description: binary file as response
 
+  /ingest/webpage:
+    post:
+      tags: 
+        - v1
+      operationId: convertUrlToMediafile
+      description: capture a screenshort from the given url
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: target url
+          schema:
+            type: string
+        - name: title
+          in: query
+          required: true
+          description: target title
+          schema:
+            type: string      
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaFile'      
+
   /trash:
     get:
       tags:
@@ -294,6 +345,14 @@ components:
           type: string
         activated:
           type: boolean
+        createdBy:
+          type: string
+        creationDate:
+          $ref: './share.yaml#/components/schemas/LocalDateTime'
+        modifiedBy:
+          type: string
+        modificationDate:
+          $ref: './share.yaml#/components/schemas/LocalDateTime'   
         props:
           type: array
           items:
@@ -309,11 +368,19 @@ components:
           type: array
           items:
             description: list of tags
-            type: string        
+            type: string  
+        children:
+          type: array
+          items:
+            $ref:  '#/components/schemas/MediaFile'         
 
     MediaFilePropType:
       type: string
-      enum: ["integer", "string", "boolean", "float", "datetime"]               
+      enum: ["integer", "string", "boolean", "float", "datetime"]
+
+    ThumbnailSize:
+      type: string
+      enum: ["small", "large"]
 
   securitySchemes:
     bearerAuth:

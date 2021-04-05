@@ -9,6 +9,7 @@ package com.jumkid.vault.repository;
  *
  * (c)2019 Jumkid Innovation All rights reserved.
  */
+import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
@@ -52,7 +53,7 @@ public class HadoopFileStorage implements FileStorage<MediaFileMetadata> {
     }
 
     @Override
-    public MediaFileMetadata saveFile(byte[] bytes, MediaFileMetadata mediaFileMetadata) {
+    public Optional<MediaFileMetadata> saveFile(byte[] bytes, MediaFileMetadata mediaFileMetadata) {
         FSDataOutputStream outputStream = null;
         try (FileSystem fs = FileSystem.get(conf)) {
             //get file full path for the media file
@@ -90,7 +91,7 @@ public class HadoopFileStorage implements FileStorage<MediaFileMetadata> {
             }
         }
 
-        return mediaFileMetadata;
+        return Optional.of(mediaFileMetadata);
     }
 
     @Override
@@ -100,11 +101,6 @@ public class HadoopFileStorage implements FileStorage<MediaFileMetadata> {
 
     @Override
     public Optional<FileChannel> getFileRandomAccess(MediaFileMetadata mediaFileMetadata) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, boolean large) {
         return Optional.empty();
     }
 
@@ -122,5 +118,10 @@ public class HadoopFileStorage implements FileStorage<MediaFileMetadata> {
         } catch (IOException ioe) {
             log.error("Failed to delete media file {}", ioe.getMessage());
         }
+    }
+
+    @Override
+    public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
+        return Optional.empty();
     }
 }

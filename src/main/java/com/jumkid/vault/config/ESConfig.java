@@ -15,14 +15,27 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
 /**
  * Created at 17 Sep, 2018$
@@ -39,11 +52,20 @@ public class ESConfig {
     @Value("${elasticsearch.port}")
     private int esPort;
 
+    @Value("${elasticsearch.http.protocol}")
+    private String esProtocol;
+
     @Value("${elasticsearch.user.name}")
     private String esUserName;
 
     @Value("${elasticsearch.user.password}")
     private String esUserPassword;
+
+    @Value("${elasticsearch.keystore.path}")
+    private String esKeystorePath;
+
+    @Value("${elasticsearch.keystore.pass}")
+    private String esKeyStorePass;
 
     @Value("${elasticsearch.cluster.name}")
     private String esClusterName;
@@ -57,15 +79,32 @@ public class ESConfig {
                 new UsernamePasswordCredentials(esUserName, esUserPassword));
 
         try {
+            SSLContext sslContext = esProtocol.equals("https") ? buildContext() : null;
+
             return new RestHighLevelClient(RestClient.builder(
-                    new HttpHost(InetAddress.getByName(esHost), esPort, "http")
+                    new HttpHost(InetAddress.getByName(esHost), esPort, esProtocol)
                     ).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
-                            .setDefaultCredentialsProvider(credentialsProvider)));
+                            .setDefaultCredentialsProvider(credentialsProvider)
+                            .setSSLContext(sslContext)
+                    ));
         } catch (UnknownHostException uhe) {
             log.error("Failed to connect elasticsearch host {} ", esHost);
-            return null;
+        } catch (Exception e) {
+            log.error("Failed to build ssl context {}", e.getMessage());
         }
+        return null;
+    }
 
+    private SSLContext buildContext() throws KeyStoreException, IOException, CertificateException,
+            NoSuchAlgorithmException, KeyManagementException {
+        Path trustStorePath = Paths.get(esKeystorePath);
+        KeyStore truststore = KeyStore.getInstance("pkcs12");
+        try (InputStream is = Files.newInputStream(trustStorePath)) {
+            truststore.load(is, esKeyStorePass.toCharArray());
+        }
+        SSLContextBuilder sslBuilder = SSLContexts.custom()
+                .loadTrustMaterial(truststore, null);
+        return sslBuilder.build();
     }
 
 }

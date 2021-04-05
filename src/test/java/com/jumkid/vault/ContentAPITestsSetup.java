@@ -1,9 +1,7 @@
 package com.jumkid.vault;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.model.MediaFileMetadata;
-import com.jumkid.vault.model.MediaFileProp;
 import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
 import org.junit.Assert;
@@ -21,11 +19,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -33,9 +26,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest
+@SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class WebAPITests {
+public class ContentAPITestsSetup extends APITestsSetup {
 
     @Value("file:src/test/resources/upload-test.html")
     private Resource resource;
@@ -49,7 +42,6 @@ public class WebAPITests {
     @MockBean
     private LocalFileStorage localFileStorage;
 
-    private static String DUMMY_ID = "dummy-id";
     private static String INVALID_ID = "invalid-id";
     private MediaFileMetadata mediaFileMetadata;
 
@@ -141,82 +133,6 @@ public class WebAPITests {
         String content = result.getResponse().getContentAsString();
         Assert.assertFalse(content.contains("test.title"));
         Assert.assertEquals("<p>test.content</p>", content);
-    }
-
-    @Test
-    public void whenGivenFile_shouldUploadFile() throws Exception {
-        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-
-        byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
-
-        mockMvc.perform(multipart("/file/upload").file("file", uploadFile))
-                .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.filename").value(mediaFileMetadata.getFilename()));
-    }
-
-    @Test
-    public void shouldGetListOfMetadata() throws Exception {
-        when(metadataStorage.getAll()).thenReturn(buildListOfMetadata());
-
-        mockMvc.perform(get("/metadata"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0]").exists())
-                .andExpect(jsonPath("$[0].uuid").value(DUMMY_ID))
-                .andExpect(jsonPath("$[1]").exists());
-    }
-
-    @Test
-    public void whenGivenID_shouldGetMetadata() throws Exception {
-        mockMvc.perform(get("/metadata/"+DUMMY_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
-                .andExpect(jsonPath("$.title").value("test.title"));
-    }
-
-    @Test
-    public void whenGivenMetadata_shouldUpdateMetadata() throws Exception {
-        mockMvc.perform(put("/metadata/"+DUMMY_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
-                .andExpect(jsonPath("$.title").value("test.title"));
-    }
-
-    @Test
-    public void whenGivenId_shouldDeleteMetadata() throws Exception {
-        mockMvc.perform(delete("/metadata/"+DUMMY_ID))
-                .andExpect(status().isNoContent());
-    }
-
-    private MediaFileMetadata buildMetadata() throws IOException {
-        return MediaFileMetadata.builder()
-                .id(DUMMY_ID).title("test.title").filename("upload-test.html")
-                .content("<p>test.content</p>")
-                .size(Long.valueOf(resource.getFile().length()).intValue())
-                .props(List.of(MediaFileProp.builder()
-                        .name("author").value("mr. nobody").dataType(MediaFilePropType.STRING)
-                        .build()))
-                .build();
-    }
-
-    private List<MediaFileMetadata> buildListOfMetadata() throws IOException {
-        final List<MediaFileMetadata> metadataLst = new ArrayList<>();
-        MediaFileMetadata mediaFileMetadata1 = buildMetadata();
-        MediaFileMetadata mediaFileMetadata2 = MediaFileMetadata.builder()
-                .id("dummy-id-1").title("test.title.1")
-                .content("<p>test.content.1</p>")
-                .props(List.of(MediaFileProp.builder()
-                        .name("comment").value("I like this").dataType(MediaFilePropType.STRING)
-                        .build()))
-                .build();
-
-        metadataLst.add(mediaFileMetadata1);
-        metadataLst.add(mediaFileMetadata2);
-        return metadataLst;
     }
 
 }
