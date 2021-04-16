@@ -2,8 +2,9 @@ package com.jumkid.vault.enums;
 
 public enum MediaFilePropField {
     NAME("name"),
-    VALUE("value"),
-    DATATYPE("dataType");
+    TEXT_VALUE("textValue"),
+    DATE_VALUE("dateValue"),
+    NUMBER_VALUE("numberValue");
 
     private final String value;
 

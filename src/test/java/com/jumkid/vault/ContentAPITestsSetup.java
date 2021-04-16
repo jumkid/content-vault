@@ -68,7 +68,7 @@ public class ContentAPITestsSetup extends APITestsSetup {
                     .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(mediaFileMetadata.getTitle()))
-                .andExpect(jsonPath("$.props[0].name").value(mediaFileMetadata.getProps().get(0).name));
+                .andExpect(jsonPath("$.props[0].name").value(mediaFileMetadata.getProps().get(0).getName()));
     }
 
     @Test

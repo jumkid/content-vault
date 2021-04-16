@@ -138,7 +138,7 @@ public class MediaContentController {
     public void thumbnail(@PathVariable("id") String id,
                           @RequestParam(value = "size", required = false) ThumbnailNamespace thumbnailNamespace,
                           HttpServletResponse response){
-        if (thumbnailNamespace == null) thumbnailNamespace = ThumbnailNamespace.SMALL;
+        if (thumbnailNamespace == null) thumbnailNamespace = ThumbnailNamespace.MEDIUM;
         Optional<byte[]> optional = fileService.getThumbnail(id, thumbnailNamespace);
         if (optional.isPresent()) {
             MediaFile mediaFile = MediaFile.builder()

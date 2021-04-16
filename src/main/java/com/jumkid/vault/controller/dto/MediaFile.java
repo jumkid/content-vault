@@ -30,8 +30,6 @@ public class MediaFile extends GenericDTO {
 
     private Boolean activated;
 
-    private List<Prop> props;
-
     private List<String> tags;
 
     private List<MediaFile> children;
@@ -42,7 +40,7 @@ public class MediaFile extends GenericDTO {
      */
     @Builder
     public MediaFile(String uuid, String filename, String mimeType, Integer size, String title, String content,
-                     Boolean activated, List<Prop> props, List<String> tags,
+                     Boolean activated, List<String> tags,
                      String createdBy, LocalDateTime creationDate, String modifiedBy, LocalDateTime modificationDate) {
         super(createdBy, creationDate, modifiedBy, modificationDate);
         this.uuid = uuid;
@@ -52,7 +50,6 @@ public class MediaFile extends GenericDTO {
         this.size = size;
         this.content = content;
         this.activated = activated;
-        this.props = props;
         this.tags = tags;
     }
 }

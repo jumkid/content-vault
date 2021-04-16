@@ -30,32 +30,26 @@ import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
+import com.jumkid.vault.repository.thumbnail.ThumbnailFileManager;
 import com.jumkid.vault.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
-import net.coobird.thumbnailator.Thumbnails;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository("localFileStorage")
 public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
-	@Value("${vault.thumbnail.small}")
-	private int thumbnailSmall;
-
-    @Value("${vault.thumbnail.large}")
-	private int thumbnailLarge;
-
-    private static String thumbnailFileFormat = "PNG";
+	private final ThumbnailFileManager thumbnailFileManager;
 
 	private final FilePathManager filePathManager;
 
 	private final FileTrashManager fileTrashManager;
 
 	@Autowired
-	public LocalFileStorage(FilePathManager filePathManager, FileTrashManager fileTrashManager) {
+	public LocalFileStorage(ThumbnailFileManager thumbnailFileManager, FilePathManager filePathManager, FileTrashManager fileTrashManager) {
+		this.thumbnailFileManager = thumbnailFileManager;
 		this.filePathManager = filePathManager;
 		this.fileTrashManager = fileTrashManager;
 	}
@@ -96,7 +90,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 			//generate thumbnail for image
 			if(mediaFile.getMimeType().startsWith("image/")){
-				generateThumbnail(path);
+				thumbnailFileManager.generateThumbnail(path);
 			}
 
 			return Optional.of(mediaFile);
@@ -138,12 +132,6 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		
 	}
 
-	/**
-	 * Get file from repository with random accessing
-	 *
-	 * @param mediaFile
-	 * @return
-	 */
 	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) {
 
 		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId());
@@ -183,78 +171,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 	@Override
 	public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
-		String dataHomePath = filePathManager.getDataHomePath();
-		String logicalPath = mediaFileMetadata.getLogicalPath();
-		String filePath = null;
-		if(mediaFileMetadata.getMimeType().startsWith("image")) {
-			filePath = String.format("%s%s/%s%s.%s", dataHomePath, logicalPath, mediaFileMetadata.getId(),
-					thumbnailNamespace.equals(ThumbnailNamespace.LARGE) ? ThumbnailNamespace.LARGE_SUFFIX : ThumbnailNamespace.SMALL_SUFFIX, thumbnailFileFormat);
-		} else if(mediaFileMetadata.getMimeType().startsWith("video")) {
-			filePath = dataHomePath + "/misc/icon_video.png";
-		} else if(mediaFileMetadata.getMimeType().startsWith("audio")) {
-			filePath = dataHomePath + "/misc/icon_audio.png";
-		} else if(mediaFileMetadata.getMimeType().equals("application/pdf")) {
-			filePath = dataHomePath + "/misc/icon_pdf.png";
-		} else if(mediaFileMetadata.getMimeType().contains("mspowerpoint")) {
-			filePath = dataHomePath + "/misc/icon_ppt.png";
-		} else if(mediaFileMetadata.getMimeType().contains("msexcel")) {
-			filePath = dataHomePath + "/misc/icon_xls.png";
-		} else if(mediaFileMetadata.getMimeType().contains("msword")) {
-			filePath = dataHomePath + "/misc/icon_doc.png";
-		} else if(mediaFileMetadata.getMimeType().contains("avatar")) {
-			filePath = dataHomePath + "/misc/icon_avatar.png";
-		} else {
-			filePath = dataHomePath + "/misc/icon_file.png";
-		}
-
-		File file = new File(filePath);
-		if(!file.exists()) {
-			log.info("file in {} is not found.", filePath);
-			return Optional.empty();
-		}
-
-		try (FileInputStream fin = new FileInputStream(file)) {
-			return FileUtils.fileChannelToBytes(fin.getChannel());
-		} catch(Exception e) {
-			log.error("Failed to get file on {}", filePath);
-		}
-		return Optional.empty();
-	}
-	
-	private void generateThumbnail(Path filePath) throws IOException {
-		String path = filePath.toString();
-		
-		Thumbnails.of(new File(path))
-				.size(thumbnailSmall, thumbnailSmall)
-				.outputFormat(thumbnailFileFormat)
-				.toFile(new File(path + ThumbnailNamespace.SMALL_SUFFIX));
-		
-		Thumbnails.of(new File(path))
-				.size(thumbnailLarge, thumbnailLarge)
-				.outputFormat(thumbnailFileFormat)
-				.toFile(new File(path + ThumbnailNamespace.LARGE_SUFFIX));
-		
-	}
-	
-	private void deleteThumbnail(MediaFileMetadata mediaFile) {
-		
-		if(mediaFile.getMimeType().startsWith("image")){
-			Path pathS = getThumbnailPath(mediaFile, ThumbnailNamespace.SMALL_SUFFIX.value() + "." + thumbnailFileFormat);
-			Path pathL = getThumbnailPath(mediaFile, ThumbnailNamespace.LARGE_SUFFIX.value() + "." + thumbnailFileFormat);
-			
-			try {
-				Files.deleteIfExists(pathS);
-				Files.deleteIfExists(pathL);
-			} catch (IOException e) {
-				log.warn("Failed to remove thumbnail. {}", e.getMessage());
-			}
-			
-		}
-		
-	}
-	
-	private Path getThumbnailPath(MediaFileMetadata mediaFile, String suffix){
-		return Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId() + suffix);
+		return thumbnailFileManager.getThumbnail(mediaFileMetadata, thumbnailNamespace);
 	}
 
 	private String getFileUuid(byte[] bytes, MediaFileMetadata mfile){

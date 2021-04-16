@@ -1,7 +1,6 @@
 package com.jumkid.vault;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.model.MediaFileProp;
 import com.jumkid.vault.repository.LocalFileStorage;
@@ -114,7 +113,7 @@ public class MetadataAPITestsSetup extends APITestsSetup {
                 .id("dummy-id-1").title("test.title.1")
                 .content("<p>test.content.1</p>")
                 .props(List.of(MediaFileProp.builder()
-                        .name("comment").value("I like this").dataType(MediaFilePropType.STRING)
+                        .name("comment").textValue("I like this")
                         .build()))
                 .build();
 

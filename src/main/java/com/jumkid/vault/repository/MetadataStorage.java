@@ -14,7 +14,6 @@ package com.jumkid.vault.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumkid.vault.enums.MediaFilePropField;
-import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import static com.jumkid.vault.util.Constants.*;
@@ -45,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.jumkid.vault.enums.MediaFileField.*;
@@ -126,7 +126,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     private MediaFileMetadata sourceToMetadata(Map<String, Object> sourceMap) {
-        MediaFileMetadata mediaFileMetadata =  MediaFileMetadata.builder()
+        return MediaFileMetadata.builder()
                 .title(sourceMap.get(TITLE.value()) !=null ? sourceMap.get(TITLE.value()).toString() : null)
                 .filename(sourceMap.get(FILENAME.value()) !=null ? sourceMap.get(FILENAME.value()).toString() : null)
                 .mimeType(sourceMap.get(MIMETYPE.value()) !=null ? sourceMap.get(MIMETYPE.value()).toString() : null)
@@ -142,19 +142,24 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
                 .modifiedBy((String)sourceMap.get(MODIFIED_BY.value()))
                 .modificationDate(DateTimeUtils.stringToLocalDatetime((String)sourceMap.get(CREATION_DATE.value())))
                 .build();
+    }
 
+    private MediaFileMetadata sourceToMetadataWithProps(Map<String, Object> sourceMap) {
+        MediaFileMetadata mediaFileMetadata = sourceToMetadata(sourceMap);
         if (sourceMap.get(PROPS.value()) != null) {
-            List<HashMap<String, String>> propsLst = (List<HashMap<String, String>>)sourceMap.get(PROPS.value());
+            List<HashMap<String, Object>> propsLst = (List<HashMap<String, Object>>)sourceMap.get(PROPS.value());
             List<MediaFileProp> props = new ArrayList<>();
-            for (HashMap<String, String> propsMap : propsLst) {
+            for (HashMap<String, Object> propsMap : propsLst) {
                 props.add(MediaFileProp.builder()
-                        .name(propsMap.get(MediaFilePropField.NAME.value()))
-                        .value(propsMap.get(MediaFilePropField.VALUE.value()))
-                        .dataType(MediaFilePropType.fromValue((propsMap.get(MediaFilePropField.DATATYPE.value()))))
+                        .name((String)propsMap.get(MediaFilePropField.NAME.value()))
+                        .textValue((String)propsMap.get(MediaFilePropField.TEXT_VALUE.value()))
+                        .dateValue((LocalDateTime) propsMap.get(MediaFilePropField.DATE_VALUE.value()))
+                        .numberValue((Integer)propsMap.get(MediaFilePropField.NUMBER_VALUE.value()))
                         .build());
             }
             mediaFileMetadata.setProps(props);
         }
+
         return mediaFileMetadata;
     }
 
@@ -222,8 +227,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
         try {
             XContentBuilder builder = jsonBuilder();
-            builder
-                    .startObject()
+            builder.startObject()
                     .field(TITLE.value(), mediaFileMetadata.getTitle())
                     .field(FILENAME.value(), mediaFileMetadata.getFilename())
                     .field(SIZE.value(), mediaFileMetadata.getSize())
@@ -260,9 +264,9 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
             for (MediaFileProp prop : props) {
                 builder.startObject()
                         .field(MediaFilePropField.NAME.value(), prop.getName())
-                        .field(MediaFilePropField.VALUE.value(), prop.getValue())
-                        .field(MediaFilePropField.DATATYPE.value(), prop.getDataType() != null ?
-                                prop.getDataType().getValue() : MediaFilePropType.STRING.getValue())
+                        .field(MediaFilePropField.TEXT_VALUE.value(), prop.getTextValue())
+                        .field(MediaFilePropField.DATE_VALUE.value(), prop.getDateValue())
+                        .field(MediaFilePropField.NUMBER_VALUE.value(), prop.getNumberValue())
                         .endObject();
             }
         }

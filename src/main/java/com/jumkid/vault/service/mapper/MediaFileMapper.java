@@ -1,16 +1,14 @@
 package com.jumkid.vault.service.mapper;
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.controller.dto.Prop;
 import com.jumkid.vault.model.MediaFileMetadata;
-import com.jumkid.vault.model.MediaFileProp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Mapper(uses = MediaFilePropMapper.class)
+@Mapper
 public interface MediaFileMapper {
 
     default MediaFile metadataToDto(MediaFileMetadata metadata) {
@@ -26,19 +24,10 @@ public interface MediaFileMapper {
                 .modificationDate(metadata.getModificationDate())
                 .createdBy(metadata.getCreatedBy())
                 .modifiedBy(metadata.getModifiedBy())
-                .tags(metadata.getTags())
                 .build();
 
-        if (metadata.getProps() != null) {
-            List<Prop> props = new ArrayList<>();
-            for (MediaFileProp prop : metadata.getProps()) {
-                props.add(Prop.builder()
-                        .name(prop.getName())
-                        .value(prop.getValue())
-                        .dataType(prop.getDataType())
-                        .build());
-            }
-            mediaFile.setProps(props);
+        if (metadata.getTags() != null) {
+            mediaFile.setTags(metadata.getTags());
         }
 
         if (metadata.getChildren() != null) {
@@ -62,12 +51,16 @@ public interface MediaFileMapper {
                     .content(dto.getContent())
                     .filename(dto.getFilename())
                     .activated(dto.getActivated())
-                    .tags(dto.getTags())
+                    .props(new ArrayList<>())
                     .creationDate(dto.getCreationDate())
                     .modificationDate(dto.getModificationDate())
                     .createdBy(dto.getCreatedBy())
                     .modifiedBy(dto.getModifiedBy())
                     .build();
+
+        if (dto.getTags() != null) {
+            metadata.setTags(dto.getTags());
+        }
 
         if (dto.getChildren() != null) {
             List<MediaFileMetadata> children = new ArrayList<>();

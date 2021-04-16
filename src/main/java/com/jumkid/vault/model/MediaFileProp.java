@@ -1,19 +1,24 @@
 package com.jumkid.vault.model;
 
-import com.jumkid.vault.enums.MediaFilePropType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
+@NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
 public class MediaFileProp {
 
-    public String name;
+    private String name;
 
-    public String value;
+    private String textValue;
 
-    public MediaFilePropType dataType;
+    private LocalDateTime dateValue;
+
+    private Integer numberValue;
 
 }

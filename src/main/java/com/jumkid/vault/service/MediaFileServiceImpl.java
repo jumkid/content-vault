@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.enums.MediaFilePropType;
 import com.jumkid.vault.enums.StorageMode;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
@@ -233,7 +232,12 @@ public class MediaFileServiceImpl implements MediaFileService {
         try (InputStream stream = new ByteArrayInputStream(bytes)) {
             parser.parse(stream, handler, metadata);
             for(String metaName : metadata.names()) {
-                mediaFileMetadata.addProp(metaName, metadata.get(metaName), MediaFilePropType.STRING.getValue());
+                if (metaName.toLowerCase().contains("date")) {
+                    log.debug("meta={}", metaName);
+                    mediaFileMetadata.addProp(metaName, LocalDateTime.parse(metadata.get(metaName)));
+                } else {
+                    mediaFileMetadata.addProp(metaName, metadata.get(metaName));
+                }
             }
         } catch (Exception e) {
             log.error("Metadata parsing exception {}", e.getMessage());
