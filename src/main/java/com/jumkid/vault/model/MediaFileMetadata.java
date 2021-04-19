@@ -57,6 +57,7 @@ public class MediaFileMetadata {
 	@JsonIgnore
 	private String modifiedBy;
 
+	@JsonIgnore
 	private List<MediaFileProp> props;
 
 	private List<String> tags;

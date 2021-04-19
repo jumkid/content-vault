@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class MetadataAPITestsSetup extends APITestsSetup {
+public class MetadataAPITest extends APITestsSetup {
 
     @Autowired
     private MockMvc mockMvc;

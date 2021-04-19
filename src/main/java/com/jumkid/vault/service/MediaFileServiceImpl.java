@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import com.jumkid.vault.controller.dto.MediaFile;
@@ -231,16 +232,24 @@ public class MediaFileServiceImpl implements MediaFileService {
         Metadata metadata = new Metadata();
         try (InputStream stream = new ByteArrayInputStream(bytes)) {
             parser.parse(stream, handler, metadata);
-            for(String metaName : metadata.names()) {
+            for (String metaName : metadata.names()) {
                 if (metaName.toLowerCase().contains("date")) {
-                    log.debug("meta={}", metaName);
-                    mediaFileMetadata.addProp(metaName, LocalDateTime.parse(metadata.get(metaName)));
+                    addDatetimeProp(mediaFileMetadata, metadata, metaName);
                 } else {
                     mediaFileMetadata.addProp(metaName, metadata.get(metaName));
                 }
             }
         } catch (Exception e) {
             log.error("Metadata parsing exception {}", e.getMessage());
+        }
+    }
+
+    private void addDatetimeProp(MediaFileMetadata mediaFileMetadata, Metadata metadata, String metaName) {
+        try {
+            mediaFileMetadata.addProp(metaName, LocalDateTime.parse(metadata.get(metaName)));
+        } catch (DateTimeParseException ex) {
+            log.debug("meta={} {}", metaName, ex.getMessage());
+            mediaFileMetadata.addProp(metaName, metadata.get(metaName));
         }
     }
 

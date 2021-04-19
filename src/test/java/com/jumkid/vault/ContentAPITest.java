@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class ContentAPITestsSetup extends APITestsSetup {
+public class ContentAPITest extends APITestsSetup {
 
     @Value("file:src/test/resources/upload-test.html")
     private Resource resource;

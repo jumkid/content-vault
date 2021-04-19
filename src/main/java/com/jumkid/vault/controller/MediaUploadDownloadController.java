@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -41,7 +42,9 @@ public class MediaUploadDownloadController {
 
     @PostMapping("/upload")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public MediaFile upload(@NotNull @RequestParam("file") MultipartFile file, HttpServletRequest httpRequest){
+    public MediaFile upload(@NotNull @RequestParam("file") MultipartFile file,
+                            @RequestParam(value = "tags", required = false) List<String> tags,
+                            HttpServletRequest httpRequest){
         MediaFile mediaFile = null;
         try {
             String title = httpRequest.getParameter("title");
@@ -50,6 +53,7 @@ public class MediaUploadDownloadController {
                     .filename(file.getOriginalFilename())
                     .size((int)file.getSize())
                     .mimeType(file.getContentType())
+                    .tags(tags)
                     .build();
 
             setUserInfo(mediaFile);

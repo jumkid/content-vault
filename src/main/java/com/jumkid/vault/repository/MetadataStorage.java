@@ -183,28 +183,8 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     public MediaFileMetadata saveMetadata(MediaFileMetadata mediaFileMetadata, byte[] bytes) {
         try {
             XContentBuilder builder = XContentFactory.cborBuilder();
-            builder.startObject()
-                    .field(TITLE.value(), mediaFileMetadata.getTitle())
-                    .field(FILENAME.value(), mediaFileMetadata.getFilename())
-                    .field(SIZE.value(), mediaFileMetadata.getSize())
-                    .field(MODULE.value(), mediaFileMetadata.getModule())
-                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
-                    .field(CONTENT.value(), mediaFileMetadata.getContent())
-                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
-                    .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
-                    .array(TAGS.value(), mediaFileMetadata.getTags() != null ? mediaFileMetadata.getTags().toArray() : null)
-                    .startArray(PROPS.value());
-            buildProps(builder, mediaFileMetadata.getProps());
-            builder.endArray()
-                    .startArray(CHILDREN.value());
-            buildChildren(builder, mediaFileMetadata.getChildren());
-            builder.endArray()
-                    .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
-                    .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
-                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
-                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
-                    .field(BLOB.value(), bytes)
-                    .endObject();
+            buildContent(builder, mediaFileMetadata);
+
             IndexRequest request = new IndexRequest(MODULE_MFILE).source(builder);
             request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
@@ -227,27 +207,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
         try {
             XContentBuilder builder = jsonBuilder();
-            builder.startObject()
-                    .field(TITLE.value(), mediaFileMetadata.getTitle())
-                    .field(FILENAME.value(), mediaFileMetadata.getFilename())
-                    .field(SIZE.value(), mediaFileMetadata.getSize())
-                    .field(MODULE.value(), mediaFileMetadata.getModule())
-                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
-                    .field(CONTENT.value(), mediaFileMetadata.getContent())
-                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
-                    .field(ACTIVATED.value(), mediaFileMetadata.getActivated())
-                    .array(TAGS.value(), mediaFileMetadata.getTags())
-                    .startArray(PROPS.value());
-            buildProps(builder, mediaFileMetadata.getProps());
-            builder.endArray()
-                    .startArray(CHILDREN.value());
-            buildChildren(builder, mediaFileMetadata.getChildren());
-            builder.endArray()
-                    .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
-                    .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
-                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
-                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
-                    .endObject();
+            buildContent(builder, mediaFileMetadata);
 
             updateRequest.doc(builder);
 
@@ -257,6 +217,37 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         }
 
         return mediaFileMetadata;
+    }
+
+    private void buildContent(XContentBuilder builder, MediaFileMetadata mediaFileMetadata){
+        try {
+            builder.startObject()
+                    .field(TITLE.value(), mediaFileMetadata.getTitle())
+                    .field(FILENAME.value(), mediaFileMetadata.getFilename())
+                    .field(SIZE.value(), mediaFileMetadata.getSize())
+                    .field(MODULE.value(), mediaFileMetadata.getModule())
+                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
+                    .field(CONTENT.value(), mediaFileMetadata.getContent())
+                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
+                    .field(ACTIVATED.value(), mediaFileMetadata.getActivated());
+
+            if (mediaFileMetadata.getTags() != null) builder.array(TAGS.value(), mediaFileMetadata.getTags().toArray());
+
+            builder.startArray(PROPS.value());
+            buildProps(builder, mediaFileMetadata.getProps());
+            builder.endArray();
+
+            builder.startArray(CHILDREN.value());
+            buildChildren(builder, mediaFileMetadata.getChildren());
+            builder.endArray()
+                    .timeField(CREATION_DATE.value(), mediaFileMetadata.getCreationDate())
+                    .field(CREATED_BY.value(), mediaFileMetadata.getCreatedBy())
+                    .timeField(MODIFICATION_DATE.value(), mediaFileMetadata.getModificationDate())
+                    .field(MODIFIED_BY.value(), mediaFileMetadata.getModifiedBy())
+                    .endObject();
+        } catch (IOException e) {
+            log.error("failed to build metadata {}", e.getMessage());
+        }
     }
 
     private void buildProps(XContentBuilder builder, List<MediaFileProp> props) throws IOException{

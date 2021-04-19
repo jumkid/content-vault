@@ -51,16 +51,12 @@ public interface MediaFileMapper {
                     .content(dto.getContent())
                     .filename(dto.getFilename())
                     .activated(dto.getActivated())
-                    .props(new ArrayList<>())
+                    .tags(dto.getTags())
                     .creationDate(dto.getCreationDate())
                     .modificationDate(dto.getModificationDate())
                     .createdBy(dto.getCreatedBy())
                     .modifiedBy(dto.getModifiedBy())
                     .build();
-
-        if (dto.getTags() != null) {
-            metadata.setTags(dto.getTags());
-        }
 
         if (dto.getChildren() != null) {
             List<MediaFileMetadata> children = new ArrayList<>();
