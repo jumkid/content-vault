@@ -48,6 +48,9 @@
           }
         }
       },
+      "children": {
+        "type": "nested"
+      },
       "creationDate": {
         "type": "date"
       },

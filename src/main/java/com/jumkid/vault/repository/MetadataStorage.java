@@ -264,7 +264,6 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         }
     }
 
-    //TODO only store child id as references
     private void buildChildren(XContentBuilder builder, List<MediaFileMetadata> children) throws IOException{
         if (children != null) {
             XContentParser parser;
