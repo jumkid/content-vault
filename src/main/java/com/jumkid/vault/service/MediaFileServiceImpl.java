@@ -233,10 +233,13 @@ public class MediaFileServiceImpl implements MediaFileService {
         try (InputStream stream = new ByteArrayInputStream(bytes)) {
             parser.parse(stream, handler, metadata);
             for (String metaName : metadata.names()) {
+                String metaValue = metadata.get(metaName);
+                if (metaValue == null || metaValue.isBlank()) continue;
+
                 if (metaName.toLowerCase().contains("date")) {
-                    addDatetimeProp(mediaFileMetadata, metadata, metaName);
+                    addDatetimeProp(mediaFileMetadata, metaValue, metaName);
                 } else {
-                    mediaFileMetadata.addProp(metaName, metadata.get(metaName));
+                    mediaFileMetadata.addProp(metaName, metaValue);
                 }
             }
         } catch (Exception e) {
@@ -244,12 +247,12 @@ public class MediaFileServiceImpl implements MediaFileService {
         }
     }
 
-    private void addDatetimeProp(MediaFileMetadata mediaFileMetadata, Metadata metadata, String metaName) {
+    private void addDatetimeProp(MediaFileMetadata mediaFileMetadata, String metaValue, String metaName) {
         try {
-            mediaFileMetadata.addProp(metaName, LocalDateTime.parse(metadata.get(metaName)));
+            mediaFileMetadata.addProp(metaName, LocalDateTime.parse(metaValue));
         } catch (DateTimeParseException ex) {
             log.debug("meta={} {}", metaName, ex.getMessage());
-            mediaFileMetadata.addProp(metaName, metadata.get(metaName));
+            mediaFileMetadata.addProp(metaName, metaValue);
         }
     }
 

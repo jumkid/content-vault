@@ -11,22 +11,18 @@ info:
   license:
     name: Jumkid Public License
     url: 'http://license.jumkid.com'
-
 servers:
   - description: Testing
     url: 'http://test.jumkid.com'
   - description: Live production
     url: 'http://api.jumkid.com'
-
 tags:
   - name: v1
     description: API for version 1.0.0
   - name: test
     description: API for test
-
 security:
   - bearerAuth: []
-
 paths:
   /metadata:
     get:
@@ -43,8 +39,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
-
-  /metadata/{id}:
+  '/metadata/{id}':
     get:
       tags:
         - v1
@@ -104,7 +99,6 @@ paths:
       responses:
         '204':
           description: successfully delete the metadata by givn id
-  
   /content:
     post:
       tags:
@@ -113,9 +107,9 @@ paths:
       description: save a new full content
       requestBody:
         content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MediaFile'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaFile'
       responses:
         '200':
           description: OK
@@ -123,9 +117,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-      summary: Add full content  
-
-  /content/html/{id}:
+      summary: Add full content
+  '/content/html/{id}':
     get:
       tags:
         - v1
@@ -145,8 +138,7 @@ paths:
             text/html:
               schema:
                 type: string
-
-  /content/plain/{id}:
+  '/content/plain/{id}':
     get:
       tags:
         - v1
@@ -172,7 +164,6 @@ paths:
             test/plain:
               schema:
                 type: string
-
   /content/plain:
     post:
       tags:
@@ -197,8 +188,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
       summary: Add plain content
-
-  /content/stream/{id}:
+  '/content/stream/{id}':
     get:
       tags:
         - v1
@@ -219,24 +209,22 @@ paths:
       responses:
         '200':
           description: binary stream as response
-
-  /content/thumbnail/{id}:
+  '/content/thumbnail/{id}':
     get:
       tags:
         - v1
       operationId: thumbnail
       description: get thumbnail image by given content id
       parameters:
-         - name: id
-           in: path
-           required: true
-           description: mediafile identifier
-           schema:
-             type: string
+        - name: id
+          in: path
+          required: true
+          description: mediafile identifier
+          schema:
+            type: string
       responses:
         '200':
           description: binary as response
-
   /file/upload:
     post:
       tags:
@@ -259,8 +247,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-
-  /file/download/{id}:
+      parameters:
+        - schema:
+            type: array
+          in: query
+          name: tags
+          description: a list of tags
+  '/file/download/{id}':
     get:
       tags:
         - v1
@@ -276,10 +269,9 @@ paths:
       responses:
         '200':
           description: binary file as response
-
   /ingest/webpage:
     post:
-      tags: 
+      tags:
         - v1
       operationId: convertUrlToMediafile
       description: capture a screenshort from the given url
@@ -295,7 +287,7 @@ paths:
           required: true
           description: target title
           schema:
-            type: string      
+            type: string
       responses:
         '200':
           description: OK
@@ -304,8 +296,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MediaFile'      
-
+                  $ref: '#/components/schemas/MediaFile'
   /trash:
     get:
       tags:
@@ -321,7 +312,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
-                  
 components:
   schemas:
     MediaFile:
@@ -348,11 +338,11 @@ components:
         createdBy:
           type: string
         creationDate:
-          $ref: './share.yaml#/components/schemas/LocalDateTime'
+          $ref: ./share.yaml#/components/schemas/LocalDateTime
         modifiedBy:
           type: string
         modificationDate:
-          $ref: './share.yaml#/components/schemas/LocalDateTime'   
+          $ref: ./share.yaml#/components/schemas/LocalDateTime
         props:
           type: array
           items:
@@ -368,20 +358,24 @@ components:
           type: array
           items:
             description: list of tags
-            type: string  
+            type: string
         children:
           type: array
           items:
-            $ref:  '#/components/schemas/MediaFile'         
-
+            $ref: '#/components/schemas/MediaFile'
     MediaFilePropType:
       type: string
-      enum: ["integer", "string", "boolean", "float", "datetime"]
-
+      enum:
+        - integer
+        - string
+        - boolean
+        - float
+        - datetime
     ThumbnailSize:
       type: string
-      enum: ["small", "large"]
-
+      enum:
+        - small
+        - large
   securitySchemes:
     bearerAuth:
       type: http

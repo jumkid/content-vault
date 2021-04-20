@@ -13,6 +13,8 @@ import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
+import java.nio.charset.StandardCharsets;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -49,7 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 UsernamePasswordAuthenticationFilter.class);
 
         CharacterEncodingFilter encodingFilter = new CharacterEncodingFilter();
-        encodingFilter.setEncoding("UTF-8");
+        encodingFilter.setEncoding(StandardCharsets.UTF_8.toString());
         encodingFilter.setForceEncoding(true);
         http.addFilterBefore(encodingFilter, CsrfFilter.class);
     }

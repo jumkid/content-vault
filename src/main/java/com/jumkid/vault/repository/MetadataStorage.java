@@ -129,10 +129,10 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         return MediaFileMetadata.builder()
                 .title(sourceMap.get(TITLE.value()) !=null ? sourceMap.get(TITLE.value()).toString() : null)
                 .filename(sourceMap.get(FILENAME.value()) !=null ? sourceMap.get(FILENAME.value()).toString() : null)
-                .mimeType(sourceMap.get(MIMETYPE.value()) !=null ? sourceMap.get(MIMETYPE.value()).toString() : null)
+                .mimeType(sourceMap.get(MIME_TYPE.value()) !=null ? sourceMap.get(MIME_TYPE.value()).toString() : null)
                 .size(sourceMap.get(SIZE.value()) != null ? (Integer)sourceMap.get(SIZE.value()) : null)
                 .content(sourceMap.get(CONTENT.value()) !=null ? sourceMap.get(CONTENT.value()).toString() : null)
-                .logicalPath((String)sourceMap.get(LOGICALPATH.value()))
+                .logicalPath((String)sourceMap.get(LOGICAL_PATH.value()))
                 .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
                 .tags((List<String>) sourceMap.get(TAGS.value()))
                 .children(linkToReferencedMetadata((List<MediaFileMetadata>) sourceMap.get(CHILDREN.value())))
@@ -226,9 +226,9 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
                     .field(FILENAME.value(), mediaFileMetadata.getFilename())
                     .field(SIZE.value(), mediaFileMetadata.getSize())
                     .field(MODULE.value(), mediaFileMetadata.getModule())
-                    .field(MIMETYPE.value(), mediaFileMetadata.getMimeType())
+                    .field(MIME_TYPE.value(), mediaFileMetadata.getMimeType())
                     .field(CONTENT.value(), mediaFileMetadata.getContent())
-                    .field(LOGICALPATH.value(), mediaFileMetadata.getLogicalPath())
+                    .field(LOGICAL_PATH.value(), mediaFileMetadata.getLogicalPath())
                     .field(ACTIVATED.value(), mediaFileMetadata.getActivated());
 
             if (mediaFileMetadata.getTags() != null) builder.array(TAGS.value(), mediaFileMetadata.getTags().toArray());
@@ -253,16 +253,18 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     private void buildProps(XContentBuilder builder, List<MediaFileProp> props) throws IOException{
         if (props != null) {
             for (MediaFileProp prop : props) {
-                builder.startObject()
-                        .field(MediaFilePropField.NAME.value(), prop.getName())
-                        .field(MediaFilePropField.TEXT_VALUE.value(), prop.getTextValue())
-                        .field(MediaFilePropField.DATE_VALUE.value(), prop.getDateValue())
-                        .field(MediaFilePropField.NUMBER_VALUE.value(), prop.getNumberValue())
-                        .endObject();
+                builder.startObject().field(MediaFilePropField.NAME.value(), prop.getName());
+
+                if (prop.getTextValue() != null) builder.field(MediaFilePropField.TEXT_VALUE.value(), prop.getTextValue());
+                if (prop.getDateValue() != null) builder.field(MediaFilePropField.DATE_VALUE.value(), prop.getDateValue());
+                if (prop.getNumberValue() != null) builder.field(MediaFilePropField.NUMBER_VALUE.value(), prop.getNumberValue());
+
+                builder.endObject();
             }
         }
     }
 
+    //TODO only store child id as references
     private void buildChildren(XContentBuilder builder, List<MediaFileMetadata> children) throws IOException{
         if (children != null) {
             XContentParser parser;

@@ -1,0 +1,65 @@
+{
+  "mappings": {
+    "properties": {
+      "title": {
+        "type": "text"
+      },
+      "filename": {
+        "type": "keyword"
+      },
+      "mimeType": {
+        "type": "keyword"
+      },
+      "size": {
+        "type": "integer",
+        "index": false
+      },
+      "module": {
+        "type": "keyword",
+        "index": false
+      },
+      "content": {
+        "type": "text"
+      },
+      "activated": {
+        "type": "boolean"
+      },
+      "logicalPath": {
+        "type": "keyword",
+        "index": false
+      },
+      "blob": {
+        "type": "binary",
+        "index": false
+      },
+      "props": {
+        "properties": {
+          "name": {
+            "type": "keyword"
+          },
+          "textValue": {
+            "type": "text"
+          },
+          "dateValue": {
+            "type": "date"
+          },
+          "numberValue": {
+            "type": "long"
+          }
+        }
+      },
+      "creationDate": {
+        "type": "date"
+      },
+      "createdBy": {
+        "type": "keyword"
+      },
+      "modificationDate": {
+        "type": "date"
+      },
+      "modifiedBy": {
+        "type": "keyword"
+      }
+    }
+  }
+}

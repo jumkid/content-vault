@@ -16,6 +16,7 @@ import com.jumkid.vault.util.Constants;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
@@ -65,23 +66,32 @@ public class MediaFileMetadata {
 	private List<MediaFileMetadata> children;
 
 	public void addProp(String name, String value) {
-		if (props != null && props.stream().noneMatch(prop -> prop.getName().equals(name))) {
+		if (isPropNotExist(name)) {
 			props.add(MediaFileProp.builder().name(name).textValue(value)
                     .build());
 		}
 	}
 
 	public void addProp(String name, LocalDateTime date) {
-		if (props != null && props.stream().noneMatch(prop -> prop.getName().equals(name))) {
+		if (isPropNotExist(name)) {
 			props.add(MediaFileProp.builder().name(name).dateValue(date)
 					.build());
 		}
 	}
 
 	public void addProp(String name, Integer number) {
-		if (props != null && props.stream().noneMatch(prop -> prop.getName().equals(name))) {
+		if (isPropNotExist(name)) {
 			props.add(MediaFileProp.builder().name(name).numberValue(number)
 					.build());
+		}
+	}
+
+	private boolean isPropNotExist(String propName) {
+		if (props == null) {
+			props = new ArrayList<>();
+			return true;
+		} else{
+			return props.stream().noneMatch(prop -> prop.getName().equals(propName));
 		}
 	}
 

@@ -4,7 +4,7 @@ public enum MediaFileField {
     ID("id"),
     TITLE("title"),
     FILENAME("filename"),
-    MIMETYPE("mimeType"),
+    MIME_TYPE("mimeType"),
     SIZE("size"),
     MODULE("module"),
     CREATION_DATE("creationDate"),
@@ -14,7 +14,7 @@ public enum MediaFileField {
     CONTENT("content"),
     ACTIVATED("activated"),
     BLOB("blob"),
-    LOGICALPATH("logicalPath"),
+    LOGICAL_PATH("logicalPath"),
     PROPS("props"),
     TAGS("tags"),
     CHILDREN("children");
