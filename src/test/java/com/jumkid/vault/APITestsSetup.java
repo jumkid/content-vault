@@ -11,8 +11,11 @@ class APITestsSetup {
 
     MediaFileMetadata buildMetadata() {
         return MediaFileMetadata.builder()
-                .id(DUMMY_ID).title("test.title").filename("upload-test.html")
+                .id(DUMMY_ID)
+                .title("test.title")
+                .filename("upload-test.html")
                 .content("<p>test.content</p>")
+                .activated(true)
                 .props(List.of(MediaFileProp.builder()
                         .name("author").textValue("Mr nobody")
                         .build()))
