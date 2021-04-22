@@ -64,6 +64,21 @@ public interface FileMetadata<T> {
     T updateMetadata(T t);
 
     /**
+     * update metadata active status
+     *
+     * @param id identity of media file
+     */
+    void updateMetadataStatus(String id, boolean active);
+
+    /**
+     * Update metadata file storage path
+     *
+     * @param id identity of media file
+     * @param logicalPath file path on the storage
+     */
+    void updateLogicalPath(String id, String logicalPath);
+
+    /**
      * Get all media files from repository
      *
      * @return List of type

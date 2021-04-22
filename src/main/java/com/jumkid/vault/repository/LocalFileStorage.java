@@ -18,11 +18,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -110,7 +106,6 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		}
 		
 		return Optional.empty();
-		
 	}
 
 	private FileChannel getFileChannel(MediaFileMetadata mediaFile) {
@@ -129,7 +124,6 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 			throw new FileStoreServiceException(e.getMessage());
 			//move to trash if 
 		}
-		
 	}
 
 	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) {
@@ -151,22 +145,23 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public void deleteFile(MediaFileMetadata mediaFile) {
+	public void deleteFile(MediaFileMetadata mediaFile) throws FileNotFoundException, FileStoreServiceException {
 		if (mediaFile.getLogicalPath() == null) return;
-
 		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath());
+		String mediaFileId = mediaFile.getId();
+
 		if(!Files.exists(path)) {
-			throw new FileNotFoundException(mediaFile.getId());
+			log.warn("media file {} is not found", mediaFileId);
+			throw new FileNotFoundException(mediaFileId);
 		}
 
-		fileTrashManager.moveToTrash(path, mediaFile.getId());
 		try {
+			fileTrashManager.moveToTrash(path, mediaFileId);
 			FileUtils.deleteDirectoryStream(path);
 		} catch (Exception e) {
 			log.error("failed to delete file {} {}", path.toString(), e.getMessage());
-			throw new FileStoreServiceException(mediaFile.getId());
+			throw new FileStoreServiceException(mediaFileId);
 		}
-
 	}
 
 	@Override

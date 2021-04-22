@@ -65,7 +65,7 @@ public class MediaMetadataController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public void deleteMetadata(@PathVariable("id") String id) {
-        fileService.deleteMediaFile(id);
+        fileService.trashMediaFile(id);
     }
 
 }

@@ -115,7 +115,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
                 return null;
             }
 
-            MediaFileMetadata mediaFileMetadata = sourceToMetadata(getResponse.getSource());
+            MediaFileMetadata mediaFileMetadata = sourceToMetadataWithProps(getResponse.getSource());
             mediaFileMetadata.setId(getResponse.getId());
             return mediaFileMetadata;
         } catch (IOException ioe) {
@@ -146,15 +146,25 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     private MediaFileMetadata sourceToMetadataWithProps(Map<String, Object> sourceMap) {
         MediaFileMetadata mediaFileMetadata = sourceToMetadata(sourceMap);
+
         if (sourceMap.get(PROPS.value()) != null) {
             List<HashMap<String, Object>> propsLst = (List<HashMap<String, Object>>)sourceMap.get(PROPS.value());
             List<MediaFileProp> props = new ArrayList<>();
             for (HashMap<String, Object> propsMap : propsLst) {
+                Object textObj = propsMap.get(MediaFilePropField.TEXT_VALUE.value());
+                String textValue = textObj != null ? (String)textObj : null;
+
+                Object dateObj = propsMap.get(MediaFilePropField.DATE_VALUE.value());
+                LocalDateTime dateValue = dateObj != null ? DateTimeUtils.stringToLocalDatetime((String)dateObj) : null;
+
+                Object numberObj = propsMap.get(MediaFilePropField.NUMBER_VALUE.value());
+                Integer numberValue = numberObj != null ? (Integer)numberObj : null;
+
                 props.add(MediaFileProp.builder()
                         .name((String)propsMap.get(MediaFilePropField.NAME.value()))
-                        .textValue((String)propsMap.get(MediaFilePropField.TEXT_VALUE.value()))
-                        .dateValue((LocalDateTime) propsMap.get(MediaFilePropField.DATE_VALUE.value()))
-                        .numberValue((Integer)propsMap.get(MediaFilePropField.NUMBER_VALUE.value()))
+                        .textValue(textValue)
+                        .dateValue(dateValue)
+                        .numberValue(numberValue)
                         .build());
             }
             mediaFileMetadata.setProps(props);
@@ -201,22 +211,45 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public MediaFileMetadata updateMetadata(MediaFileMetadata mediaFileMetadata) {
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.index(MODULE_MFILE);
-        updateRequest.id(mediaFileMetadata.getId());
-
+        String id = mediaFileMetadata.getId();
         try {
             XContentBuilder builder = jsonBuilder();
             buildContent(builder, mediaFileMetadata);
 
-            updateRequest.doc(builder);
-
-            esClient.update(updateRequest, RequestOptions.DEFAULT);
+            updateMetadata(id, builder);
         } catch (IOException e) {
-            log.error("failed to update metadata {}", e.getMessage());
+            log.error("failed to update metadata {} due to {}", id, e.getMessage());
         }
 
         return mediaFileMetadata;
+    }
+
+    @Override
+    public void updateMetadataStatus(String id, boolean active) {
+        try {
+            updateMetadata(id, jsonBuilder().startObject().field(ACTIVATED.value(), active).endObject());
+        } catch (IOException e) {
+            log.error("failed to update metadata logical path {} due to {}", id, e.getMessage());
+        }
+    }
+
+    @Override
+    public void updateLogicalPath(String id, String logicalPath) {
+        try {
+            updateMetadata(id, jsonBuilder().startObject().field(LOGICAL_PATH.value(), logicalPath).endObject());
+        } catch (IOException e) {
+            log.error("failed to update metadata logical path {} due to {}", id, e.getMessage());
+        }
+    }
+
+    private void updateMetadata(String id, XContentBuilder builder) throws IOException{
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.index(MODULE_MFILE);
+        updateRequest.id(id);
+
+        updateRequest.doc(builder);
+
+        esClient.update(updateRequest, RequestOptions.DEFAULT);
     }
 
     private void buildContent(XContentBuilder builder, MediaFileMetadata mediaFileMetadata){

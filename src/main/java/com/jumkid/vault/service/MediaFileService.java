@@ -84,7 +84,7 @@ public interface MediaFileService {
      *
      * @param id media file identity
      */
-    void deleteMediaFile(String id);
+    void trashMediaFile(String id);
 
     /**
      * Get all media files

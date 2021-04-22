@@ -172,21 +172,23 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public void deleteMediaFile(String id) {
+    public void trashMediaFile(String id) {
         MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
-        if(mediaFileMetadata != null) {
-            mediaFileMetadata.setActivated(false);
-            metadataStorage.updateMetadata(mediaFileMetadata);
+        if (mediaFileMetadata != null && mediaFileMetadata.getActivated()) {
+            metadataStorage.updateMetadataStatus(id, false);
+
             try {
                 getFileStorage().deleteFile(mediaFileMetadata);
+            } catch (FileNotFoundException ex) {
+                metadataStorage.updateLogicalPath(id, null);
             } catch (Exception e) {
                 //roll back metadata status
-                mediaFileMetadata.setActivated(true);
-                metadataStorage.updateMetadata(mediaFileMetadata);
+                metadataStorage.updateMetadataStatus(id, true);
                 throw new FileStoreServiceException(e.getMessage());
             }
+
         } else {
-            throw new FileNotFoundException(id);
+            log.warn("metadata is not found for media file {}", id);
         }
     }
 

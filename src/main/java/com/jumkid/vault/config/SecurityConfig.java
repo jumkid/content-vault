@@ -9,11 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.filter.CharacterEncodingFilter;
-
-import java.nio.charset.StandardCharsets;
 
 @Configuration
 @EnableWebSecurity
@@ -41,7 +37,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                                 "/configuration/security",
                                 "/swagger-ui.html",
                                 "/webjars/**").permitAll() //whitelist
-                .antMatchers("/**").authenticated() //any other request
+                .antMatchers(enableTokenCheck ? "/**" : "/admin-console").authenticated() //other requests
                 .and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -49,11 +45,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http.addFilterBefore(new BearerTokenRequestFilter(enableTokenCheck, tokenIntrospectUrl, restTemplate),
                 UsernamePasswordAuthenticationFilter.class);
-
-        CharacterEncodingFilter encodingFilter = new CharacterEncodingFilter();
-        encodingFilter.setEncoding(StandardCharsets.UTF_8.toString());
-        encodingFilter.setForceEncoding(true);
-        http.addFilterBefore(encodingFilter, CsrfFilter.class);
     }
 
 }
