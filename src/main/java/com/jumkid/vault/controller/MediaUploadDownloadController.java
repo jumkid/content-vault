@@ -80,11 +80,11 @@ public class MediaUploadDownloadController {
     @ResponseStatus(HttpStatus.OK)
     public void download(@PathVariable("id") String id, HttpServletResponse response){
         MediaFileMetadata mediaFileMetadata = null;
-        Optional opt = fileService.getFileSource(id);
+        Optional<byte[]> opt = fileService.getFileSource(id);
         try {
             if(opt.isPresent()) {
                 mediaFileMetadata = fileService.getMediaFileMetadata(id);
-                byte[] bytes = (byte[])opt.get();
+                byte[] bytes = opt.get();
                 responseMFileWriter.writeForDownload(mediaFileMetadata, bytes, response);
             }
         } catch (IOException ioe) {

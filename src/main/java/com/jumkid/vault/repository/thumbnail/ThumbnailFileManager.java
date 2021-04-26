@@ -15,7 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -29,6 +33,9 @@ public class ThumbnailFileManager {
 
     @Value("${vault.thumbnail.large}")
     private int thumbnailLarge;
+
+    @Value("#{${vault.thumbnail.icon-mappings}}")
+    private Map<String, String> iconMappings;
 
     public static final String THUMBNAIL_FILE_EXTEND = "PNG";
     private static final String MISC_PATH = "misc";
@@ -49,22 +56,8 @@ public class ThumbnailFileManager {
         if(mediaFileMetadata.getMimeType().startsWith("image")) {
             filePath = String.format("%s%s/%s%s.%s", dataHomePath, logicalPath, mediaFileMetadata.getId(),
                     this.getThumbnailSuffix(thumbnailNamespace).value(), ThumbnailFileManager.THUMBNAIL_FILE_EXTEND);
-        } else if(mediaFileMetadata.getMimeType().startsWith("video")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_video.png");
-        } else if(mediaFileMetadata.getMimeType().startsWith("audio")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_audio.png");
-        } else if(mediaFileMetadata.getMimeType().equals("application/pdf")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_pdf.png");
-        } else if(mediaFileMetadata.getMimeType().contains("mspowerpoint")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_ppt.png");
-        } else if(mediaFileMetadata.getMimeType().contains("msexcel")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_xls.png");
-        } else if(mediaFileMetadata.getMimeType().contains("msword")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_doc.png");
-        } else if(mediaFileMetadata.getMimeType().contains("avatar")) {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_avatar.png");
         } else {
-            filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_file.png");
+            filePath = getThumbnailFilePath(mediaFileMetadata.getMimeType());
         }
 
         File file = new File(filePath);
@@ -80,6 +73,23 @@ public class ThumbnailFileManager {
             return Optional.empty();
         }
 
+    }
+
+    private String getThumbnailFilePath(String mimeType) {
+        String dataHomePath = filePathManager.getDataHomePath();
+
+        String filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_file.png"); //default icon
+
+        for (Map.Entry<String, String> mapping : iconMappings.entrySet()) {
+            Pattern pattern = Pattern.compile(mapping.getKey(), Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(mimeType);
+            if (matcher.find()) {
+                filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, mapping.getValue());
+                break;
+            }
+        }
+
+        return filePath;
     }
 
     public ThumbnailNamespace getThumbnailSuffix(ThumbnailNamespace thumbnailNamespace) {

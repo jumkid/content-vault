@@ -26,7 +26,7 @@
         <elasticsearch.version>7.9.2</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.11</thumbnailator.version>
-        <tika.version>1.24.1</tika.version>
+        <tika.version>1.26</tika.version>
         <grabzit.version>3.4.5.1</grabzit.version>
 
         <!-- jumkid modules -->

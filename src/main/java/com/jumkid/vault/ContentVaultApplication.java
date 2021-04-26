@@ -16,14 +16,12 @@ import com.jumkid.vault.service.mapper.MediaFileMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import org.mapstruct.factory.Mappers;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Arrays;
-
 
 /**
  * Main application endpoint with spring boot
@@ -37,14 +35,20 @@ import java.util.Arrays;
 @SpringBootApplication
 public class ContentVaultApplication implements CommandLineRunner {
 
+    @Value("${spring.application.name}")
+    private String appName;
+
+    @Value("${spring.application.version}")
+    private String version;
+
     public static void main(String[] args) {
         SpringApplication.run(ContentVaultApplication.class, args);
     }
 
     @Override
     public void run(String... args) {
-        log.info("Content Vault Application started with command-line arguments: {} . \n To kill this application, press Ctrl + C.",
-                Arrays.toString(args));
+        log.info("{} service started v{} ",
+                appName, version);
     }
 
     @Bean(name = "restTemplate")
