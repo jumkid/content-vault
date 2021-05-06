@@ -58,7 +58,7 @@ public interface FileMetadata<T> {
     /**
      * update the metadata of give type
      *
-     * @param T type
+     * @param t type
      * @return type
      */
     T updateMetadata(T t);
@@ -90,6 +90,11 @@ public interface FileMetadata<T> {
      *
      * @return List of type
      */
-    List<T> getTrash();
+    List<T> getInactiveMetadata();
+
+    /**
+     * Remove all inactive metadata
+     */
+    long deleteInactiveMetadata();
 
 }

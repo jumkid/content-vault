@@ -23,7 +23,7 @@
         <org.projectlombok.version>1.18.12</org.projectlombok.version>
         <junit.version>4.13.1</junit.version>
         <jaxb.version>2.3.0</jaxb.version>
-        <elasticsearch.version>7.9.2</elasticsearch.version>
+        <elasticsearch.version>7.12.1</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.11</thumbnailator.version>
         <tika.version>1.26</tika.version>

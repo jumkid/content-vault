@@ -79,7 +79,7 @@ public class MediaFileServiceImplTest {
                 .title("test").filename("test file").id("1")
                 .mimeType("plain/text").activated(true)
                 .content("test content").size(DEFAULT_SIZE)
-                .module("mfile").logicalPath("/foo")
+                .module("mediaFile").logicalPath("/foo")
                 .creationDate(now).modificationDate(now)
                 .build();
     }

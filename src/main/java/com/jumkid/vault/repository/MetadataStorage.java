@@ -36,9 +36,13 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -76,7 +80,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public List<MediaFileMetadata> getTrash() {
+    public List<MediaFileMetadata> getInactiveMetadata() {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.searchType(SearchType.DEFAULT);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -84,6 +88,27 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         searchRequest.source(sourceBuilder);
 
         return searchMetadata(searchRequest);
+    }
+
+    @Override
+    public long deleteInactiveMetadata() {
+
+        DeleteByQueryRequest deleteRequest = new DeleteByQueryRequest(ES_INDEX_MFILE);
+        deleteRequest.setConflicts("proceed");
+        try {
+            deleteRequest.setQuery(new TermQueryBuilder(ACTIVATED.value(), false));
+            //can be parallel using sliced-scroll:
+            deleteRequest.setSlices(2);
+            //uses the scroll parameter to control how long it keeps the "search context" alive.
+            deleteRequest.setScroll(TimeValue.timeValueMinutes(10));
+            deleteRequest.setRefresh(true);
+
+            BulkByScrollResponse bulkResponse = esClient.deleteByQuery(deleteRequest, RequestOptions.DEFAULT);
+            return bulkResponse.getDeleted();
+        } catch (IOException ioe) {
+            log.error("failed to delete inactive metadata due to {} ", ioe.getMessage());
+            throw new FileStoreServiceException("Not able to delete inactive media file from Elasticsearch, please contact system administrator.");
+        }
     }
 
     private List<MediaFileMetadata> searchMetadata(SearchRequest searchRequest) {
@@ -107,7 +132,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     @Override
     public MediaFileMetadata getMetadata(String id) {
 
-        GetRequest request = new GetRequest(MODULE_MFILE).id(id);
+        GetRequest request = new GetRequest(ES_INDEX_MFILE).id(id);
 
         try {
             GetResponse getResponse = esClient.get(request, RequestOptions.DEFAULT);
@@ -195,7 +220,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
             XContentBuilder builder = XContentFactory.cborBuilder();
             buildContent(builder, mediaFileMetadata);
 
-            IndexRequest request = new IndexRequest(MODULE_MFILE).source(builder);
+            IndexRequest request = new IndexRequest(ES_INDEX_MFILE).source(builder);
             request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
             //Synchronous execution
@@ -244,7 +269,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     private void updateMetadata(String id, XContentBuilder builder) throws IOException{
         UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.index(MODULE_MFILE);
+        updateRequest.index(ES_INDEX_MFILE);
         updateRequest.id(id);
 
         updateRequest.doc(builder);
@@ -311,7 +336,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public Optional<byte[]> getBinary(String id) {
-        GetRequest request = new GetRequest(MODULE_MFILE).id(id);
+        GetRequest request = new GetRequest(ES_INDEX_MFILE).id(id);
         try {
             GetResponse getResponse = esClient.get(request, RequestOptions.DEFAULT);
 
@@ -326,7 +351,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public boolean deleteMetadata(String id) {
-        DeleteRequest deleteRequest = new DeleteRequest(MODULE_MFILE).id(id);
+        DeleteRequest deleteRequest = new DeleteRequest(ES_INDEX_MFILE).id(id);
         deleteRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
         try {
             DeleteResponse deleteResponse = esClient.delete(deleteRequest, RequestOptions.DEFAULT);

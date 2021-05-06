@@ -99,4 +99,9 @@ public interface MediaFileService {
      * @return List of mediaFile
      */
     List<MediaFile> getTrash();
+
+    /**
+     * Empty the entire trash and clean up file stored in trash
+     */
+    long emptyTrash();
 }

@@ -27,6 +27,7 @@ import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.thumbnail.ThumbnailFileManager;
+import com.jumkid.vault.repository.trash.FileTrashManager;
 import com.jumkid.vault.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -157,7 +158,6 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 		try {
 			fileTrashManager.moveToTrash(path, mediaFileId);
-			FileUtils.deleteDirectoryStream(path);
 		} catch (Exception e) {
 			log.error("failed to delete file {} {}", path.toString(), e.getMessage());
 			throw new FileStoreServiceException(mediaFileId);
@@ -169,11 +169,18 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		return thumbnailFileManager.getThumbnail(mediaFileMetadata, thumbnailNamespace);
 	}
 
-	private String getFileUuid(byte[] bytes, MediaFileMetadata mfile){
-	    if(mfile.getId()==null){
-            mfile.setId(UUID.nameUUIDFromBytes(bytes).toString());
+	private String getFileUuid(byte[] bytes, MediaFileMetadata mediaFile) {
+	    if(mediaFile.getId()==null){
+			mediaFile.setId(UUID.nameUUIDFromBytes(bytes).toString());
         }
-	    return mfile.getId();
+	    return mediaFile.getId();
     }
+
+
+    @Override
+    public void emptyTrash() {
+		log.info("clean up entire trash file store");
+		fileTrashManager.emptyTrash();
+	}
 
 }

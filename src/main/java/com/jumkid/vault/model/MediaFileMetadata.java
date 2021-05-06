@@ -35,7 +35,7 @@ public class MediaFileMetadata {
 	private Integer size;
 
 	@JsonIgnore
-	private String module = Constants.MODULE_MFILE;
+	private String module = Constants.MODULE_MEDIA_FILE;
 
 	private String title;
 

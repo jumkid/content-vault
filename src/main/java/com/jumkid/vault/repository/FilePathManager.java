@@ -31,7 +31,7 @@ public class FilePathManager {
 
 	private static final String FORMAT_YYYYMMDD = "yyyyMMdd";
 
-	String getTrashPath() {
+	public String getTrashPath() {
 		return DELIMITER + SystemDirectoryName.TRASH.value();
 	}
 

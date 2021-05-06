@@ -22,7 +22,7 @@ public interface FileStorage<T> {
 	/**
 	 * Persist file in repository
 	 * 
-	 * @param bytes
+	 * @param bytes, t
 	 * @param t
 	 */
 	Optional<T> saveFile(byte[] bytes, T t);
@@ -60,4 +60,9 @@ public interface FileStorage<T> {
 	 * @throws FileStoreServiceException exception of media storage service
 	 */
 	Optional<byte[]> getThumbnail(T t, ThumbnailNamespace thumbnailNamespace);
+
+	/**
+	 * Clean up file stored in trash
+	 */
+	void emptyTrash();
 }

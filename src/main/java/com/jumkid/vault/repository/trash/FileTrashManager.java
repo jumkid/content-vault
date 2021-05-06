@@ -1,6 +1,8 @@
-package com.jumkid.vault.repository;
+package com.jumkid.vault.repository.trash;
 
 import com.jumkid.vault.exception.FileStoreServiceException;
+import com.jumkid.vault.repository.FilePathManager;
+import com.jumkid.vault.util.FileUtils;
 import com.jumkid.vault.util.FileZipUtils;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +23,26 @@ public class FileTrashManager {
         this.fileZipUtils = fileZipUtils;
     }
 
-    public void moveToTrash(Path filePath, String id) {
+    public void moveToTrash(Path filePath, String mediaFileId) {
         try{
             checkTrashPath();
-            Path trashTargetPath = Paths.get(filePathManager.getDataHomePath(), filePathManager.getTrashPath(), id);
-            //Files.move(filePath, trashPath, StandardCopyOption.ATOMIC_MOVE);
+            Path trashTargetPath = Paths.get(filePathManager.getDataHomePath(),
+                    filePathManager.getTrashPath(), mediaFileId);
+            //archive file to target path
             fileZipUtils.zip(filePath, trashTargetPath);
+            //delete the original file
+            FileUtils.deleteDirectoryStream(filePath);
         } catch (IOException ioe) {
             throw new FileStoreServiceException("Failed to move file to trash " + filePath);
+        }
+    }
+
+    public void emptyTrash() {
+        try {
+            Path trashPath = Paths.get(filePathManager.getDataHomePath(), filePathManager.getTrashPath());
+            FileUtils.deleteDirectoryStream(trashPath);
+        } catch (Exception ex) {
+            throw new FileStoreServiceException("Failed to empty the trash ");
         }
     }
 

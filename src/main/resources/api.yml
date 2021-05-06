@@ -338,6 +338,19 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
+    delete:
+      tags:
+      - v1
+      operationId: emptyTrash
+      description: delete all files in the trash
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: number
+
 components:
   schemas:
     MediaFile:

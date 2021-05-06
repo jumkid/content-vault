@@ -204,9 +204,19 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Override
     public List<MediaFile> getTrash() {
-        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.getTrash();
+        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.getInactiveMetadata();
         if (mediaFileMetadataList == null) return Collections.emptyList();
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
+    }
+
+    @Override
+    public long emptyTrash() {
+        long count = metadataStorage.deleteInactiveMetadata();
+        if (count > 0) {
+            log.debug("Deleted {} inactive metadata", count);
+            getFileStorage().emptyTrash();
+        }
+        return count;
     }
 
     private void normalizeDTO(String uuid, MediaFile dto, MediaFileMetadata oldMetadata) {

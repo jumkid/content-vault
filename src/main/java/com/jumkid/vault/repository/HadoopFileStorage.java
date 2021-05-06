@@ -124,4 +124,9 @@ public class HadoopFileStorage implements FileStorage<MediaFileMetadata> {
     public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
         return Optional.empty();
     }
+
+    @Override
+    public void emptyTrash() {
+        //void
+    }
 }
