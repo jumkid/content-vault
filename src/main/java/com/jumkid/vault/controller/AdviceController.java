@@ -31,7 +31,7 @@ public class AdviceController {
     }
 
     @ExceptionHandler({FileStoreServiceException.class})
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.EXPECTATION_FAILED)
     public CustomErrorResponse handle(FileStoreServiceException ex) {
         log.info("File storage service encounter something wrong {}.", ex.getMessage());
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());

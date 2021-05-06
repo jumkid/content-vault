@@ -36,6 +36,9 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -206,26 +209,36 @@ public class MediaFileServiceImpl implements MediaFileService {
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
 
-
-    private boolean isRandomAccess(MediaFileMetadata mFile){
-        return mFile.getMimeType().startsWith("video") || mFile.getMimeType().startsWith("audio");
-    }
-
     private void normalizeDTO(String uuid, MediaFile dto, MediaFileMetadata oldMetadata) {
         dto.setUuid(uuid);
-
+        String currentUser = getCurrentUserName();
         LocalDateTime now = LocalDateTime.now();
         dto.setModificationDate(now);
 
         if (oldMetadata != null) {
+            dto.setModifiedBy(currentUser);
             dto.setCreatedBy(oldMetadata.getCreatedBy());
             dto.setCreationDate(oldMetadata.getCreationDate());
         } else {
+            dto.setCreatedBy(currentUser);
             dto.setCreationDate(now);
         }
 
         if (dto.getActivated() == null) dto.setActivated(true);
 
+    }
+
+    private String getCurrentUserName() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null) return "anonymousUser";
+
+        if (auth.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+            return userDetails.getUsername();
+        } else {
+            return auth.getPrincipal().toString();
+        }
     }
 
     private void enrichMetadata(MediaFileMetadata mediaFileMetadata, byte[] bytes) {

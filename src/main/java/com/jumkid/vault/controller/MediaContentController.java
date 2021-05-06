@@ -14,22 +14,19 @@ package com.jumkid.vault.controller;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import com.jumkid.vault.util.ResponseMediaFileWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.Optional;
 
@@ -48,90 +45,96 @@ public class MediaContentController {
         this.responseMFileWriter = responseMFileWriter;
     }
 
-    @PostMapping
+    @GetMapping(value = "{id}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public MediaFile addContent(@NotNull @Valid @RequestBody MediaFile mediaFile){
-        setCreationInfo(mediaFile);
-        return fileService.addMediaFile(mediaFile, null);
+    public String getTextContent(@PathVariable("id") String id, @RequestParam(required = false) Boolean ignoreTitle){
+        return getContent(id, ignoreTitle);
     }
 
-    @GetMapping("/plain/{id}")
+    @GetMapping(value = "/html/{id}", produces = MediaType.TEXT_HTML_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public String getPlain(@PathVariable("id") String id, @RequestParam(required = false) Boolean ignoreTitle,
-                           @RequestParam(required = false) Boolean ignoreContent){
+    public String getHtml(@PathVariable("id") String id, @RequestParam(required = false) Boolean ignoreTitle) {
+        return getContent(id, ignoreTitle);
+    }
+
+    private String getContent(String id, Boolean ignoreTitle){
         MediaFile mediaFile = fileService.getMediaFile(id);
         StringBuilder sb = new StringBuilder();
         boolean addedTitle = false;
-        if (ignoreTitle == null || !ignoreTitle){
+        String title = mediaFile.getTitle();
+        if (title != null && (ignoreTitle == null || !ignoreTitle)){
             sb.append(mediaFile.getTitle());
             addedTitle = true;
         }
-        if (ignoreContent == null || !ignoreContent) {
-            if (addedTitle) sb.append("\n\n");
+        String content = mediaFile.getContent();
+        if (content != null && !content.isBlank()) {
+            if (addedTitle) sb.append("\n");
             sb.append(mediaFile.getContent());
         }
 
         return sb.toString();
     }
 
-    @PostMapping("/plain")
+    @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public MediaFile addPlain(@NotBlank @RequestParam String title, @RequestParam(required = false) String content) {
+    public MediaFile addTextContent(@RequestParam(required = false) String title, @NotBlank String content) {
         MediaFile mediaFile = MediaFile.builder()
                 .title(title).content(content)
-                .size(title.length() + (content == null ? 0 : content.length()))
+                .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_PLAIN_VALUE)
                 .build();
-        setCreationInfo(mediaFile);
         return fileService.addMediaFile(mediaFile, null);
     }
 
-    @GetMapping(value = "/html/{id}", produces = MediaType.TEXT_HTML_VALUE)
+    @PostMapping("/html")
     @ResponseStatus(HttpStatus.OK)
-    public String getHtml(@PathVariable("id") String id) {
-        Optional<byte[]> optional = fileService.getFileSource(id);
-        if (optional.isPresent()) {
-            return new String(optional.get());
-        } else {
-            throw new FileNotFoundException(id);
-        }
+    public MediaFile addHtmlContent(@RequestParam(required = false) String title, @NotBlank @RequestBody String content) {
+        MediaFile mediaFile = MediaFile.builder()
+                .title(title)
+                .content(content)
+                .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
+                .mimeType(MediaType.TEXT_HTML_VALUE)
+                .build();
+        return fileService.addMediaFile(mediaFile, null);
     }
 
     @GetMapping(value="/stream/{id}")
+    @ResponseStatus(HttpStatus.OK)
     public void stream(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response){
-        try {
-            MediaFile mediaFile = fileService.getMediaFile(id);
+        MediaFile mediaFile = fileService.getMediaFile(id);
 
-            if(mediaFile.getMimeType().startsWith("audio") || mediaFile.getMimeType().startsWith("video")){
-                log.debug("stream media content");
-                try (FileChannel fc = fileService.getFileChannel(id)) {
-                    if (fc != null) {
-                        response = responseMFileWriter.stream(mediaFile, fc, request, response);
-                    } else {
-                        log.error("File channel is blank. There is nothing to stream");
-                        throw new FileNotFoundException(id);
-                    }
-                }
+        if(mediaFile.getMimeType().startsWith("audio") || mediaFile.getMimeType().startsWith("video")){
+            log.debug("stream media content");
 
-            } else {
-                Optional<byte[]> optional = fileService.getFileSource(id);
-                if (optional.isPresent()) {
-                    response = responseMFileWriter.write(mediaFile, optional.get(), response);
+            try (FileChannel fc = fileService.getFileChannel(id)) {
+                if (fc != null) {
+                    response = responseMFileWriter.stream(mediaFile, fc, request, response);
                 } else {
-                    log.error("File channel is blank. There is nothing to stream");
+                    log.error("File is blank. There is nothing to stream");
                     throw new FileNotFoundException(id);
                 }
+            } catch (IOException ex) {
+                log.error("failed to stream file resource {}", ex.getMessage());
+            } finally {
+                try{
+                    response.flushBuffer();
+                } catch (Exception e) {
+                    log.error("fatal response issue {}", e.getMessage());
+                }
             }
-        } catch (Exception e) {
-            log.error("failed to stream file resource {}", e.getMessage());
-        } finally {
-            try{
-                response.flushBuffer();
-            } catch (Exception e) {
-                log.error("failed to get file resource {}", e.getMessage());
+
+        } else {
+            Optional<byte[]> optional = fileService.getFileSource(id);
+            if (optional.isPresent()) {
+                responseMFileWriter.write(mediaFile, optional.get(), response);
+                return;
+            } else {
+                log.error("File is blank. There is nothing to stream");
+                throw new FileNotFoundException(id);
             }
         }
 
+        throw new FileStoreServiceException(id);
     }
 
     @GetMapping(value="/thumbnail/{id}")
@@ -149,16 +152,6 @@ public class MediaContentController {
         } else {
             log.warn("File thumbnail {} is unavailable", id);
             throw new FileNotFoundException(id);
-        }
-    }
-
-    private void setCreationInfo(MediaFile mediaFile) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
-            mediaFile.setCreatedBy(userDetails.getUsername());
-        } else {
-            mediaFile.setCreatedBy(auth.getPrincipal().toString());
         }
     }
 

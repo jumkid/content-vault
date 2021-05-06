@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   version: v1
   title: content-vault API
@@ -24,7 +24,7 @@ tags:
 security:
   - bearerAuth: []
 paths:
-  /metadata:
+  '/metadata':
     get:
       tags:
         - v1
@@ -39,6 +39,24 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
+    post:
+      tags:
+        - v1
+      operationId: addMetadata
+      description: save a new metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaFile'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+      summary: Add raw metadata              
   '/metadata/{id}':
     get:
       tags:
@@ -99,25 +117,6 @@ paths:
       responses:
         '204':
           description: successfully delete the metadata by givn id
-  /content:
-    post:
-      tags:
-        - v1
-      operationId: addContent
-      description: save a new full content
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MediaFile'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MediaFile'
-      summary: Add full content
   '/content/html/{id}':
     get:
       tags:
@@ -137,8 +136,8 @@ paths:
           content:
             text/html:
               schema:
-                type: string
-  '/content/plain/{id}':
+                type: string           
+  '/content/{id}':
     get:
       tags:
         - v1
@@ -164,11 +163,11 @@ paths:
             test/plain:
               schema:
                 type: string
-  /content/plain:
+  '/content':
     post:
       tags:
         - v1
-      operationId: addPlain
+      operationId: addTextContent
       description: save a new plain content
       parameters:
         - name: title
@@ -187,7 +186,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-      summary: Add plain content
+      summary: Add text content
+  '/content/html':
+    post:
+      tags:
+        - v1
+      operationId: addHtmlContent
+      description: save a new text content
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+      summary: Add html content     
   '/content/stream/{id}':
     get:
       tags:
@@ -225,7 +249,8 @@ paths:
       responses:
         '200':
           description: binary as response
-  /file/upload:
+
+  '/file/upload':
     post:
       tags:
         - v1
@@ -253,6 +278,7 @@ paths:
           in: query
           name: tags
           description: a list of tags
+
   '/file/download/{id}':
     get:
       tags:

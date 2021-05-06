@@ -24,6 +24,8 @@ tags:
   - name: test
     description: API for test
 
+paths: {}
+
 components:
   schemas:
     LocalDateTime:

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -82,6 +83,20 @@ public class MetadataAPITest extends APITestsSetup {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
                 .andExpect(jsonPath("$.title").value("test.title"));
+    }
+
+    @Test
+    @WithMockUser(username="admin",
+            password="admin",
+            authorities="admin")
+    public void whenGivenMetadata_shouldSaveContentWithPros() throws Exception {
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+
+        mockMvc.perform(post("/metadata")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(mediaFileMetadata.getTitle()));
     }
 
     @Test

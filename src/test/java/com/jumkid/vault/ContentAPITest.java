@@ -60,22 +60,10 @@ public class ContentAPITest extends APITestsSetup {
     }
 
     @Test
-    public void whenGivenMetadata_shouldSaveContentWithPros() throws Exception {
+    public void whenGivenTitleAndContent_shouldSaveHtmlContent() throws Exception{
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         mockMvc.perform(post("/content")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value(mediaFileMetadata.getTitle()));
-                //.andExpect(jsonPath("$.props[0].name").value(mediaFileMetadata.getProps().get(0).getName()));
-    }
-
-    @Test
-    public void whenGivenTitleAndContent_shouldSaveSimpleContent() throws Exception{
-        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-
-        mockMvc.perform(post("/content/plain")
                     .contentType(MediaType.APPLICATION_JSON)
                     .param("title", mediaFileMetadata.getTitle())
                     .param("content", mediaFileMetadata.getContent()))
@@ -85,8 +73,8 @@ public class ContentAPITest extends APITestsSetup {
     }
 
     @Test
-    public void whenGivenId_shouldGetPlainContentWithTitle() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/plain/"+DUMMY_ID)
+    public void whenGivenId_shouldGetTextContentWithTitle() throws Exception {
+        MvcResult result = mockMvc.perform(get("/content/"+DUMMY_ID)
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -97,8 +85,8 @@ public class ContentAPITest extends APITestsSetup {
     }
 
     @Test
-    public void whenGivenIdAndIgnoreTitle_shouldGetPlainContentWithoutTitle() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/plain/"+DUMMY_ID)
+    public void whenGivenIdAndIgnoreTitle_shouldGetTextContentWithoutTitle() throws Exception {
+        MvcResult result = mockMvc.perform(get("/content/"+DUMMY_ID)
                 .contentType(MediaType.TEXT_PLAIN)
                 .queryParam("ignoreTitle", "true"))
                 .andExpect(status().isOk())
@@ -111,28 +99,40 @@ public class ContentAPITest extends APITestsSetup {
 
     @Test
     public void whenGivenInvalidId_shouldGet404WithInvalidId() throws Exception {
-        mockMvc.perform(get("/content/plain/"+INVALID_ID)
+        mockMvc.perform(get("/content/"+INVALID_ID)
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void shouldGet400WithoutId() throws Exception {
-        mockMvc.perform(get("/content/plain")
+        mockMvc.perform(get("/content")
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().is4xxClientError());
     }
 
     @Test
-    public void whenGivenId_shouldGetHtml() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/html/"+DUMMY_ID)
+    public void whenGivenId_shouldGetHtmlWithTitle() throws Exception {
+        MvcResult result = mockMvc.perform(get("/content/html/" + DUMMY_ID)
+                .contentType(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        Assert.assertTrue(content.contains("test.title"));
+        Assert.assertTrue(content.contains("<p>test.content</p>"));
+    }
+
+    @Test
+    public void whenGivenId_shouldGetHtmlWithoutTitle() throws Exception {
+        MvcResult result = mockMvc.perform(get("/content/html/" + DUMMY_ID + "?ignoreTitle=true")
                 .contentType(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
         Assert.assertFalse(content.contains("test.title"));
-        Assert.assertEquals("<p>test.content</p>", content);
+        Assert.assertTrue(content.contains("<p>test.content</p>"));
     }
 
 }
