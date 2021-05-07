@@ -28,8 +28,21 @@ paths:
     get:
       tags:
         - v1
-      operationId: getAllMetadata
-      description: get all metadata for media files
+      operationId: searchMetadata
+      description: search metadata with query and size
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: query string
+          schema:
+            type: string
+        - name: size
+          in: query
+          required: false
+          description: size of result set
+          schema:
+            type: integer    
       responses:
         '200':
           description: OK

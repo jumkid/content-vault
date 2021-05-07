@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -64,9 +64,9 @@ public class MetadataAPITest extends APITestsSetup {
             password="demo",
             authorities="user")
     public void shouldGetListOfMetadata() throws Exception {
-        when(metadataStorage.getAll()).thenReturn(buildListOfMetadata());
+        when(metadataStorage.searchMetadata(anyString(), anyInt())).thenReturn(buildListOfMetadata());
 
-        mockMvc.perform(get("/metadata"))
+        mockMvc.perform(get("/metadata?q=test&size=1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0]").exists())

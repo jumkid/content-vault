@@ -91,7 +91,7 @@ public interface MediaFileService {
      *
      * @return List of mediaFile
      */
-    List<MediaFile> getAll();
+    List<MediaFile> searchMediaFile(String query, Integer size);
 
     /**
      * Get all trashed media files

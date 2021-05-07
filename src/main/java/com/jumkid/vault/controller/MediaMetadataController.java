@@ -28,8 +28,10 @@ public class MediaMetadataController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public List<MediaFile> getAllMetadata(){
-        return fileService.getAll();
+    public List<MediaFile> searchMetadata(@RequestParam(required = false) String q,
+                                          @RequestParam(required = false) Integer size){
+        if (q == null || q.isBlank()) q = "*";
+        return fileService.searchMediaFile(q, size);
     }
 
     @GetMapping("{id}")

@@ -39,6 +39,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -69,11 +70,18 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public List<MediaFileMetadata> getAll() {
+    public List<MediaFileMetadata> searchMetadata(String query, Integer size) {
         SearchRequest searchRequest = new SearchRequest();
+
         searchRequest.searchType(SearchType.DEFAULT);
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        sourceBuilder.query(QueryBuilders.termQuery(ACTIVATED.value(), true));
+        QueryBuilder booleanQuery = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termQuery(ACTIVATED.value(), true))
+                .must(QueryBuilders.simpleQueryStringQuery(query));
+
+        sourceBuilder.size(size == null ? 50 : size);
+        sourceBuilder.query(booleanQuery);
         searchRequest.source(sourceBuilder);
 
         return searchMetadata(searchRequest);

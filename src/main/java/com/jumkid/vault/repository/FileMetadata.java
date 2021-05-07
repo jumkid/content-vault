@@ -79,11 +79,11 @@ public interface FileMetadata<T> {
     void updateLogicalPath(String id, String logicalPath);
 
     /**
-     * Get all media files from repository
+     * Search media files with given query string
      *
      * @return List of type
      */
-    List<T> getAll();
+    List<T> searchMetadata(String query, Integer size);
 
     /**
      * Get all trashed metadata from repository

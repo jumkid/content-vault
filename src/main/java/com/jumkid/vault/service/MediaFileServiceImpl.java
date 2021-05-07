@@ -196,8 +196,8 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public List<MediaFile> getAll() {
-        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.getAll();
+    public List<MediaFile> searchMediaFile(String query, Integer size) {
+        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.searchMetadata(query, size);
         if (mediaFileMetadataList == null) return Collections.emptyList();
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
