@@ -36,12 +36,12 @@ public class MediaMetadataController {
 
     @GetMapping("{id}")
     @ResponseStatus(HttpStatus.OK)
-    public MediaFile getMetadata(@PathVariable("id") String id){
-        MediaFile mediaFile = fileService.getMediaFile(id);
+    public MediaFile getMetadata(@PathVariable("id") String mediaFileId){
+        MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
         if (mediaFile != null) {
             return mediaFile;
         } else {
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(mediaFileId);
         }
     }
 
@@ -53,16 +53,18 @@ public class MediaMetadataController {
 
     @PutMapping("{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public MediaFile updateMetadata(@PathVariable("id") String id, @NotNull @RequestBody MediaFile mediaFile){
-        return fileService.updateMediaFile(id, mediaFile, null);
+    @PreAuthorize("hasAuthority('admin')" +
+            " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #mediaFileId))")
+    public MediaFile updateMetadata(@PathVariable("id") String mediaFileId, @NotNull @RequestBody MediaFile mediaFile){
+        return fileService.updateMediaFile(mediaFileId, mediaFile, null);
     }
 
     @DeleteMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public void deleteMetadata(@PathVariable("id") String id) {
-        fileService.trashMediaFile(id);
+    @PreAuthorize("hasAuthority('admin')" +
+            " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #mediaFileId))")
+    public void deleteMetadata(@PathVariable("id") String mediaFileId) {
+        fileService.trashMediaFile(mediaFileId);
     }
 
 }

@@ -78,12 +78,12 @@ public class MediaUploadDownloadController {
 
     @GetMapping("/download/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public void download(@PathVariable("id") String id, HttpServletResponse response){
+    public void download(@PathVariable("id") String mediaFileId, HttpServletResponse response){
         MediaFileMetadata mediaFileMetadata = null;
-        Optional<byte[]> opt = fileService.getFileSource(id);
+        Optional<byte[]> opt = fileService.getFileSource(mediaFileId);
         try {
             if(opt.isPresent()) {
-                mediaFileMetadata = fileService.getMediaFileMetadata(id);
+                mediaFileMetadata = fileService.getMediaFileMetadata(mediaFileId);
                 byte[] bytes = opt.get();
                 responseMFileWriter.writeForDownload(mediaFileMetadata, bytes, response);
             }

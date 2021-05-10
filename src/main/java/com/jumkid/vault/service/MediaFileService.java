@@ -33,58 +33,58 @@ public interface MediaFileService {
     /**
      * Update existing media file metadata and binary
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      * @param mediaFile media file info
      * @param file binary of file
      * @return MediaFile
      */
-    MediaFile updateMediaFile(String id, MediaFile mediaFile, byte[] file);
+    MediaFile updateMediaFile(String mediaFileId, MediaFile mediaFile, byte[] file);
 
     /**
      * Retrieve media file by id
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      * @return MediaFile
      */
-    MediaFile getMediaFile(String id);
+    MediaFile getMediaFile(String mediaFileId);
 
     /**
      * Retrieve media file by id
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      * @return MediaFileMetadata
      */
-    MediaFileMetadata getMediaFileMetadata(String id);
+    MediaFileMetadata getMediaFileMetadata(String mediaFileId);
 
     /**
      * Retrieve media file binary by id
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      * @return FileChannel
      */
-    Optional<byte[]> getFileSource(String id);
+    Optional<byte[]> getFileSource(String mediaFileId);
 
     /**
      * Get thumbnail of media file by id
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      * @return optional of binary
      */
-    Optional<byte[]> getThumbnail(String id, ThumbnailNamespace thumbnailNamespace);
+    Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace);
 
     /**
      * Retrieve media file source by id
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      * @return FileChannel
      */
-    FileChannel getFileChannel(String id);
+    FileChannel getFileChannel(String mediaFileId);
 
     /**
      *
-     * @param id media file identity
+     * @param mediaFileId media file identity
      */
-    void trashMediaFile(String id);
+    void trashMediaFile(String mediaFileId);
 
     /**
      * Get all media files

@@ -64,7 +64,7 @@ public class MetadataAPITest extends APITestsSetup {
             password="demo",
             authorities="user")
     public void shouldGetListOfMetadata() throws Exception {
-        when(metadataStorage.searchMetadata(anyString(), anyInt())).thenReturn(buildListOfMetadata());
+        when(metadataStorage.searchMetadata(anyString(), anyInt(), anyList(), eq("demo1"))).thenReturn(buildListOfMetadata());
 
         mockMvc.perform(get("/metadata?q=test&size=1"))
                 .andExpect(status().isOk())

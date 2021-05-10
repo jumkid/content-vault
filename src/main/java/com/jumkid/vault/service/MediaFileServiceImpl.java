@@ -41,6 +41,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import static com.jumkid.share.util.Constants.ANONYMOUS_USER;
+
 @Slf4j
 @Service("fileService")
 public class MediaFileServiceImpl implements MediaFileService {
@@ -55,10 +57,13 @@ public class MediaFileServiceImpl implements MediaFileService {
 
 	private final MediaFileMapper mediaFileMapper = Mappers.getMapper( MediaFileMapper.class );
 
+	private final MediaFileSecurityService securityService;
+
 	@Autowired
 	public MediaFileServiceImpl(FileMetadata<MediaFileMetadata> metadataStorage,
                                 FileStorage<MediaFileMetadata> hadoopFileStorage,
-                                FileStorage<MediaFileMetadata> localFileStorage) {
+                                FileStorage<MediaFileMetadata> localFileStorage, MediaFileSecurityService securityService) {
+        this.securityService = securityService;
         storageRegistry.put(StorageMode.LOCAL, localFileStorage);
         storageRegistry.put(StorageMode.HADOOP, hadoopFileStorage);
 	    this.metadataStorage = metadataStorage;
@@ -127,39 +132,39 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-	public MediaFile getMediaFile(String id) {
-    	log.debug("Retrieve media file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
+	public MediaFile getMediaFile(String mediaFileId) {
+    	log.debug("Retrieve media file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
         if (mediaFileMetadata != null) {
             return mediaFileMapper.metadataToDto(mediaFileMetadata);
         } else {
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(mediaFileId);
         }
 	}
 
     @Override
-    public MediaFileMetadata getMediaFileMetadata(String id) {
-        log.debug("Retrieve media file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
+    public MediaFileMetadata getMediaFileMetadata(String mediaFileId) {
+        log.debug("Retrieve media file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
         if (mediaFileMetadata != null) {
             return mediaFileMetadata;
         } else {
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(mediaFileId);
         }
     }
 
     @Override
-    public Optional<byte[]> getFileSource(String id) {
-        log.debug("Retrieve source file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
+    public Optional<byte[]> getFileSource(String mediaFileId) {
+        log.debug("Retrieve source file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
 
         return getFileStorage().getFileBinary(mediaFileMetadata);
     }
 
     @Override
-    public Optional<byte[]> getThumbnail(String id, ThumbnailNamespace thumbnailNamespace) {
-        log.debug("Retrieve thumbnail of file by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
+    public Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace) {
+        log.debug("Retrieve thumbnail of file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
         if (mediaFileMetadata != null) {
             return getFileStorage().getThumbnail(mediaFileMetadata, thumbnailNamespace);
         } else {
@@ -168,36 +173,37 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public FileChannel getFileChannel(String id) {
-        log.debug("Retrieve file channel by given id {}", id);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
+    public FileChannel getFileChannel(String mediaFileId) {
+        log.debug("Retrieve file channel by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
 	    return getFileStorage().getFileRandomAccess(mediaFileMetadata).orElseThrow();
     }
 
     @Override
-    public void trashMediaFile(String id) {
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(id);
+    public void trashMediaFile(String mediaFileId) {
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
         if (mediaFileMetadata != null && mediaFileMetadata.getActivated()) {
-            metadataStorage.updateMetadataStatus(id, false);
+            metadataStorage.updateMetadataStatus(mediaFileId, false);
 
             try {
                 getFileStorage().deleteFile(mediaFileMetadata);
             } catch (FileNotFoundException ex) {
-                metadataStorage.updateLogicalPath(id, null);
+                metadataStorage.updateLogicalPath(mediaFileId, null);
             } catch (Exception e) {
                 //roll back metadata status
-                metadataStorage.updateMetadataStatus(id, true);
+                metadataStorage.updateMetadataStatus(mediaFileId, true);
                 throw new FileStoreServiceException(e.getMessage());
             }
 
         } else {
-            log.warn("metadata is not found for media file {}", id);
+            log.warn("metadata is not found for media file {}", mediaFileId);
         }
     }
 
     @Override
     public List<MediaFile> searchMediaFile(String query, Integer size) {
-        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.searchMetadata(query, size);
+        List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.searchMetadata(query, size,
+                securityService.getCurrentUserRoles(), securityService.getCurrentUserName());
         if (mediaFileMetadataList == null) return Collections.emptyList();
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }
@@ -241,7 +247,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     private String getCurrentUserName() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null) return "anonymousUser";
+        if (auth == null) return ANONYMOUS_USER;
 
         if (auth.getPrincipal() instanceof UserDetails) {
             UserDetails userDetails = (UserDetails) auth.getPrincipal();

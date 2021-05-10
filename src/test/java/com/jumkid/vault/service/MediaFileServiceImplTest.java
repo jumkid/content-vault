@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.LocalDateTime;
@@ -33,12 +34,14 @@ public class MediaFileServiceImplTest {
     @Mock
     private LocalFileStorage localFileStorage;
 
+    private MediaFileSecurityService securityService;
     private MediaFileServiceImpl mediaFileService;
     private static LocalDateTime now;
 
     @Before
     public void setup(){
-        mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage);
+        securityService = new MediaFileSecurityServiceImpl(metadataStorage);
+        mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage, securityService);
         mediaFileService.setStorageMode("local");
         now = LocalDateTime.now();
     }

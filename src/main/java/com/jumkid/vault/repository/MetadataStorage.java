@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumkid.vault.enums.MediaFilePropField;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
+
+import static com.jumkid.share.util.Constants.ADMIN_ROLE;
 import static com.jumkid.vault.util.Constants.*;
 
 import com.jumkid.vault.model.MediaFileProp;
@@ -39,6 +41,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -70,15 +73,20 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public List<MediaFileMetadata> searchMetadata(String query, Integer size) {
+    public List<MediaFileMetadata> searchMetadata(String query, Integer size,
+                                                  List<String> currentUserRole, String currentUsername) {
         SearchRequest searchRequest = new SearchRequest();
 
         searchRequest.searchType(SearchType.DEFAULT);
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        QueryBuilder booleanQuery = QueryBuilders.boolQuery()
-                .must(QueryBuilders.termQuery(ACTIVATED.value(), true))
-                .must(QueryBuilders.simpleQueryStringQuery(query));
+        BoolQueryBuilder booleanQuery = QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery(ACTIVATED.value(), true))
+                .filter(QueryBuilders.simpleQueryStringQuery(query));
+
+        if (!currentUserRole.contains(ADMIN_ROLE)) {
+            booleanQuery.filter(QueryBuilders.termQuery(CREATED_BY.value(), currentUsername));
+        }
 
         sourceBuilder.size(size == null ? 50 : size);
         sourceBuilder.query(booleanQuery);
@@ -138,9 +146,9 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public MediaFileMetadata getMetadata(String id) {
+    public MediaFileMetadata getMetadata(String mediaFileId) {
 
-        GetRequest request = new GetRequest(ES_INDEX_MFILE).id(id);
+        GetRequest request = new GetRequest(ES_INDEX_MFILE).id(mediaFileId);
 
         try {
             GetResponse getResponse = esClient.get(request, RequestOptions.DEFAULT);
@@ -244,41 +252,41 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public MediaFileMetadata updateMetadata(MediaFileMetadata mediaFileMetadata) {
-        String id = mediaFileMetadata.getId();
+        String mediaFileId = mediaFileMetadata.getId();
         try {
             XContentBuilder builder = jsonBuilder();
             buildContent(builder, mediaFileMetadata);
 
-            updateMetadata(id, builder);
+            updateMetadata(mediaFileId, builder);
         } catch (IOException e) {
-            log.error("failed to update metadata {} due to {}", id, e.getMessage());
+            log.error("failed to update metadata {} due to {}", mediaFileId, e.getMessage());
         }
 
         return mediaFileMetadata;
     }
 
     @Override
-    public void updateMetadataStatus(String id, boolean active) {
+    public void updateMetadataStatus(String mediaFileId, boolean active) {
         try {
-            updateMetadata(id, jsonBuilder().startObject().field(ACTIVATED.value(), active).endObject());
+            updateMetadata(mediaFileId, jsonBuilder().startObject().field(ACTIVATED.value(), active).endObject());
         } catch (IOException e) {
-            log.error("failed to update metadata logical path {} due to {}", id, e.getMessage());
+            log.error("failed to update metadata logical path {} due to {}", mediaFileId, e.getMessage());
         }
     }
 
     @Override
-    public void updateLogicalPath(String id, String logicalPath) {
+    public void updateLogicalPath(String mediaFileId, String logicalPath) {
         try {
-            updateMetadata(id, jsonBuilder().startObject().field(LOGICAL_PATH.value(), logicalPath).endObject());
+            updateMetadata(mediaFileId, jsonBuilder().startObject().field(LOGICAL_PATH.value(), logicalPath).endObject());
         } catch (IOException e) {
-            log.error("failed to update metadata logical path {} due to {}", id, e.getMessage());
+            log.error("failed to update metadata logical path {} due to {}", mediaFileId, e.getMessage());
         }
     }
 
-    private void updateMetadata(String id, XContentBuilder builder) throws IOException{
+    private void updateMetadata(String mediaFileId, XContentBuilder builder) throws IOException{
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.index(ES_INDEX_MFILE);
-        updateRequest.id(id);
+        updateRequest.id(mediaFileId);
 
         updateRequest.doc(builder);
 
@@ -343,8 +351,8 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public Optional<byte[]> getBinary(String id) {
-        GetRequest request = new GetRequest(ES_INDEX_MFILE).id(id);
+    public Optional<byte[]> getBinary(String mediaFileId) {
+        GetRequest request = new GetRequest(ES_INDEX_MFILE).id(mediaFileId);
         try {
             GetResponse getResponse = esClient.get(request, RequestOptions.DEFAULT);
 
@@ -358,15 +366,15 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public boolean deleteMetadata(String id) {
-        DeleteRequest deleteRequest = new DeleteRequest(ES_INDEX_MFILE).id(id);
+    public boolean deleteMetadata(String mediaFileId) {
+        DeleteRequest deleteRequest = new DeleteRequest(ES_INDEX_MFILE).id(mediaFileId);
         deleteRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
         try {
             DeleteResponse deleteResponse = esClient.delete(deleteRequest, RequestOptions.DEFAULT);
             return deleteResponse.getResult() == DocWriteResponse.Result.DELETED;
         } catch (IOException ioe) {
             log.error("failed to delete media file {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to delete media file id[" + id + "] from Elasticsearch, please contact system administrator.");
+            throw new FileStoreServiceException("Not able to delete media file id[" + mediaFileId + "] from Elasticsearch, please contact system administrator.");
         }
     }
 

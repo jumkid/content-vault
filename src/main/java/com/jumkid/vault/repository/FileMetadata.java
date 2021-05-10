@@ -37,23 +37,23 @@ public interface FileMetadata<T> {
     /**
      * Get type from repository by given identifier
      *
-     * @param id identity of media
+     * @param mediaFileId identity of media
      */
-    T getMetadata(String id);
+    T getMetadata(String mediaFileId);
 
     /**
      * Get file from repository
      *
-     * @param id identity of media
+     * @param mediaFileId identity of media
      */
-    Optional<byte[]> getBinary(String id);
+    Optional<byte[]> getBinary(String mediaFileId);
 
     /**
      * Remove file from search
      *
-     * @param id identity of media file
+     * @param mediaFileId identity of media file
      */
-    boolean deleteMetadata(String id);
+    boolean deleteMetadata(String mediaFileId);
 
     /**
      * update the metadata of give type
@@ -66,24 +66,28 @@ public interface FileMetadata<T> {
     /**
      * update metadata active status
      *
-     * @param id identity of media file
+     * @param mediaFileId identity of media file
      */
-    void updateMetadataStatus(String id, boolean active);
+    void updateMetadataStatus(String mediaFileId, boolean active);
 
     /**
      * Update metadata file storage path
      *
-     * @param id identity of media file
+     * @param mediaFileId identity of media file
      * @param logicalPath file path on the storage
      */
-    void updateLogicalPath(String id, String logicalPath);
+    void updateLogicalPath(String mediaFileId, String logicalPath);
 
     /**
      * Search media files with given query string
      *
+     * @param query query keyword
+     * @param size size of result set
+     * @param currentUserRole current user roles
+     * @param currentUsername current username
      * @return List of type
      */
-    List<T> searchMetadata(String query, Integer size);
+    List<T> searchMetadata(String query, Integer size, List<String> currentUserRole, String currentUsername);
 
     /**
      * Get all trashed metadata from repository
