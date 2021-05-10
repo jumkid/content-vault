@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -56,6 +57,9 @@ public class FileUploadAPITest extends APITestsSetup {
     }
 
     @Test
+    @WithMockUser(username="test",
+            password="test",
+            authorities="user")
     public void whenGivenFile_shouldUploadFile() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
@@ -66,6 +70,22 @@ public class FileUploadAPITest extends APITestsSetup {
         mockMvc.perform(multipart("/file/upload").file("file", uploadFile))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.filename").value(mediaFileMetadata.getFilename()));
+    }
+
+    @Test
+    @WithMockUser(username="test",
+            password="test",
+            authorities="user")
+    public void whenGivenFile_shouldUploadMultipleFile() throws Exception {
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
+        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+
+        byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
+
+        mockMvc.perform(multipart("/file/multipleUpload").file("files", uploadFile))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$[0].filename").value(mediaFileMetadata.getFilename()));
     }
 
 }

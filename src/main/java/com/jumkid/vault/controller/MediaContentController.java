@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -77,6 +78,7 @@ public class MediaContentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public MediaFile addTextContent(@RequestParam(required = false) String title, @NotBlank String content) {
         MediaFile mediaFile = MediaFile.builder()
                 .title(title).content(content)
@@ -88,6 +90,7 @@ public class MediaContentController {
 
     @PostMapping("/html")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public MediaFile addHtmlContent(@RequestParam(required = false) String title, @NotBlank @RequestBody String content) {
         MediaFile mediaFile = MediaFile.builder()
                 .title(title)

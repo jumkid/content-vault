@@ -31,7 +31,7 @@ public class MediaTrashController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public long emptyTrash() { return fileService.emptyTrash(); }
 
 }

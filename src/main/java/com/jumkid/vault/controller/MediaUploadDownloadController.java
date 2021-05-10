@@ -9,6 +9,7 @@ import com.jumkid.vault.util.ResponseMediaFileWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +44,7 @@ public class MediaUploadDownloadController {
 
     @PostMapping("/upload")
     @ResponseStatus(HttpStatus.ACCEPTED)
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public MediaFile upload(@NotNull @RequestParam("file") MultipartFile file,
                             @RequestParam(value = "tags", required = false) List<String> tags,
                             HttpServletRequest httpRequest){
@@ -59,11 +62,40 @@ public class MediaUploadDownloadController {
             setUserInfo(mediaFile);
 
             mediaFile = fileService.addMediaFile(mediaFile, file.getBytes());
-            log.info("media file {} uploaded", mediaFile.getFilename());
+            log.debug("media file {} uploaded", mediaFile.getFilename());
             return mediaFile;
         } catch (IOException ioe) {
             throw new FileStoreServiceException("Failed to update file", mediaFile);
         }
+    }
+
+    @PostMapping("/multipleUpload")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public List<MediaFile> multipleUpload(@NotNull @RequestParam("files") MultipartFile[] files,
+                                          @RequestParam(value = "tags", required = false) List<String> tags) {
+        MediaFile mediaFile = null;
+        List<MediaFile> mediaFileList = new ArrayList<>();
+        try {
+            for (MultipartFile file : files) {
+                mediaFile = MediaFile.builder()
+                        .title(file.getName())
+                        .filename(file.getOriginalFilename())
+                        .size((int)file.getSize())
+                        .mimeType(file.getContentType())
+                        .tags(tags)
+                        .build();
+
+                setUserInfo(mediaFile);
+
+                mediaFile = fileService.addMediaFile(mediaFile, file.getBytes());
+                mediaFileList.add(mediaFile);
+                log.debug("media file {} uploaded", mediaFile.getFilename());
+            }
+        } catch (IOException ioe) {
+            throw new FileStoreServiceException("Failed to update file ", mediaFile);
+        }
+        return mediaFileList;
     }
 
     private void setUserInfo(MediaFile mediaFile) {

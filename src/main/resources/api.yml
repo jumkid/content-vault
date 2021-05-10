@@ -278,20 +278,43 @@ paths:
                 file:
                   type: string
                   format: binary
+                tags:
+                  type: array
+                  format: string
       responses:
         '202':
-          description: save a new content in plain format
+          description: upload a new content in file format
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-      parameters:
-        - schema:
-            type: array
-          in: query
-          name: tags
-          description: a list of tags
-
+  '/file/multipleUpload':
+    post:
+      tags:
+        - v1
+      operationId: multipleUpload
+      description: multiple files upload
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  format: binary
+                tags:
+                  type: array
+                  format: string
+      responses:
+        '202':
+          description: upload multiple content in file format
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaFile'
   '/file/download/{id}':
     get:
       tags:
