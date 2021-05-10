@@ -57,6 +57,13 @@ paths:
         - v1
       operationId: addMetadata
       description: save a new metadata
+      parameters:
+        - name: mediaFileModule
+          in: query
+          required: true
+          description: mediaFile module
+          schema:
+            $ref: '#/components/schemas/MediaFileModule'
       requestBody:
         content:
           application/json:
@@ -102,6 +109,18 @@ paths:
           description: mediafile identifier
           schema:
             type: string
+        - name: mediaFileField
+          in: query
+          required: true
+          description: mediaFile field name
+          schema:
+            $ref: '#/components/schemas/MediaFileField'
+        - name: mediaFileFieldValue
+          in: query
+          required: true
+          description: mediaFile field value
+          schema:
+            type: string  
       requestBody:
         description: metadata json object
         content:
@@ -425,10 +444,12 @@ components:
             properties:
               name:
                 type: string
-              value:
+              textValue:
                 type: string
-              dataType:
-                $ref: '#/components/schemas/MediaFilePropType'
+              dateValue:
+                $ref: ./share.yaml#/components/schemas/LocalDateTime
+              numberValue:
+                type: integer  
         tags:
           type: array
           items:
@@ -438,14 +459,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MediaFile'
-    MediaFilePropType:
+    MediaFileField:
       type: string
       enum:
-        - integer
-        - string
-        - boolean
-        - float
-        - datetime
+        - title
+        - filename
+        - mimeType
+        - module
+        - content
+    MediaFileModule:
+      type: string
+      enum:
+        - file
+        - text
+        - html
+        - gallery    
     ThumbnailSize:
       type: string
       enum:

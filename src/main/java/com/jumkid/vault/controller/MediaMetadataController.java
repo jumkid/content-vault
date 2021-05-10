@@ -1,7 +1,10 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileField;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,16 +50,27 @@ public class MediaMetadataController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public MediaFile addMetadata(@NotNull @Valid @RequestBody MediaFile mediaFile){
-        return fileService.addMediaFile(mediaFile, null);
+    public MediaFile addMetadata(@NotNull @Valid @RequestBody MediaFile mediaFile,
+                                 @NotNull MediaFileModule mediaFileModule){
+        return fileService.addMediaFile(mediaFile, null, mediaFileModule);
     }
 
     @PutMapping("{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('admin')" +
             " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #mediaFileId))")
-    public MediaFile updateMetadata(@PathVariable("id") String mediaFileId, @NotNull @RequestBody MediaFile mediaFile){
-        return fileService.updateMediaFile(mediaFileId, mediaFile, null);
+    public MediaFile updateMetadata(@PathVariable("id") String mediaFileId,
+                                    @RequestParam(required = false) MediaFileField fieldName,
+                                    @RequestParam(required = false) String fieldValue,
+                                    @RequestBody(required = false) MediaFile mediaFile){
+        if (fieldName != null && fieldValue != null) {
+            if (!fileService.updateMediaFileFieldValue(mediaFileId, fieldName, fieldValue)) {
+                throw new FileStoreServiceException(String.join("Failed to update media file field %s value", fieldName.value()));
+            }
+        } else if (mediaFile != null) {
+            return fileService.updateMediaFile(mediaFileId, mediaFile, null);
+        }
+        return null;
     }
 
     @DeleteMapping("{id}")

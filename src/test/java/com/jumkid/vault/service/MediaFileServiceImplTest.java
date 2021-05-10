@@ -1,6 +1,7 @@
 package com.jumkid.vault.service;
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.HadoopFileStorage;
@@ -50,7 +51,7 @@ public class MediaFileServiceImplTest {
     public void shouldAddMediaFileWithoutBytes() {
         final MediaFile mediaFile = generateMediaFile();
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(generateMediaFileMetadata());
-        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, null);
+        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, null, MediaFileModule.TEXT);
 
         Assertions.assertThat(savedMediaFile).isEqualTo(generateMediaFile());
     }
@@ -63,7 +64,7 @@ public class MediaFileServiceImplTest {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(eq(bytes), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
         when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, bytes);
+        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, bytes, MediaFileModule.FILE);
 
         Assertions.assertThat(savedMediaFile).isEqualTo(generateMediaFile());
     }
@@ -79,10 +80,15 @@ public class MediaFileServiceImplTest {
 
     private MediaFileMetadata generateMediaFileMetadata() {
         return MediaFileMetadata.builder()
-                .title("test").filename("test file").id("1")
-                .mimeType("plain/text").activated(true)
-                .content("test content").size(DEFAULT_SIZE)
-                .module("mediaFile").logicalPath("/foo")
+                .id("1")
+                .title("test")
+                .filename("test file")
+                .mimeType("plain/text")
+                .activated(true)
+                .content("test content")
+                .size(DEFAULT_SIZE)
+                .module(MediaFileModule.TEXT)
+                .logicalPath("/foo")
                 .creationDate(now).modificationDate(now)
                 .build();
     }

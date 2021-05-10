@@ -1,6 +1,7 @@
 package com.jumkid.vault.service;
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileModule;
 import it.grabz.grabzit.GrabzItClient;
 import it.grabz.grabzit.GrabzItFile;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class MediaIngestService {
 
                 //TODO set user info
 
-                return fileService.addMediaFile(mediaFile, gFile.getBytes());
+                return fileService.addMediaFile(mediaFile, gFile.getBytes(), MediaFileModule.FILE);
             }
 
         } catch (Exception e) {

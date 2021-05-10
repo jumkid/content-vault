@@ -12,6 +12,8 @@ package com.jumkid.vault.service;
  */
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileField;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
 
@@ -28,7 +30,7 @@ public interface MediaFileService {
      * @param file binary of file
      * @return MediaFile
      */
-    MediaFile addMediaFile(MediaFile mediaFile, byte[] file);
+    MediaFile addMediaFile(MediaFile mediaFile, byte[] file, MediaFileModule mediaFileModule);
 
     /**
      * Update existing media file metadata and binary
@@ -39,6 +41,16 @@ public interface MediaFileService {
      * @return MediaFile
      */
     MediaFile updateMediaFile(String mediaFileId, MediaFile mediaFile, byte[] file);
+
+    /**
+     * Update existing media file metadata field value
+     *
+     * @param mediaFileId media file identity
+     * @param mediaFileField media file field
+     * @param value media file field value
+     * @return true if succeed
+     */
+    boolean updateMediaFileFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value);
 
     /**
      * Retrieve media file by id

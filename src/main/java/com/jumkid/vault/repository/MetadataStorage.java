@@ -13,6 +13,8 @@ package com.jumkid.vault.repository;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumkid.vault.enums.MediaFileField;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.MediaFilePropField;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
@@ -42,7 +44,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -177,7 +178,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
                 .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
                 .tags((List<String>) sourceMap.get(TAGS.value()))
                 .children(linkToReferencedMetadata((List<MediaFileMetadata>) sourceMap.get(CHILDREN.value())))
-                .module((String)sourceMap.get(MODULE.value()))
+                .module(MediaFileModule.valueOf((String)sourceMap.get(MODULE.value())))
                 .creationDate(sourceMap.get(CREATION_DATE.value()) != null ? DateTimeUtils.stringToLocalDatetime(sourceMap.get(CREATION_DATE.value()).toString()) : null)
                 .createdBy(sourceMap.get(CREATED_BY.value()) != null ? sourceMap.get(CREATED_BY.value()).toString() : null)
                 .modifiedBy((String)sourceMap.get(MODIFIED_BY.value()))
@@ -263,6 +264,17 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         }
 
         return mediaFileMetadata;
+    }
+
+    @Override
+    public boolean updateMetadataFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value) {
+        try {
+            updateMetadata(mediaFileId, jsonBuilder().startObject().field(mediaFileField.value(), value).endObject());
+            return true;
+        } catch (IOException e) {
+            log.error("failed to update metadata {} field {} due to {}", mediaFileId, mediaFileField.value(), e.getMessage());
+            return false;
+        }
     }
 
     @Override

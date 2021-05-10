@@ -12,6 +12,7 @@ package com.jumkid.vault.controller;
  */
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
@@ -85,7 +86,7 @@ public class MediaContentController {
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_PLAIN_VALUE)
                 .build();
-        return fileService.addMediaFile(mediaFile, null);
+        return fileService.addMediaFile(mediaFile, null, MediaFileModule.FILE);
     }
 
     @PostMapping("/html")
@@ -98,7 +99,7 @@ public class MediaContentController {
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_HTML_VALUE)
                 .build();
-        return fileService.addMediaFile(mediaFile, null);
+        return fileService.addMediaFile(mediaFile, null, MediaFileModule.HTML);
     }
 
     @GetMapping(value="/stream/{id}")

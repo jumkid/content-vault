@@ -10,6 +10,8 @@ package com.jumkid.vault.repository;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
+import com.jumkid.vault.enums.MediaFileField;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -62,6 +64,16 @@ public interface FileMetadata<T> {
      * @return type
      */
     T updateMetadata(T t);
+
+    /**
+     * update the metadata of give single field name and value
+     *
+     * @param mediaFileId identity of media file
+     * @param mediaFileField for field name
+     * @param value for the field
+     * @return true if succeed
+     */
+    boolean updateMetadataFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value);
 
     /**
      * update metadata active status

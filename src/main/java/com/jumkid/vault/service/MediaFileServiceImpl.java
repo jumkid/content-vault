@@ -19,6 +19,8 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileField;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.StorageMode;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
@@ -75,10 +77,11 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     //TODO make the whole process transactional
     @Override
-    public MediaFile addMediaFile(MediaFile mediaFile, byte[] bytes) {
+    public MediaFile addMediaFile(MediaFile mediaFile, byte[] bytes, MediaFileModule mediaFileModule) {
         normalizeDTO(null, mediaFile, null);
 
         MediaFileMetadata mediaFileMetadata = mediaFileMapper.dtoToMetadata(mediaFile);
+        mediaFileMetadata.setModule(mediaFileModule);
 
 	    if(bytes == null || bytes.length == 0) {
 	        mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
@@ -106,6 +109,8 @@ public class MediaFileServiceImpl implements MediaFileService {
             normalizeDTO(uuid, mediaFile, oldMetadata);
 
             MediaFileMetadata mediaFileMetadata = mediaFileMapper.dtoToMetadata(mediaFile);
+
+            mediaFileMetadata.setModule(oldMetadata.getModule());
             mediaFileMetadata.setLogicalPath(oldMetadata.getLogicalPath());
 
             if (bytes == null || bytes.length == 0) {
@@ -129,6 +134,11 @@ public class MediaFileServiceImpl implements MediaFileService {
         } else {
             throw new FileNotFoundException(uuid);
         }
+    }
+
+    @Override
+    public boolean updateMediaFileFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value) {
+        return metadataStorage.updateMetadataFieldValue(mediaFileId, mediaFileField, value);
     }
 
     @Override

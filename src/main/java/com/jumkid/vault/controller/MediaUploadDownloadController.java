@@ -1,6 +1,7 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.service.MediaFileService;
@@ -61,7 +62,7 @@ public class MediaUploadDownloadController {
 
             setUserInfo(mediaFile);
 
-            mediaFile = fileService.addMediaFile(mediaFile, file.getBytes());
+            mediaFile = fileService.addMediaFile(mediaFile, file.getBytes(), MediaFileModule.FILE);
             log.debug("media file {} uploaded", mediaFile.getFilename());
             return mediaFile;
         } catch (IOException ioe) {
@@ -88,7 +89,7 @@ public class MediaUploadDownloadController {
 
                 setUserInfo(mediaFile);
 
-                mediaFile = fileService.addMediaFile(mediaFile, file.getBytes());
+                mediaFile = fileService.addMediaFile(mediaFile, file.getBytes(), MediaFileModule.FILE);
                 mediaFileList.add(mediaFile);
                 log.debug("media file {} uploaded", mediaFile.getFilename());
             }

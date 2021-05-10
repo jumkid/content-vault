@@ -12,7 +12,7 @@ package com.jumkid.vault.model;
  */
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.jumkid.vault.util.Constants;
+import com.jumkid.vault.enums.MediaFileModule;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -35,7 +35,7 @@ public class MediaFileMetadata {
 	private Integer size;
 
 	@JsonIgnore
-	private String module = Constants.MODULE_MEDIA_FILE;
+	private MediaFileModule module;
 
 	private String title;
 
