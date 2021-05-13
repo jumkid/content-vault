@@ -1,6 +1,7 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.share.controller.response.CustomErrorResponse;
+import com.jumkid.vault.exception.FileNotAvailableException;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.exception.InvalidFieldException;
@@ -23,9 +24,9 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @Slf4j
 public class AdviceController {
 
-    @ExceptionHandler({FileNotFoundException.class})
+    @ExceptionHandler({FileNotFoundException.class, FileNotAvailableException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public CustomErrorResponse handle(FileNotFoundException ex) {
+    public CustomErrorResponse handle(RuntimeException ex) {
         log.info(ex.getMessage());
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
     }

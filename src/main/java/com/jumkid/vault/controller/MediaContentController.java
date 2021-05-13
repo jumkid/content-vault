@@ -86,7 +86,7 @@ public class MediaContentController {
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_PLAIN_VALUE)
                 .build();
-        return fileService.addMediaFile(mediaFile, null, MediaFileModule.FILE);
+        return fileService.addMediaFile(mediaFile, MediaFileModule.FILE);
     }
 
     @PostMapping("/html")
@@ -99,7 +99,7 @@ public class MediaContentController {
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_HTML_VALUE)
                 .build();
-        return fileService.addMediaFile(mediaFile, null, MediaFileModule.HTML);
+        return fileService.addMediaFile(mediaFile, MediaFileModule.HTML);
     }
 
     @GetMapping(value="/stream/{id}")

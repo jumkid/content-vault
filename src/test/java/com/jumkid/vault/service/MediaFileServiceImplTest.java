@@ -1,5 +1,6 @@
 package com.jumkid.vault.service;
 
+import com.jumkid.vault.TestsSetup;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.model.MediaFileMetadata;
@@ -12,10 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -24,9 +23,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringJUnit4ClassRunner.class)
-public class MediaFileServiceImplTest {
-
-    private final int DEFAULT_SIZE = 100;
+public class MediaFileServiceImplTest extends TestsSetup {
 
     @Mock
     private MetadataStorage metadataStorage;
@@ -34,63 +31,52 @@ public class MediaFileServiceImplTest {
     private HadoopFileStorage hadoopFileStorage;
     @Mock
     private LocalFileStorage localFileStorage;
-
+    @Mock
     private MediaFileSecurityService securityService;
+
     private MediaFileServiceImpl mediaFileService;
-    private static LocalDateTime now;
 
     @Before
     public void setup(){
-        securityService = new MediaFileSecurityServiceImpl(metadataStorage);
+        when(securityService.getCurrentUserName()).thenReturn("admin");
+
         mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage, securityService);
         mediaFileService.setStorageMode("local");
-        now = LocalDateTime.now();
     }
 
     @Test
     public void shouldAddMediaFileWithoutBytes() {
-        final MediaFile mediaFile = generateMediaFile();
-        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(generateMediaFileMetadata());
-        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, null, MediaFileModule.TEXT);
+        final MediaFile mediaFile = buildMediaFile(null);
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(buildMetadata(null));
+        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, MediaFileModule.TEXT);
 
-        Assertions.assertThat(savedMediaFile).isEqualTo(generateMediaFile());
+        Assertions.assertThat(savedMediaFile).isEqualTo(mediaFile);
     }
 
     @Test
     public void shouldAddMediaFileWithBytes() {
-        final MediaFile mediaFile = generateMediaFile();
-        final MediaFileMetadata mediaFileMetadata = generateMediaFileMetadata();
-        byte[] bytes = new byte[DEFAULT_SIZE];
+        final MediaFile mediaFile = buildMediaFile(null);
+        final MediaFileMetadata mediaFileMetadata = buildMetadata(null);
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        when(localFileStorage.saveFile(eq(bytes), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
-        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
-        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, bytes, MediaFileModule.FILE);
+        when(localFileStorage.saveFile(eq(mediaFile.getFile()), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
+        MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, MediaFileModule.TEXT);
 
-        Assertions.assertThat(savedMediaFile).isEqualTo(generateMediaFile());
+        Assertions.assertThat(savedMediaFile).isEqualTo(mediaFile);
     }
 
-    private MediaFile generateMediaFile() {
-        return MediaFile.builder()
-                .title("test").filename("test file").uuid("1")
-                .mimeType("plain/text").activated(true)
-                .content("test content").size(DEFAULT_SIZE)
-                .creationDate(now).modificationDate(now)
-                .build();
-    }
+    @Test
+    public void shouldAddMediaGalleryWithBytes() {
+        final MediaFile mediaFile = this.buildMediaGallery(null);
+        final MediaFileMetadata mediaFileMetadata = buildGalleryMetadata(null);
+        MediaFileMetadata child1 = mediaFileMetadata.getChildren().get(0);
+        MediaFileMetadata child2 = mediaFileMetadata.getChildren().get(1);
+        when(metadataStorage.saveMetadata(eq(mediaFileMetadata))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.saveMetadata(eq(child1))).thenReturn(child1);
+        when(metadataStorage.saveMetadata(eq(child2))).thenReturn(child2);
 
-    private MediaFileMetadata generateMediaFileMetadata() {
-        return MediaFileMetadata.builder()
-                .id("1")
-                .title("test")
-                .filename("test file")
-                .mimeType("plain/text")
-                .activated(true)
-                .content("test content")
-                .size(DEFAULT_SIZE)
-                .module(MediaFileModule.TEXT)
-                .logicalPath("/foo")
-                .creationDate(now).modificationDate(now)
-                .build();
+        MediaFile savedMediaFile = mediaFileService.addMediaGallery(mediaFile);
+
+        Assertions.assertThat(savedMediaFile).isEqualTo(mediaFile);
     }
 
 }

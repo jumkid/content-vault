@@ -60,9 +60,10 @@ public class MediaUploadDownloadController {
                     .tags(tags)
                     .build();
 
+            mediaFile.setFile(file.getBytes());
             setUserInfo(mediaFile);
 
-            mediaFile = fileService.addMediaFile(mediaFile, file.getBytes(), MediaFileModule.FILE);
+            mediaFile = fileService.addMediaFile(mediaFile, MediaFileModule.FILE);
             log.debug("media file {} uploaded", mediaFile.getFilename());
             return mediaFile;
         } catch (IOException ioe) {
@@ -87,9 +88,10 @@ public class MediaUploadDownloadController {
                         .tags(tags)
                         .build();
 
+                mediaFile.setFile(file.getBytes());
                 setUserInfo(mediaFile);
 
-                mediaFile = fileService.addMediaFile(mediaFile, file.getBytes(), MediaFileModule.FILE);
+                mediaFile = fileService.addMediaFile(mediaFile, MediaFileModule.FILE);
                 mediaFileList.add(mediaFile);
                 log.debug("media file {} uploaded", mediaFile.getFilename());
             }

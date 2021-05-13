@@ -1,8 +1,8 @@
 package com.jumkid.vault;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumkid.vault.enums.MediaFileField;
 import com.jumkid.vault.model.MediaFileMetadata;
-import com.jumkid.vault.model.MediaFileProp;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
 import org.junit.Assert;
@@ -18,9 +18,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -32,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class MetadataAPITest extends APITestsSetup {
+public class MetadataTest extends TestsSetup {
 
     @Autowired
     private MockMvc mockMvc;
@@ -48,8 +45,9 @@ public class MetadataAPITest extends APITestsSetup {
     @Before
     public void setup() {
         try {
-            mediaFileMetadata = buildMetadata();
+            mediaFileMetadata = buildMetadata(null);
 
+            when(metadataStorage.updateMetadataField(eq(DUMMY_ID), any(MediaFileField.class), any())).thenReturn(true);
             when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(mediaFileMetadata);
             when(localFileStorage.getFileBinary(mediaFileMetadata))
                     .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
@@ -105,8 +103,9 @@ public class MetadataAPITest extends APITestsSetup {
             authorities="user")
     public void whenGivenMetadata_shouldUpdateMetadata() throws Exception {
         mockMvc.perform(put("/metadata/"+DUMMY_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .queryParam("fieldName", "title")
+                .queryParam("fieldValue", "test.title"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
                 .andExpect(jsonPath("$.title").value("test.title"));
@@ -119,21 +118,5 @@ public class MetadataAPITest extends APITestsSetup {
     public void whenGivenId_shouldDeleteMetadata() throws Exception {
         mockMvc.perform(delete("/metadata/"+DUMMY_ID))
                 .andExpect(status().isNoContent());
-    }
-
-    private List<MediaFileMetadata> buildListOfMetadata() throws IOException {
-        final List<MediaFileMetadata> metadataLst = new ArrayList<>();
-        MediaFileMetadata mediaFileMetadata1 = buildMetadata();
-        MediaFileMetadata mediaFileMetadata2 = MediaFileMetadata.builder()
-                .id("dummy-id-1").title("test.title.1")
-                .content("<p>test.content.1</p>")
-                .props(List.of(MediaFileProp.builder()
-                        .name("comment").textValue("I like this")
-                        .build()))
-                .build();
-
-        metadataLst.add(mediaFileMetadata1);
-        metadataLst.add(mediaFileMetadata2);
-        return metadataLst;
     }
 }

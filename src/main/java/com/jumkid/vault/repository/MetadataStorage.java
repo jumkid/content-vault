@@ -109,7 +109,6 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public long deleteInactiveMetadata() {
-
         DeleteByQueryRequest deleteRequest = new DeleteByQueryRequest(ES_INDEX_MFILE);
         deleteRequest.setConflicts("proceed");
         try {
@@ -177,7 +176,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
                 .logicalPath((String)sourceMap.get(LOGICAL_PATH.value()))
                 .activated(sourceMap.get(ACTIVATED.value()) != null ? (Boolean) sourceMap.get(ACTIVATED.value()) : Boolean.FALSE)
                 .tags((List<String>) sourceMap.get(TAGS.value()))
-                .children(linkToReferencedMetadata((List<MediaFileMetadata>) sourceMap.get(CHILDREN.value())))
+                .children(linkToChildMetadata((List<Map<String, Object>>) sourceMap.get(CHILDREN.value())))
                 .module(MediaFileModule.valueOf((String)sourceMap.get(MODULE.value())))
                 .creationDate(sourceMap.get(CREATION_DATE.value()) != null ? DateTimeUtils.stringToLocalDatetime(sourceMap.get(CREATION_DATE.value()).toString()) : null)
                 .createdBy(sourceMap.get(CREATED_BY.value()) != null ? sourceMap.get(CREATED_BY.value()).toString() : null)
@@ -215,15 +214,18 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         return mediaFileMetadata;
     }
 
-    private List<MediaFileMetadata> linkToReferencedMetadata(List<MediaFileMetadata> mediaFileMetadataList) {
-        if (mediaFileMetadataList == null) return Collections.emptyList();
-        List<MediaFileMetadata>  newMetadataList = new ArrayList<>();
-        for (MediaFileMetadata mediaFileMetadata : mediaFileMetadataList) {
-            String childId = mediaFileMetadata.getId();
-            MediaFileMetadata metadata = this.getMetadata(childId);
-            newMetadataList.add(Objects.requireNonNullElse(metadata, mediaFileMetadata));
+    private List<MediaFileMetadata> linkToChildMetadata(List<Map<String, Object>> mediaFileMetadataMap) {
+        if (mediaFileMetadataMap == null) return Collections.emptyList();
+        List<MediaFileMetadata>  childMetadataList = new ArrayList<>();
+        for (Map<String, Object> metadataMap : mediaFileMetadataMap) {
+            String childId = (String)metadataMap.get(ID.value());
+            String childModule = (String)metadataMap.get(MODULE.value());
+            childMetadataList.add(MediaFileMetadata.builder()
+                    .id(childId)
+                    .module(childModule != null ? MediaFileModule.valueOf(childModule) : MediaFileModule.FILE)
+                    .build());
         }
-        return newMetadataList;
+        return childMetadataList;
     }
 
     @Override
@@ -267,12 +269,29 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public boolean updateMetadataFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value) {
+    public boolean updateMetadataField(String mediaFileId, MediaFileField mediaFileField, Object value) {
         try {
             updateMetadata(mediaFileId, jsonBuilder().startObject().field(mediaFileField.value(), value).endObject());
             return true;
         } catch (IOException e) {
             log.error("failed to update metadata {} field {} due to {}", mediaFileId, mediaFileField.value(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateMultipleMetadataFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap) {
+        if (fieldValueMap.isEmpty()) return false;
+        try {
+            XContentBuilder builder = jsonBuilder().startObject();
+            for (Map.Entry<MediaFileField, Object> entry : fieldValueMap.entrySet()) {
+                builder.field(entry.getKey().value(), entry.getValue());
+            }
+            builder.endObject();
+            updateMetadata(mediaFileId, builder);
+            return true;
+        } catch (IOException e) {
+            log.error("failed to update metadata due to {}", e.getMessage());
             return false;
         }
     }

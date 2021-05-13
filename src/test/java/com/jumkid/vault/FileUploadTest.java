@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class FileUploadAPITest extends APITestsSetup {
+public class FileUploadTest extends TestsSetup {
 
     @Value("file:src/test/resources/upload-test.html")
     private Resource resource;
@@ -49,7 +49,7 @@ public class FileUploadAPITest extends APITestsSetup {
     @Before
     public void setup() {
         try {
-            mediaFileMetadata = buildMetadata();
+            mediaFileMetadata = buildMetadata(null);
         } catch (Exception e) {
             Assert.fail();
         }

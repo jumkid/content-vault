@@ -282,6 +282,91 @@ paths:
         '200':
           description: binary as response
 
+  '/gallery/upload':
+    post:
+      tags:
+        - v1
+      operationId: galleryUpload
+      description: upload multiple file as gallery
+      parameters:
+        - name: files
+          in: query
+          required: true
+          schema:
+            type: array
+            format: file
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            format: string
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: content
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: upload a gallery with multiple files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+  '/gallery/{id}':
+    put:
+      tags:
+        - v1
+      operationId: updateGallery
+      description: update a gallery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: gallery identifier
+          schema:
+            type: string
+        - name: links
+          in: query
+          required: false
+          schema:
+            type: array
+            format: string
+        - name: files
+          in: query
+          required: false
+          schema:
+            type: array
+            format: file
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            format: string
+        - name: title
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: content
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: updated a gallery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+
   '/file/upload':
     post:
       tags:
@@ -470,10 +555,10 @@ components:
     MediaFileModule:
       type: string
       enum:
-        - file
-        - text
-        - html
-        - gallery    
+        - FILE
+        - TEXT
+        - HTML
+        - GALLERY
     ThumbnailSize:
       type: string
       enum:

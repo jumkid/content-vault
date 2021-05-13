@@ -9,6 +9,7 @@ import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,23 +53,22 @@ public class MediaMetadataController {
     @ResponseStatus(HttpStatus.OK)
     public MediaFile addMetadata(@NotNull @Valid @RequestBody MediaFile mediaFile,
                                  @NotNull MediaFileModule mediaFileModule){
-        return fileService.addMediaFile(mediaFile, null, mediaFileModule);
+        return fileService.addMediaFile(mediaFile, mediaFileModule);
     }
 
-    @PutMapping("{id}")
+    @PutMapping(value = "{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('admin')" +
             " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #mediaFileId))")
     public MediaFile updateMetadata(@PathVariable("id") String mediaFileId,
-                                    @RequestParam(required = false) MediaFileField fieldName,
-                                    @RequestParam(required = false) String fieldValue,
-                                    @RequestBody(required = false) MediaFile mediaFile){
+                                    @RequestParam (required = false) MediaFileField fieldName,
+                                    @RequestParam (required = false) String fieldValue){
         if (fieldName != null && fieldValue != null) {
-            if (!fileService.updateMediaFileFieldValue(mediaFileId, fieldName, fieldValue)) {
+            if (!fileService.updateMediaFileField(mediaFileId, fieldName, fieldValue)) {
                 throw new FileStoreServiceException(String.join("Failed to update media file field %s value", fieldName.value()));
+            } else {
+                return fileService.getMediaFile(mediaFileId);
             }
-        } else if (mediaFile != null) {
-            return fileService.updateMediaFile(mediaFileId, mediaFile, null);
         }
         return null;
     }

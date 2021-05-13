@@ -11,7 +11,7 @@ package com.jumkid.vault.model;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.jumkid.vault.enums.MediaFileModule;
 import lombok.*;
 
@@ -24,6 +24,7 @@ import java.util.List;
 @Data
 @Builder
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MediaFileMetadata {
 
 	private String id;
@@ -34,31 +35,24 @@ public class MediaFileMetadata {
 	
 	private Integer size;
 
-	@JsonIgnore
 	private MediaFileModule module;
 
 	private String title;
 
 	private String content;
 
-	@JsonIgnore
 	private Boolean activated = true;
 
 	private String logicalPath;
 
-	@JsonIgnore
 	private LocalDateTime creationDate;
 
-	@JsonIgnore
 	private String createdBy;
 
-	@JsonIgnore
 	private LocalDateTime modificationDate;
 
-	@JsonIgnore
 	private String modifiedBy;
 
-	@JsonIgnore
 	private List<MediaFileProp> props;
 
 	private List<String> tags;

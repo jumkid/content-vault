@@ -1,6 +1,5 @@
 package com.jumkid.vault;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
@@ -29,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class ContentAPITest extends APITestsSetup {
+public class ContentTest extends TestsSetup {
 
     @Value("file:src/test/resources/upload-test.html")
     private Resource resource;
@@ -49,7 +48,7 @@ public class ContentAPITest extends APITestsSetup {
     @Before
     public void setup() {
         try {
-            mediaFileMetadata = buildMetadata();
+            mediaFileMetadata = buildMetadata(null);
 
             when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(mediaFileMetadata);
             when(localFileStorage.getFileBinary(mediaFileMetadata))
@@ -124,7 +123,7 @@ public class ContentAPITest extends APITestsSetup {
 
         String content = result.getResponse().getContentAsString();
         Assert.assertTrue(content.contains("test.title"));
-        Assert.assertTrue(content.contains("<p>test.content</p>"));
+        Assert.assertTrue(content.contains("test.content"));
     }
 
     @Test
@@ -136,7 +135,7 @@ public class ContentAPITest extends APITestsSetup {
 
         String content = result.getResponse().getContentAsString();
         Assert.assertFalse(content.contains("test.title"));
-        Assert.assertTrue(content.contains("<p>test.content</p>"));
+        Assert.assertTrue(content.contains("test.content"));
     }
 
 }

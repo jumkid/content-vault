@@ -23,8 +23,10 @@ import com.jumkid.vault.enums.MediaFileField;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.StorageMode;
 import com.jumkid.vault.enums.ThumbnailNamespace;
+import com.jumkid.vault.exception.FileNotAvailableException;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
+import com.jumkid.vault.exception.GalleryNotFoundException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FileStorage;
@@ -38,12 +40,7 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
-import static com.jumkid.share.util.Constants.ANONYMOUS_USER;
 
 @Slf4j
 @Service("fileService")
@@ -77,23 +74,24 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     //TODO make the whole process transactional
     @Override
-    public MediaFile addMediaFile(MediaFile mediaFile, byte[] bytes, MediaFileModule mediaFileModule) {
+    public MediaFile addMediaFile(MediaFile mediaFile, MediaFileModule mediaFileModule) {
         normalizeDTO(null, mediaFile, null);
 
         MediaFileMetadata mediaFileMetadata = mediaFileMapper.dtoToMetadata(mediaFile);
         mediaFileMetadata.setModule(mediaFileModule);
-
-	    if(bytes == null || bytes.length == 0) {
+        byte[] file = mediaFile.getFile();
+	    if(file == null || file.length == 0) {
 	        mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
         } else {
-            enrichMetadata(mediaFileMetadata, bytes);
-            //firstly save metadata to get indexed doc with id
+            enrichMetadata(mediaFileMetadata, file);
+            //save metadata to get indexed doc with id
             mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
-            //second save file binary to file system
-            Optional<MediaFileMetadata> optional = getFileStorage().saveFile(bytes, mediaFileMetadata);
+            //save file binary to file system
+            Optional<MediaFileMetadata> optional = getFileStorage().saveFile(file, mediaFileMetadata);
             if (optional.isPresent()) {
-                //finally update the logical path to metadata
-                mediaFileMetadata = metadataStorage.updateMetadata(optional.get());
+                MediaFileMetadata savedMetadata = optional.get();
+                //update the logical path to metadata
+                metadataStorage.updateLogicalPath(savedMetadata.getId(), savedMetadata.getLogicalPath());
             } else {
                 log.error("failed to add file {}", mediaFileMetadata);
             }
@@ -103,10 +101,64 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public MediaFile updateMediaFile(String uuid, MediaFile mediaFile, byte[] bytes) {
-        MediaFileMetadata oldMetadata = metadataStorage.getMetadata(uuid);
+    public MediaFile addMediaGallery(MediaFile mediaGallery) {
+        normalizeDTO(null, mediaGallery, null);
+
+        MediaFileMetadata galleryMetadata = mediaFileMapper.dtoToMetadata(mediaGallery);
+        galleryMetadata.setModule(MediaFileModule.GALLERY);
+
+        if(galleryMetadata.getChildren() != null && !galleryMetadata.getChildren().isEmpty()) {
+            List<MediaFileMetadata> childMetadataList = new ArrayList<>();
+            for (MediaFile child : mediaGallery.getChildren()) {
+                child = this.addMediaFile(child, MediaFileModule.FILE);
+                log.debug("save one file {} in new gallery", child.getUuid());
+                childMetadataList.add(MediaFileMetadata.builder()
+                        .id(child.getUuid())
+                        .module(MediaFileModule.REFERENCE)
+                        .build());
+            }
+            galleryMetadata.setChildren(childMetadataList);
+        }
+        galleryMetadata = metadataStorage.saveMetadata(galleryMetadata);
+
+        return mediaFileMapper.metadataToDto(galleryMetadata);
+    }
+
+    @Override
+    public MediaFile updateMediaGallery(String galleryId, MediaFile mediaGallery) {
+        MediaFileMetadata existGallery = metadataStorage.getMetadata(galleryId);
+        if (existGallery != null) {
+            normalizeDTO(galleryId, mediaGallery, existGallery);
+
+            MediaFileMetadata galleryMetadata = mediaFileMapper.dtoToMetadata(mediaGallery);
+
+            galleryMetadata.setModule(existGallery.getModule());
+
+            List<MediaFile> child = mediaGallery.getChildren();
+            if (child != null && !child.isEmpty()) {
+                List<MediaFileMetadata> childMetadata = new ArrayList<>();
+                for (MediaFile mediaFile : child) {
+                    childMetadata.add(MediaFileMetadata.builder()
+                            .id(mediaFile.getUuid())
+                            .module(MediaFileModule.REFERENCE)
+                            .build());
+                }
+                galleryMetadata.setChildren(childMetadata);
+            }
+
+            galleryMetadata = metadataStorage.saveMetadata(galleryMetadata);
+
+            return mediaFileMapper.metadataToDto(galleryMetadata);
+        } else {
+            throw new GalleryNotFoundException(galleryId);
+        }
+    }
+
+    @Override
+    public MediaFile updateMediaFile(String mediaFileId, MediaFile mediaFile, byte[] bytes) {
+        MediaFileMetadata oldMetadata = metadataStorage.getMetadata(mediaFileId);
         if (oldMetadata != null) {
-            normalizeDTO(uuid, mediaFile, oldMetadata);
+            normalizeDTO(mediaFileId, mediaFile, oldMetadata);
 
             MediaFileMetadata mediaFileMetadata = mediaFileMapper.dtoToMetadata(mediaFile);
 
@@ -132,25 +184,28 @@ public class MediaFileServiceImpl implements MediaFileService {
             }
             return mediaFileMapper.metadataToDto(mediaFileMetadata);
         } else {
-            throw new FileNotFoundException(uuid);
+            throw new FileNotFoundException(mediaFileId);
         }
     }
 
     @Override
-    public boolean updateMediaFileFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value) {
-        return metadataStorage.updateMetadataFieldValue(mediaFileId, mediaFileField, value);
+    public boolean updateMediaFileField(String mediaFileId, MediaFileField mediaFileField, Object value) {
+        return metadataStorage.updateMetadataField(mediaFileId, mediaFileField, value);
+    }
+
+    @Override
+    public boolean updateMediaFileFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap) {
+        return metadataStorage.updateMultipleMetadataFields(mediaFileId, fieldValueMap);
     }
 
     @Override
 	public MediaFile getMediaFile(String mediaFileId) {
     	log.debug("Retrieve media file by given id {}", mediaFileId);
         MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-        if (mediaFileMetadata != null) {
-            return mediaFileMapper.metadataToDto(mediaFileMetadata);
-        } else {
-            throw new FileNotFoundException(mediaFileId);
-        }
-	}
+        if (mediaFileMetadata == null) throw new FileNotFoundException(mediaFileId);
+        else if (Boolean.TRUE.equals(mediaFileMetadata.getActivated())) return mediaFileMapper.metadataToDto(mediaFileMetadata);
+        else throw new FileNotAvailableException();
+    }
 
     @Override
     public MediaFileMetadata getMediaFileMetadata(String mediaFileId) {
@@ -236,8 +291,9 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     private void normalizeDTO(String uuid, MediaFile dto, MediaFileMetadata oldMetadata) {
-        dto.setUuid(uuid);
-        String currentUser = getCurrentUserName();
+        if (uuid != null) dto.setUuid(uuid);
+
+        String currentUser = securityService.getCurrentUserName();
         LocalDateTime now = LocalDateTime.now();
         dto.setModificationDate(now);
 
@@ -252,19 +308,6 @@ public class MediaFileServiceImpl implements MediaFileService {
 
         if (dto.getActivated() == null) dto.setActivated(true);
 
-    }
-
-    private String getCurrentUserName() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null) return ANONYMOUS_USER;
-
-        if (auth.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
-            return userDetails.getUsername();
-        } else {
-            return auth.getPrincipal().toString();
-        }
     }
 
     private void enrichMetadata(MediaFileMetadata mediaFileMetadata, byte[] bytes) {

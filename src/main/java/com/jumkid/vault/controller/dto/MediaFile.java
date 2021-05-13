@@ -1,5 +1,8 @@
 package com.jumkid.vault.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.*;
 import com.jumkid.share.controller.dto.GenericDTO;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(of = {"uuid", "title"}, callSuper = false)
+@JsonInclude(Include.NON_NULL)
 public class MediaFile extends GenericDTO {
 
     private String uuid;
@@ -29,6 +33,9 @@ public class MediaFile extends GenericDTO {
     private String content;
 
     private Boolean activated;
+
+    @JsonIgnore
+    private byte[] file;
 
     private List<String> tags;
 

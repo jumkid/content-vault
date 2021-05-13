@@ -1,5 +1,7 @@
 package com.jumkid.vault.service;
 
+import com.jumkid.vault.exception.FileNotAvailableException;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,10 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
     @Override
     public boolean isOwner(Authentication authentication, String mediaFileId) {
         MediaFileMetadata metadata = metadataStorage.getMetadata(mediaFileId);
+
+        if (metadata == null) throw new FileNotFoundException(mediaFileId);
+        if (Boolean.FALSE.equals(metadata.getActivated())) throw new FileNotAvailableException();
+
         String currentUsername;
         if (authentication == null) {
             currentUsername = getCurrentUserName();

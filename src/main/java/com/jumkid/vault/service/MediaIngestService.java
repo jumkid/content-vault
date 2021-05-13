@@ -44,9 +44,10 @@ public class MediaIngestService {
                         .mimeType("image/jpeg")
                         .build();
 
+                mediaFile.setFile(gFile.getBytes());
                 //TODO set user info
 
-                return fileService.addMediaFile(mediaFile, gFile.getBytes(), MediaFileModule.FILE);
+                return fileService.addMediaFile(mediaFile, MediaFileModule.FILE);
             }
 
         } catch (Exception e) {

@@ -13,6 +13,7 @@ package com.jumkid.vault.repository;
 import com.jumkid.vault.enums.MediaFileField;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -66,14 +67,23 @@ public interface FileMetadata<T> {
     T updateMetadata(T t);
 
     /**
-     * update the metadata of give single field name and value
+     * Update the metadata of give single field name and value
      *
      * @param mediaFileId identity of media file
      * @param mediaFileField for field name
      * @param value for the field
      * @return true if succeed
      */
-    boolean updateMetadataFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value);
+    boolean updateMetadataField(String mediaFileId, MediaFileField mediaFileField, Object value);
+
+    /**
+     * Update a list of fields of metadata
+     *
+     * @param mediaFileId identity of media file
+     * @param fieldValueMap map for field and value
+     * @return true if succeed
+     */
+    boolean updateMultipleMetadataFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap);
 
     /**
      * update metadata active status

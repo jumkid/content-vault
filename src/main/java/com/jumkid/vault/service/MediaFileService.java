@@ -19,6 +19,7 @@ import com.jumkid.vault.model.MediaFileMetadata;
 
 import java.nio.channels.FileChannel;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface MediaFileService {
@@ -27,10 +28,26 @@ public interface MediaFileService {
      * Add new media file and binary
      *
      * @param mediaFile media file info
-     * @param file binary of file
      * @return MediaFile
      */
-    MediaFile addMediaFile(MediaFile mediaFile, byte[] file, MediaFileModule mediaFileModule);
+    MediaFile addMediaFile(MediaFile mediaFile, MediaFileModule mediaFileModule);
+
+    /**
+     * Add new media gallery and binaries
+     *
+     * @param mediaGallery media file for gallery
+     * @return MediaFile
+     */
+    MediaFile addMediaGallery(MediaFile mediaGallery);
+
+    /**
+     * Update an existing gallery
+     *
+     * @param galleryId media gallery identity
+     * @param mediaGallery media file for gallery
+     * @return MediaFile
+     */
+    MediaFile updateMediaGallery(String galleryId, MediaFile mediaGallery);
 
     /**
      * Update existing media file metadata and binary
@@ -43,14 +60,23 @@ public interface MediaFileService {
     MediaFile updateMediaFile(String mediaFileId, MediaFile mediaFile, byte[] file);
 
     /**
-     * Update existing media file metadata field value
+     * Update existing media file metadata field
      *
      * @param mediaFileId media file identity
      * @param mediaFileField media file field
      * @param value media file field value
      * @return true if succeed
      */
-    boolean updateMediaFileFieldValue(String mediaFileId, MediaFileField mediaFileField, Object value);
+    boolean updateMediaFileField(String mediaFileId, MediaFileField mediaFileField, Object value);
+
+    /**
+     * Update a list of fields of metadata
+     *
+     * @param mediaFileId identity of media file
+     * @param fieldValueMap map for field and value
+     * @return true if succeed
+     */
+    boolean updateMediaFileFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap);
 
     /**
      * Retrieve media file by id
