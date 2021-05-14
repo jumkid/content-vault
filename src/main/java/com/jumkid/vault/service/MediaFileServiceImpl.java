@@ -72,6 +72,52 @@ public class MediaFileServiceImpl implements MediaFileService {
 	    return StorageMode.valueOf(storageMode.toUpperCase()).equals(StorageMode.LOCAL) ? storageRegistry.get(StorageMode.LOCAL) : storageRegistry.get(StorageMode.HADOOP);
     }
 
+    @Override
+    public MediaFile getMediaFile(String mediaFileId) {
+        log.debug("Retrieve media file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
+        if (mediaFileMetadata == null) throw new FileNotFoundException(mediaFileId);
+        else if (Boolean.TRUE.equals(mediaFileMetadata.getActivated())) return mediaFileMapper.metadataToDto(mediaFileMetadata);
+        else throw new FileNotAvailableException();
+    }
+
+    @Override
+    public MediaFileMetadata getMediaFileMetadata(String mediaFileId) {
+        log.debug("Retrieve media file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
+        if (mediaFileMetadata != null) {
+            return mediaFileMetadata;
+        } else {
+            throw new FileNotFoundException(mediaFileId);
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getFileSource(String mediaFileId) {
+        log.debug("Retrieve source file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
+
+        return getFileStorage().getFileBinary(mediaFileMetadata);
+    }
+
+    @Override
+    public Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace) {
+        log.debug("Retrieve thumbnail of file by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
+        if (mediaFileMetadata != null) {
+            return getFileStorage().getThumbnail(mediaFileMetadata, thumbnailNamespace);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public FileChannel getFileChannel(String mediaFileId) {
+        log.debug("Retrieve file channel by given id {}", mediaFileId);
+        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
+        return getFileStorage().getFileRandomAccess(mediaFileMetadata).orElseThrow();
+    }
+
     //TODO make the whole process transactional
     @Override
     public MediaFile addMediaFile(MediaFile mediaFile, MediaFileModule mediaFileModule) {
@@ -125,36 +171,6 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public MediaFile updateMediaGallery(String galleryId, MediaFile mediaGallery) {
-        MediaFileMetadata existGallery = metadataStorage.getMetadata(galleryId);
-        if (existGallery != null) {
-            normalizeDTO(galleryId, mediaGallery, existGallery);
-
-            MediaFileMetadata galleryMetadata = mediaFileMapper.dtoToMetadata(mediaGallery);
-
-            galleryMetadata.setModule(existGallery.getModule());
-
-            List<MediaFile> child = mediaGallery.getChildren();
-            if (child != null && !child.isEmpty()) {
-                List<MediaFileMetadata> childMetadata = new ArrayList<>();
-                for (MediaFile mediaFile : child) {
-                    childMetadata.add(MediaFileMetadata.builder()
-                            .id(mediaFile.getUuid())
-                            .module(MediaFileModule.REFERENCE)
-                            .build());
-                }
-                galleryMetadata.setChildren(childMetadata);
-            }
-
-            galleryMetadata = metadataStorage.saveMetadata(galleryMetadata);
-
-            return mediaFileMapper.metadataToDto(galleryMetadata);
-        } else {
-            throw new GalleryNotFoundException(galleryId);
-        }
-    }
-
-    @Override
     public MediaFile updateMediaFile(String mediaFileId, MediaFile mediaFile, byte[] bytes) {
         MediaFileMetadata oldMetadata = metadataStorage.getMetadata(mediaFileId);
         if (oldMetadata != null) {
@@ -189,59 +205,68 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
+    public MediaFile updateMediaGallery(String galleryId, MediaFile mediaGallery) {
+        if (mediaGallery == null) return null;
+        MediaFileMetadata existGallery = metadataStorage.getMetadata(galleryId);
+        if (existGallery != null) {
+            normalizeDTO(galleryId, mediaGallery, existGallery);
+
+            MediaFileMetadata galleryMetadata = mediaFileMapper.dtoToMetadata(mediaGallery);
+
+            galleryMetadata.setModule(existGallery.getModule());
+
+            List<MediaFile> child = mediaGallery.getChildren();
+            if (child != null && !child.isEmpty()) {
+                List<MediaFileMetadata> childMetadata = new ArrayList<>();
+                for (MediaFile mediaFile : child) {
+                    childMetadata.add(MediaFileMetadata.builder()
+                            .id(mediaFile.getUuid())
+                            .module(MediaFileModule.REFERENCE)
+                            .build());
+                }
+                galleryMetadata.setChildren(childMetadata);
+            }
+
+            galleryMetadata = metadataStorage.saveMetadata(galleryMetadata);
+
+            return mediaFileMapper.metadataToDto(galleryMetadata);
+        } else {
+            throw new GalleryNotFoundException(galleryId);
+        }
+    }
+
+    @Override
     public boolean updateMediaFileField(String mediaFileId, MediaFileField mediaFileField, Object value) {
-        return metadataStorage.updateMetadataField(mediaFileId, mediaFileField, value);
+	    if (mediaFileId == null || mediaFileId.isBlank() || mediaFileField == null) return false;
+        else return metadataStorage.updateMetadataField(mediaFileId, mediaFileField, value);
     }
 
     @Override
     public boolean updateMediaFileFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap) {
-        return metadataStorage.updateMultipleMetadataFields(mediaFileId, fieldValueMap);
-    }
-
-    @Override
-	public MediaFile getMediaFile(String mediaFileId) {
-    	log.debug("Retrieve media file by given id {}", mediaFileId);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-        if (mediaFileMetadata == null) throw new FileNotFoundException(mediaFileId);
-        else if (Boolean.TRUE.equals(mediaFileMetadata.getActivated())) return mediaFileMapper.metadataToDto(mediaFileMetadata);
-        else throw new FileNotAvailableException();
-    }
-
-    @Override
-    public MediaFileMetadata getMediaFileMetadata(String mediaFileId) {
-        log.debug("Retrieve media file by given id {}", mediaFileId);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-        if (mediaFileMetadata != null) {
-            return mediaFileMetadata;
-        } else {
-            throw new FileNotFoundException(mediaFileId);
+        if (mediaFileId == null || fieldValueMap == null || fieldValueMap.isEmpty()) return false;
+	    else {
+            if (fieldValueMap.containsKey(MediaFileField.CHILDREN)) {
+                List<MediaFile> children = (List<MediaFile>)fieldValueMap.get(MediaFileField.CHILDREN);
+                List<MediaFileMetadata> childrenMetadata = new ArrayList<>();
+                for (MediaFile child : children) {
+                    if (child.getUuid() == null && child.getFile() != null) { //store the newly upload files
+                        child = this.addMediaFile(child, MediaFileModule.FILE);
+                        addChildMetadata(childrenMetadata, child);
+                    } else if (child.getUuid() != null && this.getMediaFile(child.getUuid()) != null) {
+                        addChildMetadata(childrenMetadata, child);
+                    }
+                    log.debug("saved new child file {}", child.getUuid());
+                }
+                fieldValueMap.put(MediaFileField.CHILDREN, childrenMetadata);
+            }
+            return metadataStorage.updateMultipleMetadataFields(mediaFileId, fieldValueMap);
         }
     }
 
-    @Override
-    public Optional<byte[]> getFileSource(String mediaFileId) {
-        log.debug("Retrieve source file by given id {}", mediaFileId);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-
-        return getFileStorage().getFileBinary(mediaFileMetadata);
-    }
-
-    @Override
-    public Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace) {
-        log.debug("Retrieve thumbnail of file by given id {}", mediaFileId);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-        if (mediaFileMetadata != null) {
-            return getFileStorage().getThumbnail(mediaFileMetadata, thumbnailNamespace);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    @Override
-    public FileChannel getFileChannel(String mediaFileId) {
-        log.debug("Retrieve file channel by given id {}", mediaFileId);
-        MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-	    return getFileStorage().getFileRandomAccess(mediaFileMetadata).orElseThrow();
+    private void addChildMetadata(List<MediaFileMetadata> childrenMetadata, MediaFile child) {
+        childrenMetadata.add(MediaFileMetadata.builder()
+                .id(child.getUuid()).module(MediaFileModule.REFERENCE)
+                .build());
     }
 
     @Override

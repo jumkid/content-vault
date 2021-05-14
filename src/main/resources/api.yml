@@ -24,7 +24,7 @@ tags:
 security:
   - bearerAuth: []
 paths:
-  '/metadata':
+  /metadata:
     get:
       tags:
         - v1
@@ -42,7 +42,7 @@ paths:
           required: false
           description: size of result set
           schema:
-            type: integer    
+            type: integer
       responses:
         '200':
           description: OK
@@ -76,7 +76,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-      summary: Add raw metadata              
+      summary: Add raw metadata
   '/metadata/{id}':
     get:
       tags:
@@ -120,7 +120,7 @@ paths:
           required: true
           description: mediaFile field value
           schema:
-            type: string  
+            type: string
       requestBody:
         description: metadata json object
         content:
@@ -168,7 +168,7 @@ paths:
           content:
             text/html:
               schema:
-                type: string           
+                type: string
   '/content/{id}':
     get:
       tags:
@@ -195,7 +195,7 @@ paths:
             test/plain:
               schema:
                 type: string
-  '/content':
+  /content:
     post:
       tags:
         - v1
@@ -219,7 +219,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
       summary: Add text content
-  '/content/html':
+  /content/html:
     post:
       tags:
         - v1
@@ -243,7 +243,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-      summary: Add html content     
+      summary: Add html content
   '/content/stream/{id}':
     get:
       tags:
@@ -282,25 +282,14 @@ paths:
         '200':
           description: binary as response
 
-  '/gallery/upload':
+## Gallery API
+  /gallery:
     post:
       tags:
         - v1
-      operationId: galleryUpload
+      operationId: uploadGallery
       description: upload multiple file as gallery
       parameters:
-        - name: files
-          in: query
-          required: true
-          schema:
-            type: array
-            format: file
-        - name: tags
-          in: query
-          required: false
-          schema:
-            type: array
-            format: string
         - name: title
           in: query
           required: true
@@ -311,6 +300,18 @@ paths:
           required: false
           schema:
             type: string
+        - name: files
+          in: query
+          required: false
+          schema:
+            type: array
+            format: file
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            format: string    
       responses:
         '202':
           description: upload a gallery with multiple files
@@ -331,12 +332,13 @@ paths:
           description: gallery identifier
           schema:
             type: string
-        - name: links
+        - name: mediaFileIds
           in: query
           required: false
           schema:
             type: array
             format: string
+          description: a list of media file id
         - name: files
           in: query
           required: false
@@ -367,7 +369,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
 
-  '/file/upload':
+  /file/upload:
     post:
       tags:
         - v1
@@ -392,7 +394,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
-  '/file/multipleUpload':
+  /file/multipleUpload:
     post:
       tags:
         - v1
@@ -480,7 +482,7 @@ paths:
                   $ref: '#/components/schemas/MediaFile'
     delete:
       tags:
-      - v1
+        - v1
       operationId: emptyTrash
       description: delete all files in the trash
       responses:
@@ -490,7 +492,6 @@ paths:
             application/json:
               schema:
                 type: number
-
 components:
   schemas:
     MediaFile:
@@ -534,7 +535,7 @@ components:
               dateValue:
                 $ref: ./share.yaml#/components/schemas/LocalDateTime
               numberValue:
-                type: integer  
+                type: integer
         tags:
           type: array
           items:

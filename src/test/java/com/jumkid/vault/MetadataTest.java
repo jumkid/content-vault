@@ -61,7 +61,18 @@ public class MetadataTest extends TestsSetup {
     @WithMockUser(username="demo1",
             password="demo",
             authorities="user")
-    public void shouldGetListOfMetadata() throws Exception {
+    public void shouldGetMetadata_whenGivenId() throws Exception {
+        mockMvc.perform(get("/metadata/"+DUMMY_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
+                .andExpect(jsonPath("$.title").value("test.title"));
+    }
+
+    @Test
+    @WithMockUser(username="demo1",
+            password="demo",
+            authorities="user")
+    public void shouldGetListOfMetadata_whenSearch() throws Exception {
         when(metadataStorage.searchMetadata(anyString(), anyInt(), anyList(), eq("demo1"))).thenReturn(buildListOfMetadata());
 
         mockMvc.perform(get("/metadata?q=test&size=1"))
@@ -73,21 +84,10 @@ public class MetadataTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="demo1",
-            password="demo",
-            authorities="user")
-    public void whenGivenID_shouldGetMetadata() throws Exception {
-        mockMvc.perform(get("/metadata/"+DUMMY_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
-                .andExpect(jsonPath("$.title").value("test.title"));
-    }
-
-    @Test
     @WithMockUser(username="admin",
             password="admin",
             authorities="admin")
-    public void whenGivenMetadata_shouldSaveContentWithPros() throws Exception {
+    public void shouldSaveContentWithPros_whenGivenMetadata() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         mockMvc.perform(post("/metadata")
@@ -101,7 +101,7 @@ public class MetadataTest extends TestsSetup {
     @WithMockUser(username="demo1",
             password="demo",
             authorities="user")
-    public void whenGivenMetadata_shouldUpdateMetadata() throws Exception {
+    public void shouldUpdateMetadata_whenGivenMetadata() throws Exception {
         mockMvc.perform(put("/metadata/"+DUMMY_ID)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .queryParam("fieldName", "title")
@@ -115,8 +115,11 @@ public class MetadataTest extends TestsSetup {
     @WithMockUser(username="demo1",
             password="demo",
             authorities="user")
-    public void whenGivenId_shouldDeleteMetadata() throws Exception {
+    public void shouldDeleteMetadata_whenGivenId() throws Exception {
         mockMvc.perform(delete("/metadata/"+DUMMY_ID))
                 .andExpect(status().isNoContent());
     }
+
+
+
 }

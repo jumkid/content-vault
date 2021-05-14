@@ -285,7 +285,13 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         try {
             XContentBuilder builder = jsonBuilder().startObject();
             for (Map.Entry<MediaFileField, Object> entry : fieldValueMap.entrySet()) {
-                builder.field(entry.getKey().value(), entry.getValue());
+                if (MediaFileField.CHILDREN == entry.getKey()) {
+                    List<MediaFileMetadata> children = (List<MediaFileMetadata>)entry.getValue();
+                    builder.startArray(CHILDREN.value());
+                    buildChildren(builder, children);
+                    builder.endArray();
+                } else { builder.field(entry.getKey().value(), entry.getValue()); }
+
             }
             builder.endObject();
             updateMetadata(mediaFileId, builder);

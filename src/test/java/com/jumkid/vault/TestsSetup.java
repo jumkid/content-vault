@@ -83,7 +83,10 @@ public class TestsSetup {
                 .title("gallery")
                 .filename("test gallery")
                 .mimeType("application/octet-stream").activated(true)
-                .content("test.gallery").size(DEFAULT_SIZE)
+                .content("test.gallery")
+                .size(DEFAULT_SIZE)
+                .module(MediaFileModule.GALLERY)
+                .tags(List.of("test", "gallery"))
                 .creationDate(now).modificationDate(now)
                 .build();
 
