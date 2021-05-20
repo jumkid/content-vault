@@ -71,7 +71,8 @@ public class MediaGalleryController {
 
     @PutMapping("{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @PreAuthorize("hasAuthority('admin')" +
+            " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #galleryId))")
     public MediaFile update(@PathVariable(value = "id") String galleryId,
                             @RequestParam(value = "mediaFileIds", required = false) List<String> childIds,
                             @RequestParam(value = "files", required = false) MultipartFile[] files,

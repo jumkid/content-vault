@@ -1,6 +1,5 @@
 package com.jumkid.vault;
 
-import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
@@ -19,9 +18,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -55,7 +54,7 @@ public class GalleryTest extends TestsSetup{
 
     @Test
     @WithMockUser(username="test", password="test", authorities="user")
-    public void shouldAddGallery_withGivenTitleAndContent() throws Exception{
+    public void shouldAddGallery_withGivenTitleAndContent() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(galleryMetadata);
 
         mockMvc.perform(post("/gallery")
@@ -67,6 +66,30 @@ public class GalleryTest extends TestsSetup{
                 .andExpect(jsonPath("$.content").value(galleryMetadata.getContent()))
                 .andExpect(jsonPath("$.tags[0]").value(galleryMetadata.getTags().get(0)))
                 .andExpect(jsonPath("$.children[0].uuid").value("1"));
+    }
+
+    @Test
+    @WithMockUser(username="test", password="test", authorities="user")
+    public void shouldUpdateGallery() throws Exception {
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(galleryMetadata);
+        when(metadataStorage.updateMultipleMetadataFields(eq(DUMMY_ID), anyMap())).thenReturn(true);
+
+        mockMvc.perform(put("/gallery/" + DUMMY_ID)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .param("title", galleryMetadata.getTitle())
+                .param("content", galleryMetadata.getContent()))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    @WithMockUser(username="test", password="test", authorities="user")
+    public void shouldGetError_whenUpdateGalleryWithoutValidId() throws Exception {
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(galleryMetadata);
+        when(metadataStorage.updateMultipleMetadataFields(eq(DUMMY_ID), anyMap())).thenReturn(false);
+
+        mockMvc.perform(put("/gallery/" + DUMMY_ID)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
+                .andExpect(status().isExpectationFailed());
     }
 
 }

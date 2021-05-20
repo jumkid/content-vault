@@ -27,7 +27,6 @@
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.11</thumbnailator.version>
         <tika.version>1.26</tika.version>
-        <grabzit.version>3.4.5.1</grabzit.version>
 
         <!-- jumkid modules -->
         <sharejar.version>1.0.1</sharejar.version>
@@ -59,6 +58,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
         <dependency>
@@ -152,12 +155,6 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
             <version>${tika.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>it.grabz.grabzit</groupId>
-            <artifactId>grabzit</artifactId>
-            <version>${grabzit.version}</version>
         </dependency>
 
     </dependencies>

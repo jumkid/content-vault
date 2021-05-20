@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +50,8 @@ public class MediaContentController {
 
     @GetMapping(value = "{id}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public String getTextContent(@PathVariable("id") String mediaFileId, @RequestParam(required = false) Boolean ignoreTitle){
+    public String getTextContent(@PathVariable("id") String mediaFileId,
+                                 @RequestParam(required = false) Boolean ignoreTitle){
         return getContent(mediaFileId, ignoreTitle);
     }
 
