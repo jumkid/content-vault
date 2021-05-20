@@ -22,7 +22,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestControllerAdvice
 @Slf4j
-public class AdviceController {
+public class ExceptionHandlingAdvice {
 
     @ExceptionHandler({FileNotFoundException.class, FileNotAvailableException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
