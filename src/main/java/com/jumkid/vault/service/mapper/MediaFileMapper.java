@@ -3,7 +3,6 @@ package com.jumkid.vault.service.mapper;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.model.MediaFileMetadata;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,6 @@ public interface MediaFileMapper {
         return mediaFile;
     }
 
-    @Mapping(source = "uuid", target = "id")
     default MediaFileMetadata dtoToMetadata(MediaFile dto) {
         MediaFileMetadata metadata = MediaFileMetadata.builder()
                     .id(dto.getUuid())

@@ -31,6 +31,7 @@ import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FileStorage;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
+import com.jumkid.vault.util.DateTimeUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.metadata.Metadata;
@@ -57,6 +58,8 @@ public class MediaFileServiceImpl implements MediaFileService {
 	private final MediaFileMapper mediaFileMapper = Mappers.getMapper( MediaFileMapper.class );
 
 	private final MediaFileSecurityService securityService;
+
+	private static final String WHITESPACE = "\\t";
 
 	@Autowired
 	public MediaFileServiceImpl(FileMetadata<MediaFileMetadata> metadataStorage,
@@ -345,10 +348,10 @@ public class MediaFileServiceImpl implements MediaFileService {
                 String metaValue = metadata.get(metaName);
                 if (metaValue == null || metaValue.isBlank()) continue;
 
-                if (metaName.toLowerCase().contains("date")) {
+                if (metaName.toLowerCase().contains("date") || metaName.toLowerCase().contains("modified")) {
                     addDatetimeProp(mediaFileMetadata, metaValue, metaName);
                 } else {
-                    mediaFileMetadata.addProp(metaName, metaValue);
+                    mediaFileMetadata.addProp(metaName, metaValue + WHITESPACE);  //add whitespace here to escape date type in ES
                 }
             }
         } catch (Exception e) {
@@ -358,10 +361,10 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     private void addDatetimeProp(MediaFileMetadata mediaFileMetadata, String metaValue, String metaName) {
         try {
-            mediaFileMetadata.addProp(metaName, LocalDateTime.parse(metaValue));
+            mediaFileMetadata.addProp(metaName, DateTimeUtils.stringToLocalDatetime(metaValue));
         } catch (DateTimeParseException ex) {
-            log.debug("meta={} {}", metaName, ex.getMessage());
-            mediaFileMetadata.addProp(metaName, metaValue);
+            log.error("meta={}  |  {}", metaName, ex.getMessage());
+            mediaFileMetadata.addProp(metaName, metaValue + WHITESPACE); //add whitespace here to escape date type in ES
         }
     }
 

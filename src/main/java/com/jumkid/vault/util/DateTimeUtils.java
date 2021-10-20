@@ -21,12 +21,17 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class DateTimeUtils {
 
+    private DateTimeUtils() {}
+
     private static final CopyOnWriteArrayList<DateTimeFormatter> DATE_FORMATTERS = new CopyOnWriteArrayList<>();
 
     static {
         DATE_FORMATTERS.add(DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC));
         DATE_FORMATTERS.add(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneOffset.UTC));
         DATE_FORMATTERS.add(DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC));
+        DATE_FORMATTERS.add(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        DATE_FORMATTERS.add(DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss"));
+        DATE_FORMATTERS.add(DateTimeFormatter.ofPattern("yyyy:MM:dd"));
     }
 
     // ISO_8601
@@ -86,7 +91,7 @@ public class DateTimeUtils {
                     return LocalDateTime.parse(date, formatter);
                 }
             } catch (java.time.format.DateTimeParseException dpe) {
-                log.error(dpe.getMessage());
+                log.debug(dpe.getMessage());
             }
         }
 

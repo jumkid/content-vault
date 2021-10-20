@@ -17,7 +17,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -47,13 +46,14 @@ public class MediaUploadDownloadController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public MediaFile upload(@NotNull @RequestParam("file") MultipartFile file,
-                            @RequestParam(value = "tags", required = false) List<String> tags,
-                            HttpServletRequest httpRequest){
+                            @RequestParam(value = "title", required = false) String title,
+                            @RequestParam(value = "content", required = false) String content,
+                            @RequestParam(value = "tags", required = false) List<String> tags){
         MediaFile mediaFile = null;
         try {
-            String title = httpRequest.getParameter("title");
             mediaFile = MediaFile.builder()
                     .title(title != null ? title : file.getName())
+                    .content(content)
                     .filename(file.getOriginalFilename())
                     .size((int)file.getSize())
                     .mimeType(file.getContentType())
