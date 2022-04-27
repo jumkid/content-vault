@@ -66,7 +66,6 @@ public class TestsSetup {
                 .props(List.of(MediaFileProp.builder()
                         .name("author").textValue("Mr nobody")
                         .build()))
-                .creationDate(now).modificationDate(now)
                 .build();
     }
 

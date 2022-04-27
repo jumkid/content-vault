@@ -518,11 +518,11 @@ components:
         createdBy:
           type: string
         creationDate:
-          $ref: ./share.yaml#/components/schemas/LocalDateTime
+          $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/LocalDateTime
         modifiedBy:
           type: string
         modificationDate:
-          $ref: ./share.yaml#/components/schemas/LocalDateTime
+          $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/LocalDateTime
         props:
           type: array
           items:
@@ -533,7 +533,7 @@ components:
               textValue:
                 type: string
               dateValue:
-                $ref: ./share.yaml#/components/schemas/LocalDateTime
+                $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/LocalDateTime
               numberValue:
                 type: integer
         tags:

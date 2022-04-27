@@ -47,7 +47,6 @@ public class ContentTest extends TestsSetup {
     @MockBean
     private LocalFileStorage localFileStorage;
 
-    private static String INVALID_ID = "invalid-id";
     private MediaFileMetadata mediaFileMetadata;
 
     @Before
@@ -105,7 +104,7 @@ public class ContentTest extends TestsSetup {
 
     @Test
     public void shouldGet404WithInvalidId_whenGivenInvalidId() throws Exception {
-        mockMvc.perform(get("/content/"+INVALID_ID)
+        mockMvc.perform(get("/content/InvalidId")
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isNotFound());
     }
@@ -115,30 +114,6 @@ public class ContentTest extends TestsSetup {
         mockMvc.perform(get("/content")
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    public void shouldGetHtmlWithTitle_whenGivenId() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/html/" + DUMMY_ID)
-                .contentType(MediaType.TEXT_HTML))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        Assert.assertTrue(content.contains("test.title"));
-        Assert.assertTrue(content.contains("test.content"));
-    }
-
-    @Test
-    public void shouldGetHtmlWithoutTitle_whenGivenId() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/html/" + DUMMY_ID + "?ignoreTitle=true")
-                .contentType(MediaType.TEXT_HTML))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        Assert.assertFalse(content.contains("test.title"));
-        Assert.assertTrue(content.contains("test.content"));
     }
 
     @Test
