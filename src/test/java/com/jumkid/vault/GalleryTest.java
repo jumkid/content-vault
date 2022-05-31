@@ -1,5 +1,7 @@
 package com.jumkid.vault;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
@@ -54,42 +56,28 @@ public class GalleryTest extends TestsSetup{
 
     @Test
     @WithMockUser(username="test", password="test", authorities="user")
-    public void shouldAddGallery_withGivenTitleAndContent() throws Exception {
-        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(galleryMetadata);
-
-        mockMvc.perform(post("/gallery")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .param("title", galleryMetadata.getTitle())
-                .param("content", galleryMetadata.getContent()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value(galleryMetadata.getTitle()))
-                .andExpect(jsonPath("$.content").value(galleryMetadata.getContent()))
-                .andExpect(jsonPath("$.tags[0]").value(galleryMetadata.getTags().get(0)))
-                .andExpect(jsonPath("$.children[0].uuid").value("1"));
-    }
-
-    @Test
-    @WithMockUser(username="test", password="test", authorities="user")
     public void shouldUpdateGallery() throws Exception {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(galleryMetadata);
-        when(metadataStorage.updateMultipleMetadataFields(eq(DUMMY_ID), anyMap())).thenReturn(true);
+        when(metadataStorage.updateMetadata(DUMMY_ID, galleryMetadata)).thenReturn(galleryMetadata);
 
         mockMvc.perform(put("/gallery/" + DUMMY_ID)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .param("title", galleryMetadata.getTitle())
-                .param("content", galleryMetadata.getContent()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsBytes(MediaFile.builder()
+                        .uuid(DUMMY_ID).title("test update gallery").content("test update gallery content")
+                        .build())))
                 .andExpect(status().isAccepted());
     }
 
     @Test
     @WithMockUser(username="test", password="test", authorities="user")
-    public void shouldGetError_whenUpdateGalleryWithoutValidId() throws Exception {
-        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(galleryMetadata);
-        when(metadataStorage.updateMultipleMetadataFields(eq(DUMMY_ID), anyMap())).thenReturn(false);
+    public void shouldUpdateGalleryWithChild() throws Exception {
+        when(metadataStorage.getMetadata(eq(DUMMY_ID))).thenReturn(galleryMetadata);
+        when(metadataStorage.updateMetadata(eq(DUMMY_ID), eq(galleryMetadata))).thenReturn(galleryMetadata);
 
-        mockMvc.perform(put("/gallery/" + DUMMY_ID)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
-                .andExpect(status().isExpectationFailed());
+        mockMvc.perform(post("/gallery/" + DUMMY_ID)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                .param("mediaFileIds", "1", "2"))
+                .andExpect(status().isAccepted());
     }
 
 }

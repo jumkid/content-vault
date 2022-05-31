@@ -3,7 +3,7 @@ package com.jumkid.vault;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.model.MediaFileMetadata;
-import com.jumkid.vault.model.MediaFileProp;
+import com.jumkid.vault.model.MediaFilePropMetadata;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -53,6 +53,11 @@ public class TestsSetup {
     }
 
     public MediaFileMetadata buildMetadata(String metadataId) {
+        List<MediaFilePropMetadata> props = new ArrayList<>();
+        props.add(MediaFilePropMetadata.builder()
+                .name("author").textValue("Mr nobody")
+                .build());
+
         return MediaFileMetadata.builder()
                 .id(metadataId == null ? DUMMY_ID : metadataId)
                 .title("test.title")
@@ -63,9 +68,7 @@ public class TestsSetup {
                 .activated(true)
                 .module(MediaFileModule.TEXT)
                 .logicalPath("/foo")
-                .props(List.of(MediaFileProp.builder()
-                        .name("author").textValue("Mr nobody")
-                        .build()))
+                .props(props)
                 .build();
     }
 

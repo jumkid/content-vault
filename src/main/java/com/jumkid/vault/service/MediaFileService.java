@@ -17,6 +17,7 @@ import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
 
+import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.Map;
@@ -44,39 +45,20 @@ public interface MediaFileService {
      * Update an existing gallery
      *
      * @param galleryId media gallery identity
-     * @param mediaGallery media file for gallery
+     * @param partialMediaGallery media file for gallery
      * @return MediaFile
      */
-    MediaFile updateMediaGallery(String galleryId, MediaFile mediaGallery);
+    MediaFile updateMediaGallery(String galleryId, MediaFile partialMediaGallery);
 
     /**
      * Update existing media file metadata and binary
      *
      * @param mediaFileId media file identity
-     * @param mediaFile media file info
+     * @param partialMediaFile partial media file info
      * @param file binary of file
      * @return MediaFile
      */
-    MediaFile updateMediaFile(String mediaFileId, MediaFile mediaFile, byte[] file);
-
-    /**
-     * Update existing media file metadata field
-     *
-     * @param mediaFileId media file identity
-     * @param mediaFileField media file field
-     * @param value media file field value
-     * @return true if succeed
-     */
-    boolean updateMediaFileField(String mediaFileId, MediaFileField mediaFileField, Object value);
-
-    /**
-     * Update a list of fields of metadata
-     *
-     * @param mediaFileId identity of media file
-     * @param fieldValueMap map for field and value
-     * @return true if succeed
-     */
-    boolean updateMediaFileFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap);
+    MediaFile updateMediaFile(String mediaFileId, MediaFile partialMediaFile, byte[] file);
 
     /**
      * Retrieve media file by id

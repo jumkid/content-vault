@@ -9,6 +9,10 @@ package com.jumkid.vault.config;
  *
  * (c)2019 Jumkid Innovation All rights reserved.
  */
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -18,7 +22,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -71,7 +74,7 @@ public class ESConfig {
     private String esClusterName;
 
     @Bean
-    public RestHighLevelClient esClient(){
+    public ElasticsearchClient esClient(){
 
         final CredentialsProvider credentialsProvider =
                 new BasicCredentialsProvider();
@@ -81,12 +84,17 @@ public class ESConfig {
         try {
             SSLContext sslContext = esProtocol.equals("https") ? buildContext() : null;
 
-            return new RestHighLevelClient(RestClient.builder(
+            RestClient restClient = RestClient.builder(
                     new HttpHost(InetAddress.getByName(esHost), esPort, esProtocol)
-                    ).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
-                            .setDefaultCredentialsProvider(credentialsProvider)
-                            .setSSLContext(sslContext)
-                    ));
+            ).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
+                    .setDefaultCredentialsProvider(credentialsProvider)
+                    .setSSLContext(sslContext)
+            ).build();
+
+            // Create the transport with a Jackson mapper
+            ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+
+            return new ElasticsearchClient(transport);
         } catch (UnknownHostException uhe) {
             log.error("Failed to connect elasticsearch host {} ", esHost);
         } catch (Exception e) {

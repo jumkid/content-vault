@@ -9,4 +9,6 @@ public class Constants {
 
     public static final String ES_INDEX_MFILE = "mfile";
 
+    public static final String PROP_FEATURED_ID = "featuredId";
+
 }

@@ -1,8 +1,8 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   version: v1
   title: content-vault API
-  description: content-vault RESTFul api for openapi 3.0 in swagger
+  description: content-vault RESTFul api for openapi 3.1
   termsOfService: 'https://jumkid.com/terms-of-use'
   contact:
     name: Chooli Yip
@@ -18,7 +18,7 @@ servers:
     url: 'http://api.jumkid.com'
 tags:
   - name: v1
-    description: API for version 1.0.0
+    description: API for version 1.0.2
   - name: test
     description: API for test
 security:
@@ -109,20 +109,8 @@ paths:
           description: mediafile identifier
           schema:
             type: string
-        - name: mediaFileField
-          in: query
-          required: true
-          description: mediaFile field name
-          schema:
-            $ref: '#/components/schemas/MediaFileField'
-        - name: mediaFileFieldValue
-          in: query
-          required: true
-          description: mediaFile field value
-          schema:
-            type: string
       requestBody:
-        description: metadata json object
+        description: partial metadata json object
         content:
           application/json:
             schema:
@@ -287,8 +275,8 @@ paths:
     post:
       tags:
         - v1
-      operationId: uploadGallery
-      description: upload multiple file as gallery
+      operationId: saveGallery
+      description: save multiple file as gallery
       parameters:
         - name: title
           in: query
@@ -314,53 +302,65 @@ paths:
             format: string    
       responses:
         '202':
-          description: upload a gallery with multiple files
+          description: save a gallery with multiple files upload
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
+
   '/gallery/{id}':
-    put:
+    post:
       tags:
         - v1
       operationId: updateGallery
-      description: update a gallery
+      description: update a gallery with file upload
       parameters:
-        - name: id
+        - name: galleryId
           in: path
           required: true
           description: gallery identifier
           schema:
             type: string
-        - name: mediaFileIds
+        - name: featuredId
           in: query
           required: false
+          description: representative image of the gallery
           schema:
-            type: array
-            format: string
-          description: a list of media file id
+            type: string
         - name: files
           in: query
           required: false
           schema:
             type: array
             format: file
-        - name: tags
-          in: query
-          required: false
-          schema:
-            type: array
-            format: string
-        - name: title
-          in: query
-          required: false
+
+      responses:
+        '202':
+          description: updated a gallery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+
+    put:
+      tags:
+        - v1
+      operationId: updateGallery
+      description: update a gallery with partialMediaFile or child media file list
+      parameters:
+        - name: galleryId
+          in: path
+          required: true
+          description: gallery identifier
           schema:
             type: string
-        - name: content
-          in: query
-          required: false
-          schema:
-            type: string
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaFile'
+
       responses:
         '202':
           description: updated a gallery
@@ -394,6 +394,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaFile'
+
   /file/multipleUpload:
     post:
       tags:

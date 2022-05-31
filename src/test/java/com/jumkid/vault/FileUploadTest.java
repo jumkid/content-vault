@@ -61,9 +61,10 @@ public class FileUploadTest extends TestsSetup {
             password="test",
             authorities="user")
     public void whenGivenFile_shouldUploadFile() throws Exception {
+
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
-        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.updateMetadata(any(), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
 
@@ -79,7 +80,7 @@ public class FileUploadTest extends TestsSetup {
     public void whenGivenFile_shouldUploadMultipleFile() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
-        when(metadataStorage.updateMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.updateMetadata(any(), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
 

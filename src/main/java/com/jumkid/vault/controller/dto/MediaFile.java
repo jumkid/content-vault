@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.*;
 import com.jumkid.share.controller.dto.GenericDTO;
+import com.jumkid.vault.enums.MediaFileModule;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,6 +35,8 @@ public class MediaFile extends GenericDTO {
 
     private Boolean activated;
 
+    private MediaFileModule module;
+
     @JsonIgnore
     private byte[] file;
 
@@ -41,13 +44,16 @@ public class MediaFile extends GenericDTO {
 
     private List<MediaFile> children;
 
+    private List<MediaFileProp> props;
+
     /**
      * This constructor is for lombok builder only since it is subclass of generic DTO
      *
      */
     @Builder
     public MediaFile(String uuid, String filename, String mimeType, Integer size, String title, String content,
-                     Boolean activated, List<String> tags,
+                     Boolean activated, List<String> tags, MediaFileModule module,
+                     List<MediaFileProp> props, List<MediaFile> children,
                      String createdBy, LocalDateTime creationDate, String modifiedBy, LocalDateTime modificationDate) {
         super(createdBy, creationDate, modifiedBy, modificationDate);
         this.uuid = uuid;
@@ -58,5 +64,8 @@ public class MediaFile extends GenericDTO {
         this.content = content;
         this.activated = activated;
         this.tags = tags;
+        this.module = module;
+        this.props = props;
+        this.children = children;
     }
 }

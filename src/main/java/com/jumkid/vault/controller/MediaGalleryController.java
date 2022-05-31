@@ -1,12 +1,13 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.enums.MediaFileField;
+import com.jumkid.vault.controller.dto.MediaFileProp;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,8 @@ import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
 
 @Slf4j
 @RestController
@@ -69,35 +72,53 @@ public class MediaGalleryController {
         return gallery;
     }
 
+    @PostMapping(value = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public MediaFile update(@NotNull @PathVariable("id") String galleryId,
+                            @RequestParam(value = "featuredId", required = false) String featuredId,
+                            @RequestParam(value = "mediaFileIds", required = false) List<String> childIds,
+                            @RequestParam(value = "files", required = false) MultipartFile[] files) {
+        MediaFile partialMediaFile = MediaFile.builder().uuid(galleryId).build();
+
+        boolean hasUpdate = false;
+        if (childIds != null && !childIds.isEmpty()) {
+            List<MediaFile> mediaFileList = childIds.stream()
+                    .map(childId -> MediaFile.builder().uuid(childId).build())
+                    .collect(Collectors.toList());
+
+            partialMediaFile.setChildren(mediaFileList);
+
+            hasUpdate = true;
+        }
+
+        if (files != null) {
+            List<MediaFile> childList = processNewChildren(files);
+            if (partialMediaFile.getChildren() != null) {
+                partialMediaFile.getChildren().addAll(childList);
+            } else {
+                partialMediaFile.setChildren(childList);
+            }
+            hasUpdate = true;
+        }
+
+        if (featuredId != null) {
+            partialMediaFile.setProps(List.of(MediaFileProp.builder()
+                    .name(PROP_FEATURED_ID).textValue(featuredId)
+                    .build()));
+            hasUpdate = true;
+        }
+
+        if (hasUpdate) return fileService.updateMediaGallery(galleryId, partialMediaFile);
+        else return null;
+    }
+
     @PutMapping("{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasAuthority('admin')" +
             " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #galleryId))")
     public MediaFile update(@PathVariable(value = "id") String galleryId,
-                            @RequestParam(value = "mediaFileIds", required = false) List<String> childIds,
-                            @RequestParam(value = "files", required = false) MultipartFile[] files,
-                            @RequestParam(value = "title", required = false) String title,
-                            @RequestParam(value = "content", required = false) String content,
-                            @RequestParam(value = "tags", required = false) List<String> tags) {
-        Map<MediaFileField, Object> fieldValueMap = new EnumMap<>(MediaFileField.class);
-        if (title != null && !title.isBlank()) { fieldValueMap.put(MediaFileField.TITLE, title); }
-        if (content != null && !content.isBlank()) { fieldValueMap.put(MediaFileField.CONTENT, content); }
-        if (tags != null && !tags.isEmpty()) { fieldValueMap.put(MediaFileField.TAGS, tags); }
-        //reset all children by the given list
-        if (childIds != null && !childIds.isEmpty()) {
-            List<MediaFile> mediaFileList = childIds.stream()
-                    .map(childId -> MediaFile.builder().uuid(childId).build())
-                    .collect(Collectors.toList());
-            fieldValueMap.put(MediaFileField.CHILDREN, mediaFileList);
-        }
-        List<MediaFile> newChildList = processNewChildren(files);
-        if (!newChildList.isEmpty()) { mergeNewChildren(fieldValueMap, newChildList); }
-
-        if (fileService.updateMediaFileFields(galleryId, fieldValueMap)) {
-            return fileService.getMediaFile(galleryId);
-        } else {
-            throw new FileStoreServiceException("Failed to update gallery");
-        }
+                            @NotNull @RequestBody MediaFile partialMediaFile) {
+        return fileService.updateMediaGallery(galleryId, partialMediaFile);
     }
 
     private List<MediaFile> processNewChildren(MultipartFile[] files){
@@ -118,14 +139,6 @@ public class MediaGalleryController {
             log.error("Failed to update file");
         }
         return newChildList;
-    }
-
-    private void mergeNewChildren(Map<MediaFileField, Object> fieldValueMap, List<MediaFile> newChildList) {
-        if (fieldValueMap.containsKey(MediaFileField.CHILDREN)) {
-            ((List<MediaFile>)fieldValueMap.get(MediaFileField.CHILDREN)).addAll(newChildList);
-        } else if (!newChildList.isEmpty()) {
-            fieldValueMap.put(MediaFileField.CHILDREN, newChildList);
-        }
     }
 
 }

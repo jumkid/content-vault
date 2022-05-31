@@ -11,7 +11,9 @@ package com.jumkid.vault.repository;
  */
 
 import com.jumkid.vault.enums.MediaFileField;
+import com.jumkid.vault.model.MediaFileMetadata;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,13 +31,6 @@ public interface FileMetadata<T> {
      * @param t generic type of file
      */
     T saveMetadata(T t);
-    /**
-     * Persist file metadata and binary in repository
-     *
-     * @param bytes file binary
-     * @param t generic type of file
-     */
-    T saveMetadata(T t, byte[] bytes);
 
     /**
      * Get type from repository by given identifier
@@ -64,26 +59,7 @@ public interface FileMetadata<T> {
      * @param t type
      * @return type
      */
-    T updateMetadata(T t);
-
-    /**
-     * Update the metadata of give single field name and value
-     *
-     * @param mediaFileId identity of media file
-     * @param mediaFileField for field name
-     * @param value for the field
-     * @return true if succeed
-     */
-    boolean updateMetadataField(String mediaFileId, MediaFileField mediaFileField, Object value);
-
-    /**
-     * Update a list of fields of metadata
-     *
-     * @param mediaFileId identity of media file
-     * @param fieldValueMap map for field and value
-     * @return true if succeed
-     */
-    boolean updateMultipleMetadataFields(String mediaFileId, Map<MediaFileField, Object> fieldValueMap);
+    public T updateMetadata(String id, T t) throws IOException;
 
     /**
      * update metadata active status
@@ -121,6 +97,6 @@ public interface FileMetadata<T> {
     /**
      * Remove all inactive metadata
      */
-    long deleteInactiveMetadata();
+    Long deleteInactiveMetadata();
 
 }

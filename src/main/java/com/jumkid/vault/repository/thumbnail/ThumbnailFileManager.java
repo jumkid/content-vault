@@ -1,11 +1,15 @@
 package com.jumkid.vault.repository.thumbnail;
 
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
+import com.jumkid.vault.model.MediaFilePropMetadata;
+import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FilePathManager;
 import com.jumkid.vault.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +21,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
 
 @Slf4j
 @Component
@@ -43,19 +48,21 @@ public class ThumbnailFileManager {
 
     private final FilePathManager filePathManager;
 
-    public ThumbnailFileManager(FilePathManager filePathManager) {
+    private final FileMetadata<MediaFileMetadata> metadataStorage;
+
+    @Autowired
+    public ThumbnailFileManager(FilePathManager filePathManager, FileMetadata<MediaFileMetadata> metadataStorage) {
         this.filePathManager = filePathManager;
+        this.metadataStorage = metadataStorage;
     }
 
     public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
-
-        String dataHomePath = filePathManager.getDataHomePath();
-        String logicalPath = mediaFileMetadata.getLogicalPath();
-
         String filePath;
-        if(mediaFileMetadata.getMimeType().startsWith("image")) {
-            filePath = String.format("%s%s/%s%s.%s", dataHomePath, logicalPath, mediaFileMetadata.getId(),
-                    this.getThumbnailSuffix(thumbnailNamespace).value(), ThumbnailFileManager.THUMBNAIL_FILE_EXTEND);
+
+        if (mediaFileMetadata.getModule().equals(MediaFileModule.GALLERY)) {
+            filePath = getThumbnailFilePathForGallery(mediaFileMetadata, thumbnailNamespace);
+        } else if (mediaFileMetadata.getMimeType().startsWith("image")) {
+            filePath = getThumbnailFilePathForMediaFile(mediaFileMetadata, thumbnailNamespace);
         } else {
             filePath = getThumbnailFilePath(mediaFileMetadata.getMimeType());
         }
@@ -73,6 +80,39 @@ public class ThumbnailFileManager {
             return Optional.empty();
         }
 
+    }
+
+    private String getThumbnailFilePathForGallery(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
+        if (mediaFileMetadata.getProps() == null || mediaFileMetadata.getProps().isEmpty()) {
+            return getThumbnailFilePath(MediaFileModule.GALLERY.value());
+        }
+
+        Optional<MediaFilePropMetadata> optional = mediaFileMetadata.getProps().stream()
+                .filter(prop -> prop.getName().equals(PROP_FEATURED_ID))
+                .findFirst();
+
+        if (optional.isPresent()) {   //get featured image as thumbnail
+            String featuredId = optional.get().getTextValue();
+            Optional<MediaFileMetadata> childOptional = mediaFileMetadata.getChildren().stream()
+                    .filter(prop -> prop.getId().equals(featuredId))
+                    .findFirst();
+
+            if (childOptional.isPresent()) {
+                MediaFileMetadata featuredMediaFileMetadata = metadataStorage.getMetadata(childOptional.get().getId());
+                if (featuredMediaFileMetadata != null) {
+                    return getThumbnailFilePathForMediaFile(featuredMediaFileMetadata, thumbnailNamespace);
+                }
+            }
+        }
+
+        return getThumbnailFilePath(MediaFileModule.GALLERY.value());
+    }
+
+    private String getThumbnailFilePathForMediaFile(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
+        String dataHomePath = filePathManager.getDataHomePath();
+
+        return String.format("%s%s/%s%s.%s", dataHomePath, mediaFileMetadata.getLogicalPath(), mediaFileMetadata.getId(),
+                this.getThumbnailSuffix(thumbnailNamespace).value(), ThumbnailFileManager.THUMBNAIL_FILE_EXTEND);
     }
 
     private String getThumbnailFilePath(String mimeType) {

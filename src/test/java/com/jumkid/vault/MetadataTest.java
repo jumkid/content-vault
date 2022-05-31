@@ -5,10 +5,12 @@ import com.jumkid.vault.enums.MediaFileField;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
+import com.jumkid.vault.service.MediaFileSecurityService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +42,9 @@ public class MetadataTest extends TestsSetup {
     @MockBean
     private LocalFileStorage localFileStorage;
 
+    @Autowired
+    private MediaFileSecurityService securityService;
+
     private MediaFileMetadata mediaFileMetadata;
 
     @Before
@@ -47,7 +52,6 @@ public class MetadataTest extends TestsSetup {
         try {
             mediaFileMetadata = buildMetadata(null);
 
-            when(metadataStorage.updateMetadataField(eq(DUMMY_ID), any(MediaFileField.class), any())).thenReturn(true);
             when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(mediaFileMetadata);
             when(localFileStorage.getFileBinary(mediaFileMetadata))
                     .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
@@ -102,10 +106,11 @@ public class MetadataTest extends TestsSetup {
             password="demo",
             authorities="user")
     public void shouldUpdateMetadata_whenGivenMetadata() throws Exception {
+        when(metadataStorage.updateMetadata(DUMMY_ID, mediaFileMetadata)).thenReturn(mediaFileMetadata);
+
         mockMvc.perform(put("/metadata/"+DUMMY_ID)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .queryParam("fieldName", "title")
-                .queryParam("fieldValue", "test.title"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsBytes(mediaFileMetadata)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uuid").value(DUMMY_ID))
                 .andExpect(jsonPath("$.title").value("test.title"));

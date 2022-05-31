@@ -21,9 +21,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.nio.channels.FileChannel;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
