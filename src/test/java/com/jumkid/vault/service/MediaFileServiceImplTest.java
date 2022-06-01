@@ -10,6 +10,7 @@ import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.HadoopFileStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
+import com.jumkid.vault.service.enrich.MetadataEnricher;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
 import com.jumkid.vault.service.mapper.MediaFilePropMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,8 @@ public class MediaFileServiceImplTest extends TestsSetup {
     private HadoopFileStorage hadoopFileStorage;
     @Mock
     private LocalFileStorage localFileStorage;
+    @Autowired
+    private MetadataEnricher metadataEnricher;
     @Mock
     private MediaFileSecurityService securityService;
 
@@ -56,7 +59,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         mediaFile = buildMediaFile(null);
 
         mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage,
-                mediaFileMapper, mediaFilePropMapper, securityService);
+                mediaFileMapper, mediaFilePropMapper, securityService, metadataEnricher);
         mediaFileService.setStorageMode("local");
 
         when(securityService.getCurrentUserName()).thenReturn("admin");

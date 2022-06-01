@@ -53,21 +53,24 @@ public class MediaFileMetadata extends GenericDTO {
 
 	public void addProp(String name, String value) {
 		if (isPropNotExist(name)) {
-			props.add(MediaFilePropMetadata.builder().name(name).textValue(value)
+			props.add(MediaFilePropMetadata.builder()
+					.name(name).textValue(value)
                     .build());
 		}
 	}
 
 	public void addProp(String name, LocalDateTime date) {
 		if (isPropNotExist(name)) {
-			props.add(MediaFilePropMetadata.builder().name(name).dateValue(date)
+			props.add(MediaFilePropMetadata.builder()
+					.name(name).dateValue(date)
 					.build());
 		}
 	}
 
-	public void addProp(String name, Integer number) {
+	public void addProp(String name, Number number) {
 		if (isPropNotExist(name)) {
-			props.add(MediaFilePropMetadata.builder().name(name).numberValue(number)
+			props.add(MediaFilePropMetadata.builder()
+					.name(name).numberValue(number)
 					.build());
 		}
 	}

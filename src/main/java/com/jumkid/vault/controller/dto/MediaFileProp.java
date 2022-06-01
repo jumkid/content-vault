@@ -19,6 +19,6 @@ public class MediaFileProp {
 
     private String textValue;
     private LocalDateTime dateValue;
-    private Integer numberValue;
+    private Number numberValue;
 
 }

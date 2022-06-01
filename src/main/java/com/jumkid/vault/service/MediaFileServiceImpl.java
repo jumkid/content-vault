@@ -11,12 +11,9 @@ package com.jumkid.vault.service;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import com.jumkid.vault.controller.dto.MediaFile;
@@ -30,14 +27,11 @@ import com.jumkid.vault.exception.GalleryNotFoundException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FileStorage;
+import com.jumkid.vault.service.enrich.MetadataEnricher;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
 import com.jumkid.vault.service.mapper.MediaFilePropMapper;
-import com.jumkid.vault.util.DateTimeUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -62,7 +56,7 @@ public class MediaFileServiceImpl implements MediaFileService {
 
 	private final MediaFileSecurityService securityService;
 
-	private static final String WHITESPACE = "\\t";
+    private final MetadataEnricher metadataEnricher;
 
 	@Autowired
 	public MediaFileServiceImpl(FileMetadata<MediaFileMetadata> metadataStorage,
@@ -70,10 +64,11 @@ public class MediaFileServiceImpl implements MediaFileService {
                                 FileStorage<MediaFileMetadata> localFileStorage,
                                 MediaFileMapper mediaFileMapper,
                                 MediaFilePropMapper mediaFilePropMapper,
-                                MediaFileSecurityService securityService) {
+                                MediaFileSecurityService securityService, MetadataEnricher metadataEnricher) {
         this.mediaFileMapper = mediaFileMapper;
         this.mediaFilePropMapper = mediaFilePropMapper;
         this.securityService = securityService;
+        this.metadataEnricher = metadataEnricher;
         storageRegistry.put(StorageMode.LOCAL, localFileStorage);
         storageRegistry.put(StorageMode.HADOOP, hadoopFileStorage);
 	    this.metadataStorage = metadataStorage;
@@ -140,7 +135,7 @@ public class MediaFileServiceImpl implements MediaFileService {
 	    if(file == null || file.length == 0) {
 	        mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
         } else {
-            enrichMetadata(mediaFileMetadata, file);
+            metadataEnricher.enrichProps(mediaFileMetadata, file);
             //save metadata to get indexed doc with id
             mediaFileMetadata = metadataStorage.saveMetadata(mediaFileMetadata);
             //save file binary to file system
@@ -304,36 +299,6 @@ public class MediaFileServiceImpl implements MediaFileService {
 
         if (dto.getActivated() == null) dto.setActivated(true);
 
-    }
-
-    private void enrichMetadata(MediaFileMetadata mediaFileMetadata, byte[] bytes) {
-        AutoDetectParser parser = new AutoDetectParser();
-        BodyContentHandler handler = new BodyContentHandler();
-        Metadata metadata = new Metadata();
-        try (InputStream stream = new ByteArrayInputStream(bytes)) {
-            parser.parse(stream, handler, metadata);
-            for (String metaName : metadata.names()) {
-                String metaValue = metadata.get(metaName);
-                if (metaValue == null || metaValue.isBlank()) continue;
-
-                if (metaName.toLowerCase().contains("date") || metaName.toLowerCase().contains("modified")) {
-                    addDatetimeProp(mediaFileMetadata, metaValue, metaName);
-                } else {
-                    mediaFileMetadata.addProp(metaName, metaValue + WHITESPACE);  //add whitespace here to escape date type in ES
-                }
-            }
-        } catch (Exception e) {
-            log.error("Metadata parsing exception {}", e.getMessage());
-        }
-    }
-
-    private void addDatetimeProp(MediaFileMetadata mediaFileMetadata, String metaValue, String metaName) {
-        try {
-            mediaFileMetadata.addProp(metaName, DateTimeUtils.stringToLocalDatetime(metaValue));
-        } catch (DateTimeParseException ex) {
-            log.error("meta={}  |  {}", metaName, ex.getMessage());
-            mediaFileMetadata.addProp(metaName, metaValue + WHITESPACE); //add whitespace here to escape date type in ES
-        }
     }
 
 }

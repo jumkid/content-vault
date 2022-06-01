@@ -29,6 +29,6 @@ public class MediaFilePropMetadata {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime dateValue;
 
-    private Integer numberValue;
+    private Number numberValue;
 
 }
