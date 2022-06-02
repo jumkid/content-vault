@@ -49,8 +49,6 @@ public class MediaFileServiceImplTest extends TestsSetup {
 
     @Autowired
     private MediaFileMapper mediaFileMapper;
-    @Autowired
-    private MediaFilePropMapper mediaFilePropMapper;
 
     private MediaFile mediaFile;
 
@@ -59,7 +57,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         mediaFile = buildMediaFile(null);
 
         mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage,
-                mediaFileMapper, mediaFilePropMapper, securityService, metadataEnricher);
+                mediaFileMapper, securityService, metadataEnricher);
         mediaFileService.setStorageMode("local");
 
         when(securityService.getCurrentUserName()).thenReturn("admin");

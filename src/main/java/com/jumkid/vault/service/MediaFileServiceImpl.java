@@ -52,7 +52,6 @@ public class MediaFileServiceImpl implements MediaFileService {
 	private final EnumMap<StorageMode, FileStorage<MediaFileMetadata>> storageRegistry = new EnumMap<>(StorageMode.class);
 
 	private final MediaFileMapper mediaFileMapper;
-	private final MediaFilePropMapper mediaFilePropMapper;
 
 	private final MediaFileSecurityService securityService;
 
@@ -63,10 +62,9 @@ public class MediaFileServiceImpl implements MediaFileService {
                                 FileStorage<MediaFileMetadata> hadoopFileStorage,
                                 FileStorage<MediaFileMetadata> localFileStorage,
                                 MediaFileMapper mediaFileMapper,
-                                MediaFilePropMapper mediaFilePropMapper,
-                                MediaFileSecurityService securityService, MetadataEnricher metadataEnricher) {
+                                MediaFileSecurityService securityService,
+                                MetadataEnricher metadataEnricher) {
         this.mediaFileMapper = mediaFileMapper;
-        this.mediaFilePropMapper = mediaFilePropMapper;
         this.securityService = securityService;
         this.metadataEnricher = metadataEnricher;
         storageRegistry.put(StorageMode.LOCAL, localFileStorage);
@@ -235,25 +233,57 @@ public class MediaFileServiceImpl implements MediaFileService {
         }
     }
 
+    /**
+     *
+     * @param mediaFileId media file identity
+     * @return number of trashed media file
+     */
     @Override
-    public void trashMediaFile(String mediaFileId) {
+    public Integer trashMediaFile(String mediaFileId) {
         MediaFileMetadata mediaFileMetadata = metadataStorage.getMetadata(mediaFileId);
-        if (mediaFileMetadata != null && mediaFileMetadata.getActivated()) {
-            metadataStorage.updateMetadataStatus(mediaFileId, false);
 
-            try {
-                getFileStorage().deleteFile(mediaFileMetadata);
-            } catch (FileNotFoundException ex) {
-                metadataStorage.updateLogicalPath(mediaFileId, null);
-            } catch (Exception e) {
-                //roll back metadata status
-                metadataStorage.updateMetadataStatus(mediaFileId, true);
-                throw new FileStoreServiceException(e.getMessage());
-            }
-
-        } else {
+        if (mediaFileMetadata == null || !mediaFileMetadata.getActivated()) {
             log.warn("metadata is not found for media file {}", mediaFileId);
+            return 0;
         }
+
+        if (mediaFileMetadata.getModule().equals(MediaFileModule.GALLERY)) {
+            return trashGallery(mediaFileMetadata);
+        }
+
+        metadataStorage.updateMetadataStatus(mediaFileId, false);
+
+        try {
+            getFileStorage().deleteFile(mediaFileMetadata);
+            return 1;
+        } catch (FileNotFoundException ex) {
+            metadataStorage.updateLogicalPath(mediaFileId, null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //roll back metadata status
+            metadataStorage.updateMetadataStatus(mediaFileId, true);
+            throw new FileStoreServiceException("failed to trash gallery, please contact system admin");
+        }
+
+        return 0;
+    }
+
+    private Integer trashGallery(MediaFileMetadata galleryMetadata) {
+	    String galleryId = galleryMetadata.getId();
+        metadataStorage.updateMetadataStatus(galleryId, false);
+
+        try {
+            if (galleryMetadata.getChildren() != null) {
+                galleryMetadata.getChildren().forEach(galleryItem -> trashMediaFile(galleryItem.getId()));
+
+                return galleryMetadata.getChildren().size();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            metadataStorage.updateMetadataStatus(galleryId, true); //roll back metadata status
+            throw new FileStoreServiceException("failed to trash gallery, please contact system admin");
+        }
+        return 0;
     }
 
     @Override

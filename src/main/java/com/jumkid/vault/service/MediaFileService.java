@@ -104,7 +104,7 @@ public interface MediaFileService {
      *
      * @param mediaFileId media file identity
      */
-    void trashMediaFile(String mediaFileId);
+    Integer trashMediaFile(String mediaFileId);
 
     /**
      * Get all media files
