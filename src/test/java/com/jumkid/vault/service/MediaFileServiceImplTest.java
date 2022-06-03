@@ -12,7 +12,6 @@ import com.jumkid.vault.repository.HadoopFileStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.service.enrich.MetadataEnricher;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
-import com.jumkid.vault.service.mapper.MediaFilePropMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;

@@ -29,7 +29,6 @@ import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FileStorage;
 import com.jumkid.vault.service.enrich.MetadataEnricher;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
-import com.jumkid.vault.service.mapper.MediaFilePropMapper;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
