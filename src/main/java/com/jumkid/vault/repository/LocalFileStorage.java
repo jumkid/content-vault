@@ -54,7 +54,11 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	@Override
 	public Optional<byte[]> getFileBinary(MediaFileMetadata mediaFileMetadata) {
 		FileChannel fc = getFileChannel(mediaFileMetadata);
-		return FileUtils.fileChannelToBytes(fc);
+		if (fc != null) {
+			return FileUtils.fileChannelToBytes(fc);
+		} else {
+			return Optional.empty();
+		}
 	}
 
 	@Override
@@ -110,6 +114,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	private FileChannel getFileChannel(MediaFileMetadata mediaFile) {
+		if (mediaFile == null || mediaFile.getLogicalPath() == null) return null;
 
 		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId());
 

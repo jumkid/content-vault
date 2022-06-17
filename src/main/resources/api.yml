@@ -143,26 +143,6 @@ paths:
               schema:
                 type: integer
 
-  '/content/html/{id}':
-    get:
-      tags:
-        - v1
-      operationId: getHtml
-      description: get html content
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: mediafile identifier
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            text/html:
-              schema:
-                type: string
   '/content/{id}':
     get:
       tags:
@@ -189,6 +169,7 @@ paths:
             test/plain:
               schema:
                 type: string
+
   /content:
     post:
       tags:
@@ -213,6 +194,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
       summary: Add text content
+
   /content/html:
     post:
       tags:
@@ -238,6 +220,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
       summary: Add html content
+
   '/content/stream/{id}':
     get:
       tags:
@@ -318,10 +301,10 @@ paths:
     post:
       tags:
         - v1
-      operationId: updateGallery
+      operationId: updateItems
       description: update a gallery with file upload
       parameters:
-        - name: galleryId
+        - name: id
           in: path
           required: true
           description: gallery identifier
@@ -351,10 +334,10 @@ paths:
     put:
       tags:
         - v1
-      operationId: updateGallery
+      operationId: update
       description: update a gallery with partialMediaFile or child media file list
       parameters:
-        - name: galleryId
+        - name: id
           in: path
           required: true
           description: gallery identifier

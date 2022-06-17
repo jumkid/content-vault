@@ -52,7 +52,7 @@ public class MetadataTest extends TestsSetup {
         try {
             mediaFileMetadata = buildMetadata(null);
 
-            when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(mediaFileMetadata);
+            when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
             when(localFileStorage.getFileBinary(mediaFileMetadata))
                     .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
         } catch (Exception e) {

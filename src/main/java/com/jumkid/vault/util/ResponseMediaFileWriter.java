@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,35 +47,33 @@ public class ResponseMediaFileWriter {
 
     private static final int DEFAULT_BUFFER_SIZE = Constants.DEFAULT_1K;
 
-    public String readSmallTextfile(FileChannel fc) throws IOException{
+    public String readSmallTextFile(FileChannel fc) throws IOException{
         byte[] buffer = new byte[(int)fc.size()];
         ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
 
-        try {
+        try (fc) {
             fc.read(byteBuffer);
             byteBuffer.rewind();
             byteBuffer.flip();
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            fc.close();
         }
-        return new String(buffer, Constants.DEFAULT_ENCODING);
+        return new String(buffer, StandardCharsets.UTF_8);
     }
 
-    public String readTextfile(FileChannel fc) throws IOException{
+    public String readTextFile(FileChannel fc) throws IOException{
         StringBuilder sb = new StringBuilder();
         ByteBuffer byteBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
         try (fc) {
             while (fc.read(byteBuffer) != -1) {
                 byteBuffer.flip();
                 while (byteBuffer.hasRemaining()) {
-                    sb.append(Charset.forName(Constants.DEFAULT_ENCODING).decode(byteBuffer));
+                    sb.append(StandardCharsets.UTF_8.decode(byteBuffer));
                 }
                 byteBuffer.clear();
             }
         } catch (Exception e) {
-            log.error("failed to read media file {}", e.getMessage());
+            logReadMediaFailure(e.getMessage());
         }
         return sb.toString();
     }
@@ -83,10 +81,10 @@ public class ResponseMediaFileWriter {
     /**
      * Write mediaFile to response with file channel (nio)
      *
-     * @param mediaFile
-     * @param fc
-     * @param response
-     * @return
+     * @param mediaFile media file to write
+     * @param fc file channel resource
+     * @param response http servlet response
+     * @return http servlet response
      */
     public HttpServletResponse write(MediaFile mediaFile, FileChannel fc,
                                      HttpServletResponse response){
@@ -94,7 +92,7 @@ public class ResponseMediaFileWriter {
             setResponseParams(mediaFile, (int)fc.size(), response);
             _write(fc, response);
         } catch (IOException ioe) {
-            log.error("failed to read media file {}", ioe.getMessage());
+            logReadMediaFailure(ioe.getMessage());
         }
 
         return response;
@@ -103,13 +101,42 @@ public class ResponseMediaFileWriter {
     /**
      * Write mediaFile to response with file channel (nio)
      *
-     * @param mediaFile
-     * @param bytes
-     * @param response
-     * @return
+     * @param mediaFile media file to write
+     * @param bytes byte array to write
+     * @param response http servlet response
+     * @return http servlet response
      */
-    public HttpServletResponse write(MediaFile mediaFile, byte[] bytes,
+    public HttpServletResponse write(MediaFile mediaFile,
+                                     byte[] bytes,
                                      HttpServletResponse response){
+
+        if (bytes == null || bytes.length == 0) {
+            bytes = String.join("\t", mediaFile.getTitle(), mediaFile.getContent())
+                    .getBytes(StandardCharsets.UTF_8);
+        }
+
+        try {
+            setResponseParams(mediaFile, bytes.length, response);
+            _write(bytes, response);
+        } catch (IOException ioe) {
+            logReadMediaFailure(ioe.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Write mediaFile title and content to response
+     *
+     * @param mediaFile media file to write
+     * @param response http servlet response
+     * @return http servlet response
+     */
+    public HttpServletResponse write(MediaFile mediaFile,
+                                     HttpServletResponse response){
+
+        byte[] bytes = String.join("\t", mediaFile.getTitle(), mediaFile.getContent())
+                .getBytes(StandardCharsets.UTF_8);
         try{
             setResponseParams(mediaFile, bytes.length, response);
             _write(bytes, response);
@@ -127,7 +154,7 @@ public class ResponseMediaFileWriter {
             response.setCharacterEncoding("UTF-8");
         } else {
             String fileName = (mediaFile.getFilename()==null ? mediaFile.getUuid() : mediaFile.getFilename());
-            response.setHeader("Content-Disposition", "inline;filename=\"" + fileName + "\"");
+            response.setHeader(Constants.CONTENT_DISPOSITION, "inline;filename=\"" + fileName + "\"");
             response.setContentLength(fileSize);
         }
     }
@@ -146,7 +173,7 @@ public class ResponseMediaFileWriter {
 
         String fileName = (mediaFileMetadata.getFilename()==null ? mediaFileMetadata.getId() : mediaFileMetadata.getFilename());
 
-        response.setHeader("Content-Disposition", "attachment;filename=\"" +fileName+ "\"");
+        response.setHeader(Constants.CONTENT_DISPOSITION, "attachment;filename=\"" +fileName+ "\"");
         response.setContentType(mediaFileMetadata.getMimeType());
 
         _write(fc, response);
@@ -166,7 +193,7 @@ public class ResponseMediaFileWriter {
                                  HttpServletResponse response) throws IOException{
         String fileName = (mediaFileMetadata.getFilename()==null ? mediaFileMetadata.getId() : mediaFileMetadata.getFilename());
 
-        response.setHeader("Content-Disposition", "attachment;filename=\"" +fileName+ "\"");
+        response.setHeader(Constants.CONTENT_DISPOSITION, "attachment;filename=\"" +fileName+ "\"");
         response.setContentType(mediaFileMetadata.getMimeType());
 
         response.getOutputStream().write(bytes);
@@ -186,7 +213,7 @@ public class ResponseMediaFileWriter {
 
         // Prepare some variables. The full Range represents the complete file.
         Range full = new Range(0, fc.size() - 1, fc.size());
-        List<Range> ranges = new ArrayList<Range>();
+        List<Range> ranges = new ArrayList<>();
 
         // Validate and process Range and If-Range headers.
         String range = request.getHeader("Range");
@@ -194,7 +221,7 @@ public class ResponseMediaFileWriter {
 
             // Range header should match format "bytes=n-n,n-n,n-n...". If not, then return 416.
             if (!range.matches("^bytes=\\d*-\\d*(,\\d*-\\d*)*$")) {
-                response.setHeader("Content-Range", "bytes */" + fc.size()); // Required in 416.
+                response.setHeader(Constants.CONTENT_RANGE, "bytes */" + fc.size()); // Required in 416.
                 response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
                 return response;
             }
@@ -218,8 +245,8 @@ public class ResponseMediaFileWriter {
                 for (String part : range.substring(6).split(",")) {
                     // Assuming a file with length of 100, the following examples returns bytes at:
                     // 50-80 (50 to 80), 40- (40 to length=100), -20 (length-20=80 to length=100).
-                    long start = sublong(part, 0, part.indexOf("-"));
-                    long end = sublong(part, part.indexOf("-") + 1, part.length());
+                    long start = subLong(part, 0, part.indexOf("-"));
+                    long end = subLong(part, part.indexOf("-") + 1, part.length());
 
                     if (start == -1) {
                         start = length - end;
@@ -230,7 +257,7 @@ public class ResponseMediaFileWriter {
 
                     // Check if Range is syntactically valid. If not, then return 416.
                     if (start > end) {
-                        response.setHeader("Content-Range", "bytes */" + length); // Required in 416.
+                        response.setHeader(Constants.CONTENT_RANGE, "bytes */" + length); // Required in 416.
                         response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
                         return response;
                     }
@@ -275,7 +302,7 @@ public class ResponseMediaFileWriter {
         // Initialize response.
         response.reset();
         response.setBufferSize(DEFAULT_BUFFER_SIZE);
-        response.setHeader("Content-Disposition", disposition + ";filename=\"" + fileName + "\"");
+        response.setHeader(Constants.CONTENT_DISPOSITION, disposition + ";filename=\"" + fileName + "\"");
         response.setHeader("Accept-Ranges", "bytes");
         response.setHeader("ETag", eTag);
         response.setDateHeader("Last-Modified", lastModified);
@@ -368,7 +395,7 @@ public class ResponseMediaFileWriter {
             baos.writeTo(out);
             out.flush();
         } catch (Exception e) {
-            log.error("failed to read media file {}", e.getMessage());
+            logReadMediaFailure(e.getMessage());
         }
 
         return response;
@@ -387,7 +414,7 @@ public class ResponseMediaFileWriter {
 
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
-        try{
+        try (fc) {
             while (true) {
                 final int len = fc.read(byteBuffer);
                 if (len <= 0) {
@@ -396,10 +423,8 @@ public class ResponseMediaFileWriter {
                 response.getOutputStream().write(buffer, 0, len);
                 byteBuffer.clear();
             }
-        }catch(Exception e){
-            log.error("failed to read media file {}", e.getMessage());
-        }finally{
-            fc.close();
+        } catch (Exception e) {
+            logReadMediaFailure(e.getMessage());
         }
 
         return response;
@@ -429,9 +454,7 @@ public class ResponseMediaFileWriter {
      * @param length
      * @throws IOException
      */
-    private void copy(FileChannel fc, OutputStream output, long start, long length)
-            throws IOException
-    {
+    private void copy(FileChannel fc, OutputStream output, long start, long length) throws IOException {
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
         int read;
@@ -453,7 +476,8 @@ public class ResponseMediaFileWriter {
             long toRead = length;
 
             while ((read = fc.read(byteBuffer)) > 0) {
-                if ((toRead -= read) > 0) {
+                toRead -= read;
+                if (toRead > 0) {
                     output.write(buffer, 0, read);
                 } else {
                     output.write(buffer, 0, (int) toRead + read);
@@ -467,14 +491,19 @@ public class ResponseMediaFileWriter {
     /**
      * Returns a substring of the given string value from the given begin index to the given end
      * index as a long. If the substring is empty, then -1 will be returned
+     *
      * @param value The string value to return a substring as long for.
      * @param beginIndex The begin index of the substring to be returned as long.
      * @param endIndex The end index of the substring to be returned as long.
      * @return A substring of the given string value as long or -1 if substring is empty.
      */
-    private static long sublong(String value, int beginIndex, int endIndex) {
+    private long subLong(String value, int beginIndex, int endIndex) {
         String substring = value.substring(beginIndex, endIndex);
         return (substring.length() > 0) ? Long.parseLong(substring) : -1;
+    }
+
+    private void logReadMediaFailure(String msg) {
+        log.error("failed to read media file {}", msg);
     }
 
     /**

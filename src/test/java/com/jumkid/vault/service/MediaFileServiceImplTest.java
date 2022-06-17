@@ -60,7 +60,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         mediaFileService.setStorageMode("local");
 
         when(securityService.getCurrentUserName()).thenReturn("admin");
-        when(metadataStorage.getMetadata(mediaFile.getUuid())).thenReturn(mediaFileMapper.dtoToMetadata(mediaFile));
+        when(metadataStorage.getMetadata(mediaFile.getUuid())).thenReturn(Optional.of(mediaFileMapper.dtoToMetadata(mediaFile)));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         MediaFileMetadata mediaFileMetadata = buildMetadata(null);
         String mediaFileId = mediaFile.getUuid();
 
-        when(metadataStorage.getMetadata(mediaFileId)).thenReturn(mediaFileMetadata);
+        when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
 
         MediaFile mediaFile1 = mediaFileService.getMediaFile(mediaFileId);
 
@@ -79,7 +79,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
     public void shouldThrowException_WhenGetMediaFileWithInvalidId() {
         String invalidId = "invalidId";
 
-        when(metadataStorage.getMetadata(invalidId)).thenReturn(null);
+        when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
 
         Assertions.assertThatExceptionOfType(FileNotFoundException.class)
                 .isThrownBy(() -> {mediaFileService.getMediaFile(invalidId);})
@@ -92,7 +92,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         String mediaFileId = mediaFileMetadata.getId();
         mediaFileMetadata.setActivated(false);
 
-        when(metadataStorage.getMetadata(mediaFileId)).thenReturn(mediaFileMetadata);
+        when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
 
         Assertions.assertThatExceptionOfType(FileNotAvailableException.class)
                 .isThrownBy(() -> {mediaFileService.getMediaFile(mediaFileId);});
@@ -139,7 +139,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         final String mediaFileId = mediaFile.getUuid();
         final MediaFileMetadata mediaFileMetadata = this.buildMetadata(null);
 
-        when(metadataStorage.getMetadata(eq(mediaFileId))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.getMetadata(eq(mediaFileId))).thenReturn(Optional.of(mediaFileMetadata));
         when(metadataStorage.updateMetadata(eq(mediaFileId), eq(mediaFileMetadata))).thenReturn(mediaFileMetadata);
 
         MediaFile savedMediaFile = mediaFileService.updateMediaFile(mediaFileId, mediaFile, null);
@@ -151,7 +151,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
     public void shouldThrowException_WhenUpdateMediaFileWithInvalidId() {
         String invalidId = "invalid_id";
 
-        when(metadataStorage.getMetadata(invalidId)).thenReturn(null);
+        when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
 
         Assertions.assertThatExceptionOfType(GalleryNotFoundException.class)
                 .isThrownBy(() -> {mediaFileService.updateMediaGallery(invalidId, mediaFile);})
@@ -173,7 +173,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         final MediaFileMetadata galleryMetadata = buildGalleryMetadata(null);
         final String galleryId = gallery.getUuid();
 
-        when(metadataStorage.getMetadata(eq(galleryId))).thenReturn(galleryMetadata);
+        when(metadataStorage.getMetadata(eq(galleryId))).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(eq(galleryId), eq(galleryMetadata))).thenReturn(galleryMetadata);
 
         MediaFile savedGallery = mediaFileService.updateMediaGallery(galleryId, gallery);
@@ -186,7 +186,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         String invalidId = "invalid_id";
         final MediaFile gallery = this.buildMediaGallery(null);
 
-        when(metadataStorage.getMetadata(invalidId)).thenReturn(null);
+        when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
 
         Assertions.assertThatExceptionOfType(GalleryNotFoundException.class)
                 .isThrownBy(() -> {mediaFileService.updateMediaGallery(invalidId, gallery);})

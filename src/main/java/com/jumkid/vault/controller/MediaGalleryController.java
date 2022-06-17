@@ -74,7 +74,7 @@ public class MediaGalleryController {
 
     @PostMapping(value = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public MediaFile update(@NotNull @PathVariable("id") String galleryId,
+    public MediaFile updateItems(@NotNull @PathVariable("id") String galleryId,
                             @RequestParam(value = "featuredId", required = false) String featuredId,
                             @RequestParam(value = "mediaFileIds", required = false) List<String> childIds,
                             @RequestParam(value = "files", required = false) MultipartFile[] files) {

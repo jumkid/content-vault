@@ -20,6 +20,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Optional;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -57,7 +59,7 @@ public class GalleryTest extends TestsSetup{
     @Test
     @WithMockUser(username="test", password="test", authorities="user")
     public void shouldUpdateGallery() throws Exception {
-        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(galleryMetadata);
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(DUMMY_ID, galleryMetadata)).thenReturn(galleryMetadata);
 
         mockMvc.perform(put("/gallery/" + DUMMY_ID)
@@ -71,7 +73,7 @@ public class GalleryTest extends TestsSetup{
     @Test
     @WithMockUser(username="test", password="test", authorities="user")
     public void shouldUpdateGalleryWithChild() throws Exception {
-        when(metadataStorage.getMetadata(eq(DUMMY_ID))).thenReturn(galleryMetadata);
+        when(metadataStorage.getMetadata(eq(DUMMY_ID))).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(eq(DUMMY_ID), eq(galleryMetadata))).thenReturn(galleryMetadata);
 
         mockMvc.perform(post("/gallery/" + DUMMY_ID)

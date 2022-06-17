@@ -100,7 +100,8 @@ public class MediaContentController {
 
     @GetMapping(value="/stream/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public void stream(@PathVariable("id") String mediaFileId, HttpServletRequest request, HttpServletResponse response){
+    public void stream(@PathVariable("id") String mediaFileId,
+                       HttpServletRequest request, HttpServletResponse response){
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
 
         if(mediaFile.getMimeType().startsWith("audio") || mediaFile.getMimeType().startsWith("video")){
@@ -129,8 +130,8 @@ public class MediaContentController {
                 responseMFileWriter.write(mediaFile, optional.get(), response);
                 return;
             } else {
-                log.error("File is blank. There is nothing to stream");
-                throw new FileNotFoundException(mediaFileId);
+                log.info("File is blank. Streams the content in metadata instead.");
+                responseMFileWriter.write(mediaFile, response);
             }
         }
 

@@ -136,7 +136,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public MediaFileMetadata getMetadata(String mediaFileId) {
+    public Optional<MediaFileMetadata> getMetadata(String mediaFileId) {
 
         GetRequest request = new GetRequest.Builder()
                 .index(ES_INDEX_MFILE)
@@ -145,11 +145,11 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
         try {
             GetResponse<MediaFileMetadata> response = esClient.get(request, MediaFileMetadata.class);
-            if(response.source() == null) { return null; }
+            if(response.source() == null) { return Optional.empty(); }
 
             response.source().setId(mediaFileId);
 
-            return response.source();
+            return Optional.of(response.source());
         } catch (IOException ioe) {
             log.error("failed to get media file {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to get media file from Elasticsearch, please contact system administrator.");

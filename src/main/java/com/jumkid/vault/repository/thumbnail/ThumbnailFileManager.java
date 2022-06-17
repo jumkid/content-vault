@@ -98,9 +98,9 @@ public class ThumbnailFileManager {
                     .findFirst();
 
             if (childOptional.isPresent()) {
-                MediaFileMetadata featuredMediaFileMetadata = metadataStorage.getMetadata(childOptional.get().getId());
-                if (featuredMediaFileMetadata != null) {
-                    return getThumbnailFilePathForMediaFile(featuredMediaFileMetadata, thumbnailNamespace);
+                Optional<MediaFileMetadata> featuredOptional = metadataStorage.getMetadata(childOptional.get().getId());
+                if (featuredOptional.isPresent()) {
+                    return getThumbnailFilePathForMediaFile(featuredOptional.get(), thumbnailNamespace);
                 }
             }
         }

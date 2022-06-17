@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import static com.jumkid.share.util.Constants.*;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,9 +31,11 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
 
     @Override
     public boolean isOwner(Authentication authentication, String mediaFileId) {
-        MediaFileMetadata metadata = metadataStorage.getMetadata(mediaFileId);
+        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
 
-        if (metadata == null) throw new FileNotFoundException(mediaFileId);
+        if (optional.isEmpty()) throw new FileNotFoundException(mediaFileId);
+        MediaFileMetadata metadata = optional.get();
+
         if (Boolean.FALSE.equals(metadata.getActivated())) throw new FileNotAvailableException();
 
         String currentUsername;

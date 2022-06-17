@@ -37,7 +37,7 @@ public interface FileMetadata<T> {
      *
      * @param mediaFileId identity of media
      */
-    T getMetadata(String mediaFileId);
+    Optional<T> getMetadata(String mediaFileId);
 
     /**
      * Get file from repository
