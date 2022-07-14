@@ -2,6 +2,7 @@ package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.service.MediaFileService;
@@ -36,7 +37,8 @@ public class MediaUploadDownloadController {
     private final MediaFileMapper mediaFileMapper;
 
     @Autowired
-    public MediaUploadDownloadController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter, MediaFileMapper mediaFileMapper) {
+    public MediaUploadDownloadController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter,
+                                         MediaFileMapper mediaFileMapper) {
         this.fileService = fileService;
         this.responseMFileWriter = responseMFileWriter;
         this.mediaFileMapper = mediaFileMapper;
@@ -121,6 +123,8 @@ public class MediaUploadDownloadController {
                 mediaFileMetadata = fileService.getMediaFileMetadata(mediaFileId);
                 byte[] bytes = opt.get();
                 responseMFileWriter.writeForDownload(mediaFileMetadata, bytes, response);
+            } else {
+                throw new FileNotFoundException(mediaFileId);
             }
         } catch (IOException ioe) {
             throw new FileStoreServiceException("Failed to download file", mediaFileMapper.metadataToDto(mediaFileMetadata));

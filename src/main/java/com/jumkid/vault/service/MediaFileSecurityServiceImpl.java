@@ -62,6 +62,17 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
     }
 
     @Override
+    public String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof AnonymousAuthenticationToken)) {
+            UserDetails userDetails = (UserDetails)authentication.getPrincipal();
+            return userDetails.getPassword();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public List<String> getCurrentUserRoles() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof AnonymousAuthenticationToken)) {

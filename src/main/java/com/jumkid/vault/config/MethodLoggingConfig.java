@@ -22,7 +22,9 @@ public class MethodLoggingConfig extends AbstractMethodLoggingConfig {
 
     @Pointcut("execution(* com.jumkid.vault.repository.FileMetadata.*(..))" +
             "|| execution(* com.jumkid.vault.repository.FileStorage.*(..))")
-    public void monitor() { }
+    public void monitor() {
+        //custom log message if needed here
+    }
 
     @Before("execution(* com.jumkid.vault.controller.*Controller.*(..))")
     public void log4AllControllers(JoinPoint joinPoint) {

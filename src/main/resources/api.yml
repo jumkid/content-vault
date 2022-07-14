@@ -135,6 +135,7 @@ paths:
           description: mediafile identifier
           schema:
             type: string
+            
       responses:
         '204':
           description: successfully delete the metadata by givn id
@@ -288,7 +289,8 @@ paths:
           required: false
           schema:
             type: array
-            format: string    
+            format: string
+            
       responses:
         '202':
           description: save a gallery with multiple files upload
@@ -364,6 +366,27 @@ paths:
         - v1
       operationId: upload
       description: file upload
+      parameters:
+        - name: title
+          in: query
+          required: false
+          description: title of file
+          schema:
+            type: string
+        - name: content
+          in: query
+          required: false
+          description: content of file
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          description: tags of file
+          schema:
+            type: array  
+            format: string   
+
       requestBody:
         content:
           multipart/form-data:
@@ -376,6 +399,7 @@ paths:
                 tags:
                   type: array
                   format: string
+                  
       responses:
         '202':
           description: upload a new content in file format
@@ -390,6 +414,15 @@ paths:
         - v1
       operationId: multipleUpload
       description: multiple files upload
+      parameters:
+        - name: tags
+          in: query
+          required: false
+          description: tags of files
+          schema:
+            type: array
+            format: string
+
       requestBody:
         content:
           multipart/form-data:
@@ -402,6 +435,7 @@ paths:
                 tags:
                   type: array
                   format: string
+
       responses:
         '202':
           description: upload multiple content in file format
@@ -411,6 +445,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
+
   '/file/download/{id}':
     get:
       tags:
@@ -470,6 +505,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MediaFile'
+                  
     delete:
       tags:
         - v1
@@ -482,6 +518,7 @@ paths:
             application/json:
               schema:
                 type: number
+
 components:
   schemas:
     MediaFile:
@@ -535,6 +572,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MediaFile'
+    
     MediaFileField:
       type: string
       enum:
@@ -543,6 +581,7 @@ components:
         - mimeType
         - module
         - content
+
     MediaFileModule:
       type: string
       enum:
@@ -550,11 +589,13 @@ components:
         - TEXT
         - HTML
         - GALLERY
+    
     ThumbnailSize:
       type: string
       enum:
         - small
         - large
+  
   securitySchemes:
     bearerAuth:
       type: http

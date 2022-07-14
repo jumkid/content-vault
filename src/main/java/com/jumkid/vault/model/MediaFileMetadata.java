@@ -11,8 +11,12 @@ package com.jumkid.vault.model;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.jumkid.share.controller.dto.GenericDTO;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.jumkid.vault.enums.MediaFileModule;
 import lombok.*;
 
@@ -20,12 +24,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jumkid.share.util.Constants.YYYYMMDDTHHMMSS3S;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MediaFileMetadata extends GenericDTO {
+public class MediaFileMetadata {
 
 	private String id;
 
@@ -50,6 +57,20 @@ public class MediaFileMetadata extends GenericDTO {
 	private List<String> tags;
 
 	private List<MediaFileMetadata> children;
+
+	private String createdBy;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = YYYYMMDDTHHMMSS3S)
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+	private LocalDateTime creationDate;
+
+	private String modifiedBy;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = YYYYMMDDTHHMMSS3S)
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+	private LocalDateTime modificationDate;
 
 	public void addProp(String name, String value) {
 		if (isPropNotExist(name)) {
@@ -82,33 +103,6 @@ public class MediaFileMetadata extends GenericDTO {
 		} else{
 			return props.stream().noneMatch(prop -> prop.getName().equals(propName));
 		}
-	}
-
-	/**
-	 * This constructor is for lombok builder only since it is subclass of generic DTO
-	 *
-	 */
-	@Builder
-	public MediaFileMetadata(String id, String filename, String mimeType, Integer size, MediaFileModule module,
-							 String title, String content, Boolean activated,
-							 List<String> tags, List<MediaFilePropMetadata> props, List<MediaFileMetadata> children,
-							 String createdBy, LocalDateTime creationDate, String logicalPath,
-							 String modifiedBy, LocalDateTime modificationDate) {
-		super(createdBy, creationDate, modifiedBy, modificationDate);
-
-		this.id = id;
-		this.filename = filename;
-		this.mimeType = mimeType;
-		this.size = size;
-		this.module = module;
-		this.title = title;
-		this.content = content;
-		this.activated = activated;
-		this.logicalPath = logicalPath;
-
-		this.tags = tags;
-		this.props = props;
-		this.children = children;
 	}
 
 }

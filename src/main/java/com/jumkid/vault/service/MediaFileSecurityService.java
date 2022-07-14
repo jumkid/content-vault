@@ -10,5 +10,7 @@ public interface MediaFileSecurityService {
 
     String getCurrentUserName();
 
+    String getCurrentUserId();
+
     List<String> getCurrentUserRoles();
 }

@@ -81,7 +81,7 @@ public class MediaContentController {
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_PLAIN_VALUE)
                 .build();
-        return fileService.addMediaFile(mediaFile, MediaFileModule.FILE);
+        return fileService.addMediaFile(mediaFile, MediaFileModule.TEXT);
     }
 
     @PostMapping("/html")
@@ -152,7 +152,12 @@ public class MediaContentController {
             responseMFileWriter.write(mediaFile, optional.get(), response);
         } else {
             log.warn("File thumbnail {} is unavailable", mediaFileId);
-            throw new FileNotFoundException(mediaFileId);
+            MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
+            if (mediaFile != null) {
+                responseMFileWriter.write(mediaFile, response);
+            } else {
+                throw new FileNotFoundException(mediaFileId);
+            }
         }
     }
 

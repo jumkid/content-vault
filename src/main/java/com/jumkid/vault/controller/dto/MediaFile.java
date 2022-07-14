@@ -56,6 +56,7 @@ public class MediaFile extends GenericDTO {
                      List<MediaFileProp> props, List<MediaFile> children,
                      String createdBy, LocalDateTime creationDate, String modifiedBy, LocalDateTime modificationDate) {
         super(createdBy, creationDate, modifiedBy, modificationDate);
+
         this.uuid = uuid;
         this.title = title;
         this.filename = filename;

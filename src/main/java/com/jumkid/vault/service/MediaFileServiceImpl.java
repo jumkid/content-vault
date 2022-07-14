@@ -327,16 +327,16 @@ public class MediaFileServiceImpl implements MediaFileService {
     private void normalizeDTO(String uuid, MediaFile dto, MediaFileMetadata oldMetadata) {
         if (uuid != null) dto.setUuid(uuid);
 
-        String currentUser = securityService.getCurrentUserName();
+        String currentUserId = securityService.getCurrentUserId();
         LocalDateTime now = LocalDateTime.now();
         dto.setModificationDate(now);
 
         if (oldMetadata != null) {
-            dto.setModifiedBy(currentUser);
+            dto.setModifiedBy(currentUserId);
             dto.setCreatedBy(oldMetadata.getCreatedBy());
             dto.setCreationDate(oldMetadata.getCreationDate());
         } else {
-            dto.setCreatedBy(currentUser);
+            dto.setCreatedBy(currentUserId);
             dto.setCreationDate(now);
         }
 
