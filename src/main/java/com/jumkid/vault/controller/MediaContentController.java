@@ -142,7 +142,7 @@ public class MediaContentController {
     public void thumbnail(@PathVariable("id") String mediaFileId,
                           @RequestParam(value = "size", required = false) ThumbnailNamespace thumbnailNamespace,
                           HttpServletResponse response){
-        if (thumbnailNamespace == null) thumbnailNamespace = ThumbnailNamespace.MEDIUM;
+        if (thumbnailNamespace == null) thumbnailNamespace = ThumbnailNamespace.SMALL;
         Optional<byte[]> optional = fileService.getThumbnail(mediaFileId, thumbnailNamespace);
         if (optional.isPresent()) {
             MediaFile mediaFile = MediaFile.builder()
@@ -152,8 +152,12 @@ public class MediaContentController {
             responseMFileWriter.write(mediaFile, optional.get(), response);
         } else {
             log.warn("File thumbnail {} is unavailable", mediaFileId);
+
             MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
-            if (mediaFile != null) {
+            optional = fileService.getFileSource(mediaFileId);
+            if (optional.isPresent()) {
+                responseMFileWriter.write(mediaFile, optional.get(), response);
+            } else if (mediaFile != null) {
                 responseMFileWriter.write(mediaFile, response);
             } else {
                 throw new FileNotFoundException(mediaFileId);

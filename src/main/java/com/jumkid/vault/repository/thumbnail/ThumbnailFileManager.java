@@ -64,12 +64,11 @@ public class ThumbnailFileManager {
         } else if (mediaFileMetadata.getMimeType().startsWith("image")) {
             filePath = getThumbnailFilePathForMediaFile(mediaFileMetadata, thumbnailNamespace);
         } else {
-            filePath = getThumbnailFilePath(mediaFileMetadata.getMimeType());
+            filePath = getIconFilePath(mediaFileMetadata.getMimeType());
         }
 
         File file = new File(filePath);
-        if(!file.exists()) {
-            log.info("file in {} is not found.", filePath);
+        if (!file.exists()) {
             return Optional.empty();
         }
 
@@ -84,7 +83,7 @@ public class ThumbnailFileManager {
 
     private String getThumbnailFilePathForGallery(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
         if (mediaFileMetadata.getProps() == null || mediaFileMetadata.getProps().isEmpty()) {
-            return getThumbnailFilePath(MediaFileModule.GALLERY.value());
+            return getIconFilePath(MediaFileModule.GALLERY.value());
         }
 
         Optional<MediaFilePropMetadata> optional = mediaFileMetadata.getProps().stream()
@@ -105,17 +104,35 @@ public class ThumbnailFileManager {
             }
         }
 
-        return getThumbnailFilePath(MediaFileModule.GALLERY.value());
+        return getIconFilePath(MediaFileModule.GALLERY.value());
     }
 
     private String getThumbnailFilePathForMediaFile(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
-        String dataHomePath = filePathManager.getDataHomePath();
+        Path thumbnailFilePath = getThumbnailFilePath(mediaFileMetadata, thumbnailNamespace);
 
-        return String.format("%s%s/%s%s.%s", dataHomePath, mediaFileMetadata.getLogicalPath(), mediaFileMetadata.getId(),
-                this.getThumbnailSuffix(thumbnailNamespace).value(), ThumbnailFileManager.THUMBNAIL_FILE_EXTEND);
+        if (!Files.exists(thumbnailFilePath)) {
+            // fetch other thumbnail file if the target one does not exist
+            for (ThumbnailNamespace ns : ThumbnailNamespace.getMainSet().toArray(new ThumbnailNamespace[0])){
+                if (!thumbnailNamespace.equals(ns)) {
+                    thumbnailFilePath = getThumbnailFilePath(mediaFileMetadata, ns);
+                    if (Files.exists(thumbnailFilePath)) return thumbnailFilePath.toString();
+                }
+            }
+
+        }
+
+        return thumbnailFilePath.toString();
     }
 
-    private String getThumbnailFilePath(String mimeType) {
+    private Path getThumbnailFilePath(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
+        Path rootPath = Paths.get(filePathManager.getDataHomePath(), mediaFileMetadata.getLogicalPath());
+        String thumbnailFileName = String.format("%s%s.%s", mediaFileMetadata.getId(),
+                this.getThumbnailSuffix(thumbnailNamespace).value(), ThumbnailFileManager.THUMBNAIL_FILE_EXTEND);
+
+        return Paths.get(rootPath.toString(), thumbnailFileName);
+    }
+
+    private String getIconFilePath(String mimeType) {
         String dataHomePath = filePathManager.getDataHomePath();
 
         String filePath = String.join(PATH_DELIMITER, dataHomePath, MISC_PATH, "icon_file.png"); //default icon
@@ -140,23 +157,28 @@ public class ThumbnailFileManager {
         }
     }
 
-    public void generateThumbnail(Path filePath) throws IOException {
+    public void generateThumbnail(Path filePath) {
         String path = filePath.toString();
 
-        Thumbnails.of(new File(path))
-                .size(thumbnailSmall, thumbnailSmall)
-                .outputFormat(THUMBNAIL_FILE_EXTEND)
-                .toFile(new File(path + ThumbnailNamespace.SMALL_SUFFIX.value()));
+        try {
+            Thumbnails.of(new File(path))
+                    .size(thumbnailSmall, thumbnailSmall)
+                    .outputFormat(THUMBNAIL_FILE_EXTEND)
+                    .toFile(new File(path + ThumbnailNamespace.SMALL_SUFFIX.value()));
 
-        Thumbnails.of(new File(path))
-                .size(thumbnailMedium, thumbnailMedium)
-                .outputFormat(THUMBNAIL_FILE_EXTEND)
-                .toFile(new File(path + ThumbnailNamespace.MEDIUM_SUFFIX.value()));
+            Thumbnails.of(new File(path))
+                    .size(thumbnailMedium, thumbnailMedium)
+                    .outputFormat(THUMBNAIL_FILE_EXTEND)
+                    .toFile(new File(path + ThumbnailNamespace.MEDIUM_SUFFIX.value()));
 
-        Thumbnails.of(new File(path))
-                .size(thumbnailLarge, thumbnailLarge)
-                .outputFormat(THUMBNAIL_FILE_EXTEND)
-                .toFile(new File(path + ThumbnailNamespace.LARGE_SUFFIX.value()));
+            Thumbnails.of(new File(path))
+                    .size(thumbnailLarge, thumbnailLarge)
+                    .outputFormat(THUMBNAIL_FILE_EXTEND)
+                    .toFile(new File(path + ThumbnailNamespace.LARGE_SUFFIX.value()));
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            log.info("unable to generate thumbnails for file due to {}", ioe.getMessage());
+        }
 
     }
 
