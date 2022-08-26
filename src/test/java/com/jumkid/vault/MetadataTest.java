@@ -1,7 +1,6 @@
 package com.jumkid.vault;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jumkid.vault.enums.MediaFileField;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
@@ -10,7 +9,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,9 +60,7 @@ public class MetadataTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="demo1",
-            password="demo",
-            authorities="user")
+    @WithMockUser(username="demo1", password="demo", authorities="USER_ROLE")
     public void shouldGetMetadata_whenGivenId() throws Exception {
         mockMvc.perform(get("/metadata/"+DUMMY_ID))
                 .andExpect(status().isOk())
@@ -73,11 +69,9 @@ public class MetadataTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="demo1",
-            password="demo",
-            authorities="user")
+    @WithMockUser(username="demo1", password="demo", authorities="USER_ROLE")
     public void shouldGetListOfMetadata_whenSearch() throws Exception {
-        when(metadataStorage.searchMetadata(anyString(), anyInt(), anyList(), eq("demo1"))).thenReturn(buildListOfMetadata());
+        when(metadataStorage.searchMetadata(anyString(), anyInt(), anyList(), anyString())).thenReturn(buildListOfMetadata());
 
         mockMvc.perform(get("/metadata?q=test&size=1"))
                 .andExpect(status().isOk())
@@ -88,9 +82,7 @@ public class MetadataTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="admin",
-            password="admin",
-            authorities="admin")
+    @WithMockUser(username="admin", password="admin", authorities="ADMIN_ROLE")
     public void shouldSaveContentWithPros_whenGivenMetadata() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
@@ -102,9 +94,7 @@ public class MetadataTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="demo1",
-            password="demo",
-            authorities="user")
+    @WithMockUser(username="demo1", password="demo", authorities="USER_ROLE")
     public void shouldUpdateMetadata_whenGivenMetadata() throws Exception {
         when(metadataStorage.updateMetadata(DUMMY_ID, mediaFileMetadata)).thenReturn(mediaFileMetadata);
 
@@ -117,14 +107,10 @@ public class MetadataTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="demo1",
-            password="demo",
-            authorities="user")
+    @WithMockUser(username="demo1", password="demo", authorities="USER_ROLE")
     public void shouldDeleteMetadata_whenGivenId() throws Exception {
         mockMvc.perform(delete("/metadata/"+DUMMY_ID))
                 .andExpect(status().isNoContent());
     }
-
-
 
 }

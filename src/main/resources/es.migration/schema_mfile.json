@@ -21,6 +21,10 @@
       "content": {
         "type": "text"
       },
+      "accessScope": {
+        "type": "keyword",
+        "index": false
+      },
       "activated": {
         "type": "boolean"
       },

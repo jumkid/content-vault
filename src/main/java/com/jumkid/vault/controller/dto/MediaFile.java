@@ -3,7 +3,8 @@ package com.jumkid.vault.controller.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.*;
-import com.jumkid.share.controller.dto.GenericDTO;
+import com.jumkid.share.security.AccessScope;
+import com.jumkid.share.service.dto.GenericDTO;
 import com.jumkid.vault.enums.MediaFileModule;
 import lombok.Builder;
 import lombok.Data;
@@ -37,6 +38,8 @@ public class MediaFile extends GenericDTO {
 
     private MediaFileModule module;
 
+    private AccessScope accessScope;
+
     @JsonIgnore
     private byte[] file;
 
@@ -53,7 +56,7 @@ public class MediaFile extends GenericDTO {
     @Builder
     public MediaFile(String uuid, String filename, String mimeType, Integer size, String title, String content,
                      Boolean activated, List<String> tags, MediaFileModule module,
-                     List<MediaFileProp> props, List<MediaFile> children,
+                     List<MediaFileProp> props, List<MediaFile> children, AccessScope accessScope,
                      String createdBy, LocalDateTime creationDate, String modifiedBy, LocalDateTime modificationDate) {
         super(createdBy, creationDate, modifiedBy, modificationDate);
 
@@ -63,6 +66,7 @@ public class MediaFile extends GenericDTO {
         this.mimeType = mimeType;
         this.size = size;
         this.content = content;
+        this.accessScope = accessScope;
         this.activated = activated;
         this.tags = tags;
         this.module = module;

@@ -1,5 +1,6 @@
 package com.jumkid.vault.controller;
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.controller.dto.MediaFileProp;
 import com.jumkid.vault.exception.FileStoreServiceException;
@@ -15,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
 
@@ -33,16 +33,18 @@ public class MediaGalleryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public MediaFile add(@NotNull @RequestParam("title") String title,
-                         @RequestParam(value = "content", required = false) String content,
-                         @RequestParam(value = "tags", required = false) List<String> tags,
-                         @RequestParam(value = "files", required = false) MultipartFile[] files) {
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
+    public MediaFile add(@NotNull @RequestParam String title,
+                         @RequestParam AccessScope accessScope,
+                         @RequestParam(required = false) String content,
+                         @RequestParam(required = false) List<String> tags,
+                         @RequestParam(required = false) MultipartFile[] files) {
         MediaFile gallery = MediaFile.builder()
-                                    .title(title)
-                                    .content(content)
-                                    .tags(tags)
-                                    .build();
+                .accessScope(accessScope)
+                .title(title)
+                .content(content)
+                .tags(tags)
+                .build();
 
         List<MediaFile> mediaFileList = new ArrayList<>();
         MediaFile mediaFile = null;
@@ -50,6 +52,7 @@ public class MediaGalleryController {
             if (files != null) {
                 for (MultipartFile file : files) {
                     mediaFile = MediaFile.builder()
+                            .accessScope(accessScope)
                             .filename(file.getOriginalFilename())
                             .size((int)file.getSize())
                             .mimeType(file.getContentType())
@@ -74,6 +77,8 @@ public class MediaGalleryController {
 
     @PostMapping(value = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
+            " && @securityService.isOwner(authentication, #galleryId)")
     public MediaFile updateItems(@NotNull @PathVariable("id") String galleryId,
                             @RequestParam(value = "featuredId", required = false) String featuredId,
                             @RequestParam(value = "mediaFileIds", required = false) List<String> childIds,
@@ -84,7 +89,7 @@ public class MediaGalleryController {
         if (childIds != null && !childIds.isEmpty()) {
             List<MediaFile> mediaFileList = childIds.stream()
                     .map(childId -> MediaFile.builder().uuid(childId).build())
-                    .collect(Collectors.toList());
+                    .toList();
 
             partialMediaFile.setChildren(mediaFileList);
 
@@ -92,7 +97,9 @@ public class MediaGalleryController {
         }
 
         if (files != null) {
-            List<MediaFile> childList = processNewChildren(files);
+            MediaFile galleryMeta = fileService.getMediaFile(galleryId);
+
+            List<MediaFile> childList = processNewChildren(files, galleryMeta.getAccessScope());
             if (partialMediaFile.getChildren() != null) {
                 partialMediaFile.getChildren().addAll(childList);
             } else {
@@ -114,19 +121,20 @@ public class MediaGalleryController {
 
     @PutMapping("{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasAuthority('admin')" +
-            " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #galleryId))")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #galleryId))")
     public MediaFile update(@PathVariable(value = "id") String galleryId,
                             @NotNull @RequestBody MediaFile partialMediaFile) {
         return fileService.updateMediaGallery(galleryId, partialMediaFile);
     }
 
-    private List<MediaFile> processNewChildren(MultipartFile[] files){
+    private List<MediaFile> processNewChildren(MultipartFile[] files, AccessScope accessScope){
         List<MediaFile> newChildList = new ArrayList<>();
         try {
             if (files != null) {
                 for (MultipartFile file : files) {
                     MediaFile newChild = MediaFile.builder()
+                            .accessScope(accessScope)
                             .filename(file.getOriginalFilename())
                             .size((int)file.getSize())
                             .mimeType(file.getContentType())

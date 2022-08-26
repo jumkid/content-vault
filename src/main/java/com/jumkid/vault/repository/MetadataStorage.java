@@ -54,17 +54,17 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public List<MediaFileMetadata> searchMetadata(String query, Integer size,
-                                                  List<String> currentUserRole, String currentUsername) {
+                                                  List<String> currentUserRole, String currentUserId) {
         SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
                     .index(ES_INDEX_MFILE)
                     .size(size == null ? 50 : size);
 
         BoolQuery.Builder booleanQueryBuilder = new BoolQuery.Builder()
-                .filter(tq -> tq.term(t -> t.field(ACTIVATED.value()).value(true)))
-                .must(m -> m.simpleQueryString(sq -> sq.query(query)));
+                .must(m -> m.simpleQueryString(sq -> sq.query(query)))
+                .must(m -> m.term(t -> t.field(ACTIVATED.value()).value(Boolean.TRUE)));
 
         if (!currentUserRole.contains(ADMIN_ROLE)) {
-            booleanQueryBuilder.filter(tq -> tq.term(t -> t.field(CREATED_BY.value()).value(currentUsername)));
+            booleanQueryBuilder.must(m -> m.term(t -> t.field(CREATED_BY.value()).value(currentUserId)));
         }
 
         searchRequestBuilder.query(booleanQueryBuilder.build()._toQuery());
@@ -72,7 +72,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         try {
             SearchResponse<MediaFileMetadata> response = esClient.search(searchRequestBuilder.build(), MediaFileMetadata.class);
 
-            return searchMetadata(response);
+            return searchResponseToResult(response);
         } catch (IOException ioe) {
             log.error("failed to search metadata due to {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to search media file in Elasticsearch, please contact system administrator.");
@@ -92,7 +92,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
         try {
             SearchResponse<MediaFileMetadata> response = esClient.search(searchRequest, MediaFileMetadata.class);
-            return searchMetadata(response);
+            return searchResponseToResult(response);
         } catch (IOException e) {
             e.printStackTrace();
             log.error("failed to search metadata {} ", e.getMessage());
@@ -108,7 +108,6 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
                         .field(ACTIVATED.value()).value(false)
                         .build()))
                 .conflicts(Conflicts.Proceed)
-                .slices(2L)
                 .refresh(true)
                 .build();
 
@@ -121,7 +120,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         }
     }
 
-    private List<MediaFileMetadata> searchMetadata(SearchResponse<MediaFileMetadata> response) {
+    private List<MediaFileMetadata> searchResponseToResult(SearchResponse<MediaFileMetadata> response) {
         List<MediaFileMetadata> results = new ArrayList<>();
         response.hits().hits().iterator().forEachRemaining( hitDoc -> addResult(hitDoc, results));
         return results;

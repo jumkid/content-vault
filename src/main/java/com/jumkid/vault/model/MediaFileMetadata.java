@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.enums.MediaFileModule;
 import lombok.*;
 
@@ -51,6 +52,8 @@ public class MediaFileMetadata {
 	private Boolean activated = true;
 
 	private String logicalPath;
+
+	private AccessScope accessScope;
 
 	private List<MediaFilePropMetadata> props;
 

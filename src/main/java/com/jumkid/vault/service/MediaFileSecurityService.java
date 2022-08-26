@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface MediaFileSecurityService {
 
+    boolean isPublic(String mediaFileId);
+
     boolean isOwner(Authentication authentication, String mediaFileId);
 
     String getCurrentUserName();

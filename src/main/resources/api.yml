@@ -63,7 +63,7 @@ paths:
           required: true
           description: mediaFile module
           schema:
-            $ref: '#/components/schemas/MediaFileModule'
+            $ref: '#/components/schemas/MediaFileModule'    
       requestBody:
         content:
           application/json:
@@ -180,13 +180,17 @@ paths:
       parameters:
         - name: title
           in: query
-          required: true
           schema:
             type: string
         - name: content
           in: query
           schema:
             type: string
+        - name: accessScope
+          in: query
+          required: true
+          schema:
+            $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/AccessScope
       responses:
         '200':
           description: OK
@@ -208,6 +212,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: accessScope
+          in: query
+          required: true
+          schema:
+            $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/AccessScope    
       requestBody:
         content:
           application/json:
@@ -290,6 +299,11 @@ paths:
           schema:
             type: array
             format: string
+        - name: accessScope
+          in: query
+          required: true
+          schema:
+            $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/AccessScope    
             
       responses:
         '202':
@@ -385,7 +399,12 @@ paths:
           description: tags of file
           schema:
             type: array  
-            format: string   
+            format: string
+        - name: accessScope
+          in: query
+          required: true
+          schema:
+            $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/AccessScope     
 
       requestBody:
         content:
@@ -462,34 +481,7 @@ paths:
       responses:
         '200':
           description: binary file as response
-  /ingest/webpage:
-    post:
-      tags:
-        - v1
-      operationId: convertUrlToMediafile
-      description: capture a screenshort from the given url
-      parameters:
-        - name: url
-          in: query
-          required: true
-          description: target url
-          schema:
-            type: string
-        - name: title
-          in: query
-          required: true
-          description: target title
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MediaFile'
+  
   /trash:
     get:
       tags:
@@ -542,6 +534,8 @@ components:
           type: string
         activated:
           type: boolean
+        accessScope:
+          $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/AccessScope
         createdBy:
           type: string
         creationDate:

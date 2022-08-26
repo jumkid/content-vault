@@ -1,5 +1,6 @@
 package com.jumkid.vault;
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
@@ -62,13 +63,14 @@ public class ContentTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="test", password="test", authorities="user")
+    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
     public void shouldSaveHtmlContent_whenGivenTitleAndContent() throws Exception{
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         mockMvc.perform(post("/content")
                     .contentType(MediaType.APPLICATION_JSON)
                     .param("title", mediaFileMetadata.getTitle())
+                    .param("accessScope", AccessScope.PUBLIC.value())
                     .param("content", mediaFileMetadata.getContent()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(mediaFileMetadata.getTitle()))
@@ -76,6 +78,7 @@ public class ContentTest extends TestsSetup {
     }
 
     @Test
+    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     public void shouldGetTextContentWithTitle_whenGivenId() throws Exception {
         MvcResult result = mockMvc.perform(get("/content/"+DUMMY_ID)
                 .contentType(MediaType.TEXT_PLAIN))
@@ -88,6 +91,7 @@ public class ContentTest extends TestsSetup {
     }
 
     @Test
+    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     public void shouldGetTextContentWithoutTitle_whenGivenIdAndIgnoreTitle() throws Exception {
         MvcResult result = mockMvc.perform(get("/content/"+DUMMY_ID)
                 .contentType(MediaType.TEXT_PLAIN)
@@ -101,6 +105,7 @@ public class ContentTest extends TestsSetup {
     }
 
     @Test
+    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     public void shouldGet404WithInvalidId_whenGivenInvalidId() throws Exception {
         mockMvc.perform(get("/content/InvalidId")
                 .contentType(MediaType.TEXT_PLAIN))
@@ -108,6 +113,7 @@ public class ContentTest extends TestsSetup {
     }
 
     @Test
+    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     public void shouldGet400WithoutId() throws Exception {
         mockMvc.perform(get("/content")
                 .contentType(MediaType.TEXT_PLAIN))
@@ -115,6 +121,7 @@ public class ContentTest extends TestsSetup {
     }
 
     @Test
+    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     public void shouldGetThumbnail()throws Exception {
         MediaFileMetadata mediaFileMetadata = buildMetadata(null);
         Optional<byte[]> fileByte = Optional.empty();

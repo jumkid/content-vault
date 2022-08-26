@@ -1,5 +1,6 @@
 package com.jumkid.vault;
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.model.MediaFileMetadata;
@@ -67,6 +68,7 @@ public class TestsSetup {
                 .size(DEFAULT_SIZE)
                 .activated(true)
                 .module(MediaFileModule.TEXT)
+                .accessScope(AccessScope.PRIVATE)
                 .logicalPath("/foo")
                 .props(props)
                 .build();
@@ -88,6 +90,7 @@ public class TestsSetup {
                 .content("test.gallery")
                 .size(DEFAULT_SIZE)
                 .module(MediaFileModule.GALLERY)
+                .accessScope(AccessScope.PRIVATE)
                 .tags(List.of("test", "gallery"))
                 .creationDate(now).modificationDate(now)
                 .build();

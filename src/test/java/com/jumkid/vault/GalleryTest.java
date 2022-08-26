@@ -57,7 +57,7 @@ public class GalleryTest extends TestsSetup{
     }
 
     @Test
-    @WithMockUser(username="test", password="test", authorities="user")
+    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
     public void shouldUpdateGallery() throws Exception {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(DUMMY_ID, galleryMetadata)).thenReturn(galleryMetadata);
@@ -71,7 +71,7 @@ public class GalleryTest extends TestsSetup{
     }
 
     @Test
-    @WithMockUser(username="test", password="test", authorities="user")
+    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
     public void shouldUpdateGalleryWithChild() throws Exception {
         when(metadataStorage.getMetadata(eq(DUMMY_ID))).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(eq(DUMMY_ID), eq(galleryMetadata))).thenReturn(galleryMetadata);

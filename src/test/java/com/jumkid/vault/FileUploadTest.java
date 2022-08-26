@@ -1,5 +1,6 @@
 package com.jumkid.vault;
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
@@ -57,9 +58,7 @@ public class FileUploadTest extends TestsSetup {
     }
 
     @Test
-    @WithMockUser(username="test",
-            password="test",
-            authorities="user")
+    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
     public void whenGivenFile_shouldUploadFile() throws Exception {
 
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
@@ -68,15 +67,15 @@ public class FileUploadTest extends TestsSetup {
 
         byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
 
-        mockMvc.perform(multipart("/file/upload").file("file", uploadFile))
+        mockMvc.perform(multipart("/file/upload")
+                .file("file", uploadFile)
+                .param("accessScope", AccessScope.PUBLIC.value()))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.filename").value(mediaFileMetadata.getFilename()));
     }
 
     @Test
-    @WithMockUser(username="test",
-            password="test",
-            authorities="user")
+    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
     public void whenGivenFile_shouldUploadMultipleFile() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
@@ -84,7 +83,9 @@ public class FileUploadTest extends TestsSetup {
 
         byte[] uploadFile = Files.readAllBytes(Paths.get(resource.getFile().getPath()));
 
-        mockMvc.perform(multipart("/file/multipleUpload").file("files", uploadFile))
+        mockMvc.perform(multipart("/file/multipleUpload")
+                .file("files", uploadFile)
+                .param("accessScope", AccessScope.PUBLIC.value()))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$[0].filename").value(mediaFileMetadata.getFilename()));
     }

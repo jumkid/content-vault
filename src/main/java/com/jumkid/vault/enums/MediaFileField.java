@@ -12,6 +12,7 @@ public enum MediaFileField {
     MODIFICATION_DATE("modificationDate"),
     MODIFIED_BY("modifiedBy"),
     CONTENT("content"),
+    ACCESS_SCOPE("accessScope"),
     ACTIVATED("activated"),
     BLOB("blob"),
     LOGICAL_PATH("logicalPath"),

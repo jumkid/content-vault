@@ -112,7 +112,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     public Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace) {
         log.debug("Retrieve thumbnail of file by given id {}", mediaFileId);
         Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
-        if (optional.isPresent()) {
+        if (optional.isPresent() && Boolean.TRUE.equals(optional.get().getActivated())) {
             return getFileStorage().getThumbnail(optional.get(), thumbnailNamespace);
         } else {
             return Optional.empty();
@@ -302,7 +302,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Override
     public List<MediaFile> searchMediaFile(String query, Integer size) {
         List<MediaFileMetadata> mediaFileMetadataList = metadataStorage.searchMetadata(query, size,
-                securityService.getCurrentUserRoles(), securityService.getCurrentUserName());
+                securityService.getCurrentUserRoles(), securityService.getCurrentUserId());
         if (mediaFileMetadataList == null) return Collections.emptyList();
         else return mediaFileMapper.metadataListToDTOList(mediaFileMetadataList);
     }

@@ -28,7 +28,7 @@ public class MediaMetadataController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public List<MediaFile> searchMetadata(@RequestParam(required = false) String q,
                                           @RequestParam(required = false) Integer size){
         if (q == null || q.isBlank()) q = "*";
@@ -37,6 +37,8 @@ public class MediaMetadataController {
 
     @GetMapping("{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || @securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId)")
     public MediaFile getMetadata(@PathVariable("id") String mediaFileId){
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
         if (mediaFile != null) {
@@ -48,6 +50,7 @@ public class MediaMetadataController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public MediaFile addMetadata(@NotNull @Valid @RequestBody MediaFile mediaFile,
                                  @NotNull MediaFileModule mediaFileModule){
         return fileService.addMediaFile(mediaFile, mediaFileModule);
@@ -55,8 +58,8 @@ public class MediaMetadataController {
 
     @PutMapping(value = "{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('admin')" +
-            " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #mediaFileId))")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #mediaFileId))")
     public MediaFile updateMetadata(@PathVariable("id") String mediaFileId,
                                     @NotNull @RequestBody MediaFile partialMediaFile){
         return fileService.updateMediaFile(mediaFileId, partialMediaFile, null);
@@ -64,8 +67,8 @@ public class MediaMetadataController {
 
     @DeleteMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('admin')" +
-            " || (hasAnyAuthority('user') && @securityService.isOwner(authentication, #mediaFileId))")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #mediaFileId))")
     public Integer deleteMetadata(@PathVariable("id") String mediaFileId) {
         return fileService.trashMediaFile(mediaFileId);
     }

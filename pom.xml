@@ -15,7 +15,7 @@
     <description>content storing and managing spring boot application</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
 
         <org.mapstruct.version>1.4.2.Final</org.mapstruct.version>
         <org.projectlombok.version>1.18.24</org.projectlombok.version>
@@ -23,10 +23,10 @@
         <jaxb.version>2.3.0</jaxb.version>
         <jakarta.json.version>2.1.0</jakarta.json.version>
 
-        <elasticsearch.version>8.1.0</elasticsearch.version>
+        <elasticsearch.version>8.3.3</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.17</thumbnailator.version>
-        <tika.version>2.4.0</tika.version>
+        <tika.version>2.4.1</tika.version>
 
         <!-- jumkid modules -->
         <sharejar.version>1.0.1</sharejar.version>

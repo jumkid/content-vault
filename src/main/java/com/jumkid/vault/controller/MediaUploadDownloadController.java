@@ -1,5 +1,6 @@
 package com.jumkid.vault.controller;
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.exception.FileNotFoundException;
@@ -46,11 +47,12 @@ public class MediaUploadDownloadController {
 
     @PostMapping("/upload")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public MediaFile upload(@NotNull @RequestParam("file") MultipartFile file,
-                            @RequestParam(value = "title", required = false) String title,
-                            @RequestParam(value = "content", required = false) String content,
-                            @RequestParam(value = "tags", required = false) List<String> tags){
+                            @RequestParam(required = false) String title,
+                            @RequestParam(required = false) String content,
+                            @RequestParam(required = false) List<String> tags,
+                            @RequestParam AccessScope accessScope) {
         MediaFile mediaFile = null;
         try {
             mediaFile = MediaFile.builder()
@@ -75,9 +77,10 @@ public class MediaUploadDownloadController {
 
     @PostMapping("/multipleUpload")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public List<MediaFile> multipleUpload(@NotNull @RequestParam("files") MultipartFile[] files,
-                                          @RequestParam(value = "tags", required = false) List<String> tags) {
+                                          @RequestParam(required = false) List<String> tags,
+                                          @RequestParam AccessScope accessScope) {
         MediaFile mediaFile = null;
         List<MediaFile> mediaFileList = new ArrayList<>();
         try {
@@ -105,8 +108,8 @@ public class MediaUploadDownloadController {
 
     private void setUserInfo(MediaFile mediaFile) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        if (userDetails != null) {
             mediaFile.setCreatedBy(userDetails.getUsername());
         } else {
             mediaFile.setCreatedBy(auth.getPrincipal().toString());
@@ -115,6 +118,8 @@ public class MediaUploadDownloadController {
 
     @GetMapping("/download/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
+            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
     public void download(@PathVariable("id") String mediaFileId, HttpServletResponse response){
         MediaFileMetadata mediaFileMetadata = null;
         Optional<byte[]> opt = fileService.getFileSource(mediaFileId);

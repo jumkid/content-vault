@@ -11,6 +11,7 @@ package com.jumkid.vault.controller;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
@@ -49,6 +50,8 @@ public class MediaContentController {
 
     @GetMapping(value = "{id}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
+            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
     public String getPlainContent(@PathVariable("id") String mediaFileId,
                                   @RequestParam(required = false) Boolean ignoreTitle){
         return getContent(mediaFileId, ignoreTitle);
@@ -74,9 +77,12 @@ public class MediaContentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public MediaFile addTextContent(@RequestParam(required = false) String title, @NotBlank String content) {
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
+    public MediaFile addTextContent(@RequestParam(required = false) String title,
+                                    @RequestParam AccessScope accessScope,
+                                    @NotBlank String content) {
         MediaFile mediaFile = MediaFile.builder()
+                .accessScope(accessScope)
                 .title(title).content(content)
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
                 .mimeType(MediaType.TEXT_PLAIN_VALUE)
@@ -86,10 +92,12 @@ public class MediaContentController {
 
     @PostMapping("/html")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public MediaFile addHtmlContent(@RequestParam(required = false) String title,
-                                    @NotBlank @RequestBody String content) {
+                                    @NotBlank @RequestBody String content,
+                                    @RequestParam AccessScope accessScope) {
         MediaFile mediaFile = MediaFile.builder()
+                .accessScope(accessScope)
                 .title(title)
                 .content(content)
                 .size((title != null ? title.length() : 0) + (content != null ? content.length() : 0))
@@ -100,6 +108,8 @@ public class MediaContentController {
 
     @GetMapping(value="/stream/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
+            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
     public void stream(@PathVariable("id") String mediaFileId,
                        HttpServletRequest request, HttpServletResponse response){
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
@@ -139,6 +149,8 @@ public class MediaContentController {
     }
 
     @GetMapping(value="/thumbnail/{id}")
+    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
+            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
     public void thumbnail(@PathVariable("id") String mediaFileId,
                           @RequestParam(value = "size", required = false) ThumbnailNamespace thumbnailNamespace,
                           HttpServletResponse response){

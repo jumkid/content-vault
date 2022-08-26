@@ -10,12 +10,8 @@ package com.jumkid.vault.repository;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
-import com.jumkid.vault.enums.MediaFileField;
-import com.jumkid.vault.model.MediaFileMetadata;
-
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -82,10 +78,10 @@ public interface FileMetadata<T> {
      * @param query query keyword
      * @param size size of result set
      * @param currentUserRole current user roles
-     * @param currentUsername current username
+     * @param currentUserId current user id
      * @return List of type
      */
-    List<T> searchMetadata(String query, Integer size, List<String> currentUserRole, String currentUsername);
+    List<T> searchMetadata(String query, Integer size, List<String> currentUserRole, String currentUserId);
 
     /**
      * Get all trashed metadata from repository

@@ -54,8 +54,8 @@ public class ExceptionHandlingAdvice {
         log.warn("The provided argument is missing or invalid.", ex);
         return CustomErrorResponse.builder()
                 .timestamp(Calendar.getInstance().getTime())
-                .property(ex.getFieldErrors().stream().map(FieldError::getField).collect(Collectors.toList()))
-                .details(ex.getFieldErrors().stream().map(FieldError::getDefaultMessage).collect(Collectors.toList()))
+                .property(ex.getFieldErrors().stream().map(FieldError::getField).toList())
+                .details(ex.getFieldErrors().stream().map(FieldError::getDefaultMessage).toList())
                 .build();
     }
 

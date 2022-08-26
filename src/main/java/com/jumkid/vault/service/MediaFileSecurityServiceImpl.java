@@ -1,5 +1,6 @@
 package com.jumkid.vault.service;
 
+import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.exception.FileNotAvailableException;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.model.MediaFileMetadata;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 import static com.jumkid.share.util.Constants.*;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service("securityService")
@@ -30,25 +30,28 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
     }
 
     @Override
-    public boolean isOwner(Authentication authentication, String mediaFileId) {
-        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
+    public boolean isPublic(String mediaFileId) {
+        MediaFileMetadata metadata = getMetadata(mediaFileId);
+        return AccessScope.PUBLIC.equals(metadata.getAccessScope());
+    }
 
-        if (optional.isEmpty()) throw new FileNotFoundException(mediaFileId);
-        MediaFileMetadata metadata = optional.get();
+    @Override
+    public boolean isOwner(Authentication authentication, String mediaFileId) {
+        MediaFileMetadata metadata = getMetadata(mediaFileId);
 
         if (Boolean.FALSE.equals(metadata.getActivated())) throw new FileNotAvailableException();
 
-        String currentUsername;
+        String currentUserId;
         if (authentication == null) {
-            currentUsername = getCurrentUserName();
+            currentUserId = getCurrentUserId();
         } else {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            currentUsername = userDetails.getUsername();
+            currentUserId = userDetails.getPassword();
         }
 
         String createdBy = metadata.getCreatedBy();
         if (createdBy == null) { return true; }
-        else { return metadata.getCreatedBy().equals(currentUsername); }
+        else { return metadata.getCreatedBy().equals(currentUserId); }
     }
 
     @Override
@@ -76,10 +79,17 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
     public List<String> getCurrentUserRoles() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+            return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
         } else {
             return List.of(GUEST_ROLE);
         }
+    }
+
+    private MediaFileMetadata getMetadata(String mediaFileId){
+        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
+
+        if (optional.isEmpty()) throw new FileNotFoundException(mediaFileId);
+        return optional.get();
     }
 
 }

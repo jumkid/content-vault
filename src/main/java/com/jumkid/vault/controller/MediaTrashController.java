@@ -24,14 +24,14 @@ public class MediaTrashController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public List<MediaFile> getAllTrash(){
         return fileService.getTrash();
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')")
     public long emptyTrash() { return fileService.emptyTrash(); }
 
 }
