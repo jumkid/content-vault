@@ -56,6 +56,7 @@ public class MediaUploadDownloadController {
         MediaFile mediaFile = null;
         try {
             mediaFile = MediaFile.builder()
+                    .accessScope(accessScope)
                     .title(title != null ? title : file.getName())
                     .content(content)
                     .filename(file.getOriginalFilename())
@@ -86,6 +87,7 @@ public class MediaUploadDownloadController {
         try {
             for (MultipartFile file : files) {
                 mediaFile = MediaFile.builder()
+                        .accessScope(accessScope)
                         .title(file.getName())
                         .filename(file.getOriginalFilename())
                         .size((int)file.getSize())
