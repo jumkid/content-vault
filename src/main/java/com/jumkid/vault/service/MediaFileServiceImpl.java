@@ -169,11 +169,15 @@ public class MediaFileServiceImpl implements MediaFileService {
                 log.debug("save one file {} in new gallery", child.getUuid());
                 childMetadataList.add(MediaFileMetadata.builder()
                         .id(child.getUuid())
+                        .mimeType(child.getMimeType())
                         .module(MediaFileModule.REFERENCE)
                         .build());
             }
             galleryMetadata.setChildren(childMetadataList);
-            galleryMetadata.addProp(PROP_FEATURED_ID, childMetadataList.get(0).getId());
+            MediaFileMetadata featuredMetadata = childMetadataList.get(0);
+            galleryMetadata.addProp(PROP_FEATURED_ID, featuredMetadata.getId());
+            // as gallery is not a single file, use featured file mime type as its own
+            galleryMetadata.setMimeType(featuredMetadata.getMimeType());
         }
         galleryMetadata = metadataStorage.saveMetadata(galleryMetadata);
 

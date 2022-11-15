@@ -113,8 +113,9 @@ public class MediaContentController {
     public void stream(@PathVariable("id") String mediaFileId,
                        HttpServletRequest request, HttpServletResponse response){
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
+        String mimeType = mediaFile.getMimeType();
 
-        if(mediaFile.getMimeType().startsWith("audio") || mediaFile.getMimeType().startsWith("video")){
+        if(mimeType != null && (mimeType.startsWith("audio") || mimeType.startsWith("video"))){
             log.debug("stream media content");
 
             try (FileChannel fc = fileService.getFileChannel(mediaFileId)) {

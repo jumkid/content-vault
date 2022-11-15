@@ -22,6 +22,7 @@ import java.nio.file.*;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
@@ -56,9 +57,15 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		FileChannel fc = getFileChannel(mediaFileMetadata);
 		if (fc != null) {
 			return FileUtils.fileChannelToBytes(fc);
-		} else {
-			return Optional.empty();
+		} else if (MediaFileModule.GALLERY.equals(mediaFileMetadata.getModule())) {
+			Optional<MediaFileMetadata> galleryFeaturedFileMetadata = thumbnailFileManager.getThumbnailFileForGallery(mediaFileMetadata);
+			if (galleryFeaturedFileMetadata.isPresent()) {
+				fc = getFileChannel(galleryFeaturedFileMetadata.get());
+				return FileUtils.fileChannelToBytes(fc);
+			}
 		}
+
+		return Optional.empty();
 	}
 
 	@Override

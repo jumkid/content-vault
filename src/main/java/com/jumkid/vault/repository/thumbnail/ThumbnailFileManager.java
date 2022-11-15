@@ -81,26 +81,25 @@ public class ThumbnailFileManager {
 
     }
 
-    private String getThumbnailFilePathForGallery(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
-        if (mediaFileMetadata.getProps() == null || mediaFileMetadata.getProps().isEmpty()) {
-            return getIconFilePath(MediaFileModule.GALLERY.value());
-        }
-
-        Optional<MediaFilePropMetadata> optional = mediaFileMetadata.getProps().stream()
+    public Optional<MediaFileMetadata> getThumbnailFileForGallery(MediaFileMetadata galleryMetadata) {
+        Optional<MediaFilePropMetadata> optional = galleryMetadata.getProps().stream()
                 .filter(prop -> prop.getName().equals(PROP_FEATURED_ID))
                 .findFirst();
 
         if (optional.isPresent()) {   //get featured image as thumbnail
             String featuredId = optional.get().getTextValue();
-            Optional<MediaFileMetadata> childOptional = mediaFileMetadata.getChildren().stream()
-                    .filter(prop -> prop.getId().equals(featuredId))
-                    .findFirst();
+            return metadataStorage.getMetadata(featuredId);
+        } else {
+            return Optional.empty();
+        }
+    }
 
-            if (childOptional.isPresent()) {
-                Optional<MediaFileMetadata> featuredOptional = metadataStorage.getMetadata(childOptional.get().getId());
-                if (featuredOptional.isPresent()) {
-                    return getThumbnailFilePathForMediaFile(featuredOptional.get(), thumbnailNamespace);
-                }
+    private String getThumbnailFilePathForGallery(MediaFileMetadata galleryMetadata, ThumbnailNamespace thumbnailNamespace) {
+        if (galleryMetadata.getProps() != null && !galleryMetadata.getProps().isEmpty()) {
+            Optional<MediaFileMetadata> featuredOptional = getThumbnailFileForGallery(galleryMetadata);
+
+            if (featuredOptional.isPresent()) {
+                return getThumbnailFilePathForMediaFile(featuredOptional.get(), thumbnailNamespace);
             }
         }
 
@@ -150,11 +149,11 @@ public class ThumbnailFileManager {
     }
 
     public ThumbnailNamespace getThumbnailSuffix(ThumbnailNamespace thumbnailNamespace) {
-        switch (thumbnailNamespace) {
-            case SMALL: return ThumbnailNamespace.SMALL_SUFFIX;
-            case LARGE: return ThumbnailNamespace.LARGE_SUFFIX;
-            default: return ThumbnailNamespace.MEDIUM_SUFFIX;
-        }
+        return switch (thumbnailNamespace) {
+            case SMALL -> ThumbnailNamespace.SMALL_SUFFIX;
+            case LARGE -> ThumbnailNamespace.LARGE_SUFFIX;
+            default -> ThumbnailNamespace.MEDIUM_SUFFIX;
+        };
     }
 
     public void generateThumbnail(Path filePath) {
