@@ -51,6 +51,15 @@ public interface MediaFileService {
     MediaFile updateMediaGallery(String galleryId, MediaFile partialMediaGallery);
 
     /**
+     * Clone an existing media gallery by copying its properties and children
+     *
+     * @param galleryId
+     * @param title
+     * @return MediaFile
+     */
+    MediaFile cloneMediaGallery(String galleryId, String title);
+
+    /**
      * Update existing media file metadata and binary
      *
      * @param mediaFileId media file identity

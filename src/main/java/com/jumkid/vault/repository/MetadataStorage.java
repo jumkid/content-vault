@@ -20,6 +20,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 
@@ -77,8 +78,6 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
             log.error("failed to search metadata due to {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to search media file in Elasticsearch, please contact system administrator.");
         }
-
-
     }
 
     @Override
@@ -117,6 +116,29 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         } catch (IOException ioe) {
             log.error("failed to delete inactive metadata due to {} ", ioe.getMessage());
             throw new FileStoreServiceException("Not able to delete inactive media file from Elasticsearch, please contact system administrator.");
+        }
+    }
+
+    @Override
+    public List<MediaFileMetadata> findChildrenInOtherGallery (String parentId, String childId, Integer size) {
+        SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
+                .index(ES_INDEX_MFILE)
+                .size(size == null ? 10 : size);
+
+        BoolQuery.Builder booleanQueryBuilder = new BoolQuery.Builder()
+                .must(q -> q.term(t -> t.field(MODULE.value()).value(MediaFileModule.GALLERY.value())))
+                .must(q -> q.term(t -> t.field(ACTIVATED.value()).value(Boolean.TRUE)))
+                .mustNot(q -> q.term(t -> t.field(ID.value()).value(parentId)));
+
+        searchRequestBuilder.query(booleanQueryBuilder.build()._toQuery());
+
+        try {
+            SearchResponse<MediaFileMetadata> response = esClient.search(searchRequestBuilder.build(), MediaFileMetadata.class);
+
+            return searchResponseToResult(response);
+        } catch (IOException ioe) {
+            log.error("failed to search metadata due to {} ", ioe.getMessage());
+            return Collections.emptyList();
         }
     }
 
@@ -225,7 +247,6 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
         try {
             GetResponse<String> response = esClient.get(request, String.class);
 
-            //TODO investigate why ES returns base64 encoded field value
             byte[] bytes = Base64.getDecoder().decode(response.source());
             return Optional.of(bytes);
         } catch (IOException ioe) {

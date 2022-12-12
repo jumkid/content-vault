@@ -40,7 +40,10 @@ public class TestsSetup {
                 .uuid(mediaGalleryId == null ? DUMMY_ID : mediaGalleryId)
                 .title("gallery")
                 .filename("test gallery")
-                .mimeType("application/octet-stream").activated(true)
+                .mimeType("application/octet-stream")
+                .module(MediaFileModule.GALLERY)
+                .accessScope(AccessScope.PUBLIC)
+                .activated(true)
                 .content("test.gallery").size(DEFAULT_SIZE)
                 .creationDate(now).modificationDate(now)
                 .build();
@@ -90,9 +93,10 @@ public class TestsSetup {
                 .content("test.gallery")
                 .size(DEFAULT_SIZE)
                 .module(MediaFileModule.GALLERY)
-                .accessScope(AccessScope.PRIVATE)
+                .accessScope(AccessScope.PUBLIC)
                 .tags(List.of("test", "gallery"))
-                .creationDate(now).modificationDate(now)
+                .creationDate(now)
+                .modificationDate(now)
                 .build();
 
         List<MediaFileMetadata> children = new ArrayList<>();

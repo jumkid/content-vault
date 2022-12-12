@@ -104,9 +104,8 @@ public class ResponseMediaFileWriter {
      * @param mediaFile media file to write
      * @param bytes byte array to write
      * @param response http servlet response
-     * @return http servlet response
-     */
-    public HttpServletResponse write(MediaFile mediaFile,
+     **/
+    public void write(MediaFile mediaFile,
                                      byte[] bytes,
                                      HttpServletResponse response){
 
@@ -121,8 +120,6 @@ public class ResponseMediaFileWriter {
         } catch (IOException ioe) {
             logReadMediaFailure(ioe.getMessage());
         }
-
-        return response;
     }
 
     /**

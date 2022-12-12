@@ -212,4 +212,17 @@ public class MediaFileServiceImplTest extends TestsSetup {
         Assertions.assertThat(updateMediaFile).isNotNull();
     }
 
+    @Test
+    public void shouldGetNewGallery_WhenCloneMediaGallery() throws IOException {
+        final MediaFile gallery = this.buildMediaGallery(null);
+        final String galleryId = gallery.getUuid();
+
+        when(metadataStorage.getMetadata(galleryId)).thenReturn(Optional.of(mediaFileMapper.dtoToMetadata(gallery)));
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class)))
+                .thenReturn(mediaFileMapper.dtoToMetadata(gallery));
+
+        MediaFile newGallery = mediaFileService.cloneMediaGallery(galleryId, null);
+        Assertions.assertThat(newGallery.getChildren().size()).isSameAs(gallery.getChildren().size());
+    }
+
 }

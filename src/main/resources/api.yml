@@ -374,6 +374,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
 
+  '/gallery/clone/{id}':
+    post:
+      tags:
+        - v1
+      operationId: clone existing gallery
+      description: clone a gallery with all properties and children
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: gallery identifier
+          schema:
+            type: string
+        - name: title
+          in: query
+          required: false
+          description: title of gallery
+          schema:
+            type: string    
+
+      responses:
+        '202':
+          description: clone a gallery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaFile'
+
   /file/upload:
     post:
       tags:

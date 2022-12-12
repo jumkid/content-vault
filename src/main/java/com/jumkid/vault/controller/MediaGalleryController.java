@@ -24,11 +24,11 @@ import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
 @RequestMapping("/gallery")
 public class MediaGalleryController {
 
-    private final MediaFileService fileService;
+    private final MediaFileService mediaService;
 
     @Autowired
-    public MediaGalleryController(MediaFileService fileService) {
-        this.fileService = fileService;
+    public MediaGalleryController(MediaFileService mediaService) {
+        this.mediaService = mediaService;
     }
 
     @PostMapping
@@ -70,9 +70,18 @@ public class MediaGalleryController {
             throw new FileStoreServiceException("Failed to update file ", mediaFile);
         }
 
-        gallery = fileService.addMediaGallery(gallery);
+        gallery = mediaService.addMediaGallery(gallery);
 
         return gallery;
+    }
+
+    @PostMapping("/clone/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
+            " && (@securityService.isPublic(#galleryId) || @securityService.isOwner(authentication, #galleryId))")
+    public MediaFile clone(@NotNull @PathVariable("id") String galleryId,
+                           @NotNull @RequestParam(required = false) String title) {
+        return mediaService.cloneMediaGallery(galleryId, title);
     }
 
     @PostMapping(value = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -97,7 +106,7 @@ public class MediaGalleryController {
         }
 
         if (files != null) {
-            MediaFile galleryMeta = fileService.getMediaFile(galleryId);
+            MediaFile galleryMeta = mediaService.getMediaFile(galleryId);
 
             List<MediaFile> childList = processNewChildren(files, galleryMeta.getAccessScope());
             if (partialMediaFile.getChildren() != null) {
@@ -115,7 +124,7 @@ public class MediaGalleryController {
             hasUpdate = true;
         }
 
-        if (hasUpdate) return fileService.updateMediaGallery(galleryId, partialMediaFile);
+        if (hasUpdate) return mediaService.updateMediaGallery(galleryId, partialMediaFile);
         else return null;
     }
 
@@ -125,7 +134,7 @@ public class MediaGalleryController {
             " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #galleryId))")
     public MediaFile update(@PathVariable(value = "id") String galleryId,
                             @NotNull @RequestBody MediaFile partialMediaFile) {
-        return fileService.updateMediaGallery(galleryId, partialMediaFile);
+        return mediaService.updateMediaGallery(galleryId, partialMediaFile);
     }
 
     private List<MediaFile> processNewChildren(MultipartFile[] files, AccessScope accessScope){

@@ -77,9 +77,20 @@ public class GalleryTest extends TestsSetup{
         when(metadataStorage.updateMetadata(eq(DUMMY_ID), eq(galleryMetadata))).thenReturn(galleryMetadata);
 
         mockMvc.perform(post("/gallery/" + DUMMY_ID)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
                 .param("mediaFileIds", "1", "2"))
                 .andExpect(status().isAccepted());
+    }
+
+    @Test
+    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
+    public void shouldCloneGallery() throws Exception {
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(galleryMetadata);
+
+        mockMvc.perform(post("/gallery/clone/" + DUMMY_ID)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
 }

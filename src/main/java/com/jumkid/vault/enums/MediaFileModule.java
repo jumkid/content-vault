@@ -2,7 +2,7 @@ package com.jumkid.vault.enums;
 
 public enum MediaFileModule {
 
-    FILE("file"), TEXT("text"), HTML("html"), GALLERY("gallery"), REFERENCE("reference");
+    FILE("file"), TEXT("text"), HTML("html"), GALLERY("GALLERY"), REFERENCE("REFERENCE");
 
     private final String value;
 

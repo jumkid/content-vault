@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
 
@@ -127,8 +128,8 @@ public class MediaFileServiceImpl implements MediaFileService {
         return optional.map(metadata -> getFileStorage().getFileRandomAccess(metadata).orElseThrow()).orElse(null);
     }
 
-    //TODO make the whole process transactional
     @Override
+    @Transactional
     public MediaFile addMediaFile(MediaFile mediaFile, MediaFileModule mediaFileModule) {
         normalizeDTO(null, mediaFile, null);
 
@@ -156,6 +157,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
+    @Transactional
     public MediaFile addMediaGallery(MediaFile mediaGallery) {
         normalizeDTO(null, mediaGallery, null);
 
@@ -185,6 +187,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
+    @Transactional
     public MediaFile updateMediaFile(String mediaFileId, MediaFile partialMediaFile, byte[] bytes) {
         Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
 
@@ -225,6 +228,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
+    @Transactional
     public MediaFile updateMediaGallery(String galleryId, MediaFile partialMediaGallery) {
         if (partialMediaGallery == null) return null;
 
@@ -249,12 +253,38 @@ public class MediaFileServiceImpl implements MediaFileService {
         }
     }
 
+    @Override
+    public MediaFile cloneMediaGallery(String galleryId, String title) throws GalleryNotFoundException {
+        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(galleryId);
+        if (optional.isPresent()) {
+            MediaFileMetadata existingGallery = optional.get();
+
+            existingGallery.setId(null);
+            if (title != null && !title.isBlank()) existingGallery.setTitle(title);
+
+            String currentUserId = securityService.getCurrentUserId();
+            existingGallery.setCreatedBy(currentUserId);
+            existingGallery.setCreationDate(LocalDateTime.now());
+
+            existingGallery.setModifiedBy(null);
+            existingGallery.setModificationDate(null);
+
+            MediaFileMetadata newGallery = metadataStorage.saveMetadata(existingGallery);
+            log.debug("Saved new gallery by copy an existing gallery");
+
+            return mediaFileMapper.metadataToDto(newGallery);
+        } else {
+            throw new GalleryNotFoundException(galleryId);
+        }
+    }
+
     /**
      *
      * @param mediaFileId media file identity
      * @return number of trashed media file
      */
     @Override
+    @Transactional
     public Integer trashMediaFile(String mediaFileId) {
        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
 
@@ -291,7 +321,7 @@ public class MediaFileServiceImpl implements MediaFileService {
 
         try {
             if (galleryMetadata.getChildren() != null) {
-                galleryMetadata.getChildren().forEach(galleryItem -> trashMediaFile(galleryItem.getId()));
+                galleryMetadata.getChildren().forEach(child -> this.trashChild(galleryId, child.getId()));
 
                 return galleryMetadata.getChildren().size();
             }
@@ -301,6 +331,13 @@ public class MediaFileServiceImpl implements MediaFileService {
             throw new FileStoreServiceException("failed to trash gallery, please contact system admin");
         }
         return 0;
+    }
+
+    private void trashChild(String parentId, String childId) {
+        List<MediaFileMetadata> galleryList = metadataStorage.findChildrenInOtherGallery(parentId, childId, 1);
+        if (galleryList.isEmpty()) {
+            trashMediaFile(childId);
+        }
     }
 
     @Override

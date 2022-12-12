@@ -8,6 +8,7 @@ import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FilePathManager;
 import com.jumkid.vault.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
+import net.coobird.thumbnailator.ThumbnailParameter;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +43,7 @@ public class ThumbnailFileManager {
     @Value("#{${vault.thumbnail.icon-mappings}}")
     private Map<String, String> iconMappings;
 
-    public static final String THUMBNAIL_FILE_EXTEND = "PNG";
+    public static final String THUMBNAIL_FILE_EXTEND = "png";
     private static final String MISC_PATH = "misc";
     private static final String PATH_DELIMITER = "/";
 
@@ -162,16 +163,25 @@ public class ThumbnailFileManager {
         try {
             Thumbnails.of(new File(path))
                     .size(thumbnailSmall, thumbnailSmall)
+                    .keepAspectRatio(true)
+                    .outputQuality(0.6)
+                    .imageType(ThumbnailParameter.DEFAULT_IMAGE_TYPE)
                     .outputFormat(THUMBNAIL_FILE_EXTEND)
                     .toFile(new File(path + ThumbnailNamespace.SMALL_SUFFIX.value()));
 
             Thumbnails.of(new File(path))
                     .size(thumbnailMedium, thumbnailMedium)
+                    .keepAspectRatio(true)
+                    .outputQuality(0.8)
+                    .imageType(ThumbnailParameter.DEFAULT_IMAGE_TYPE)
                     .outputFormat(THUMBNAIL_FILE_EXTEND)
                     .toFile(new File(path + ThumbnailNamespace.MEDIUM_SUFFIX.value()));
 
             Thumbnails.of(new File(path))
                     .size(thumbnailLarge, thumbnailLarge)
+                    .keepAspectRatio(true)
+                    .outputQuality(0.8)
+                    .imageType(ThumbnailParameter.DEFAULT_IMAGE_TYPE)
                     .outputFormat(THUMBNAIL_FILE_EXTEND)
                     .toFile(new File(path + ThumbnailNamespace.LARGE_SUFFIX.value()));
         } catch (IOException ioe) {

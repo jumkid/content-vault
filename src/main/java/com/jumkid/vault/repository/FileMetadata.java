@@ -95,4 +95,14 @@ public interface FileMetadata<T> {
      */
     Long deleteInactiveMetadata();
 
+    /**
+     * Find reference children in other gallery
+     *
+     * @param parentId
+     * @param childId
+     * @param size
+     * @return List of type
+     */
+    List<T> findChildrenInOtherGallery(String parentId, String childId, Integer size);
+
 }

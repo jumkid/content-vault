@@ -52,7 +52,19 @@
         }
       },
       "children": {
-        "type": "nested"
+        "type": "nested",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "mimeType": {
+            "type": "keyword"
+          },
+          "module": {
+            "type": "keyword",
+            "index": false
+          }
+        }
       },
       "creationDate": {
         "type": "date"
