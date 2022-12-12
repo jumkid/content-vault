@@ -55,7 +55,7 @@ public interface FileMetadata<T> {
      * @param t type
      * @return type
      */
-    public T updateMetadata(String id, T t) throws IOException;
+    T updateMetadata(String id, T t) throws IOException;
 
     /**
      * update metadata active status
@@ -98,9 +98,9 @@ public interface FileMetadata<T> {
     /**
      * Find reference children in other gallery
      *
-     * @param parentId
-     * @param childId
-     * @param size
+     * @param parentId gallery id
+     * @param childId child reference id
+     * @param size of list
      * @return List of type
      */
     List<T> findChildrenInOtherGallery(String parentId, String childId, Integer size);

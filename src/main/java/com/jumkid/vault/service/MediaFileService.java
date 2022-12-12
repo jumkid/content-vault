@@ -12,15 +12,12 @@ package com.jumkid.vault.service;
  */
 
 import com.jumkid.vault.controller.dto.MediaFile;
-import com.jumkid.vault.enums.MediaFileField;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
 
-import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface MediaFileService {

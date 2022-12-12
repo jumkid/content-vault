@@ -77,7 +77,7 @@ public class TestsSetup {
                 .build();
     }
 
-    public List<MediaFileMetadata> buildListOfMetadata() throws IOException {
+    public List<MediaFileMetadata> buildListOfMetadata() {
         final List<MediaFileMetadata> metadataLst = new ArrayList<>();
         metadataLst.add(buildMetadata(null));
         metadataLst.add(buildMetadata("dummy-id-1"));
