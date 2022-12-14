@@ -26,7 +26,7 @@ public class KafkaConsumerConfig {
     private Integer groupId;
 
     @Bean
-    public ConsumerFactory<String, String> vehicleConsumerFactory() {
+    public ConsumerFactory<String, String> commonConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
 
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
@@ -34,14 +34,16 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
+        log.info("kafka boostrap servers at {}", bootstrapAddress);
+
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> vehicleKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(vehicleConsumerFactory());
+        factory.setConsumerFactory(commonConsumerFactory());
 
         return factory;
     }

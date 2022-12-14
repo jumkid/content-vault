@@ -27,6 +27,7 @@
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.18</thumbnailator.version>
         <tika.version>2.4.1</tika.version>
+        <testcontainers.kafka.version>1.17.6</testcontainers.kafka.version>
 
         <!-- jumkid modules -->
         <sharejar.version>1.0.1</sharejar.version>
@@ -117,6 +118,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <version>${testcontainers.kafka.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
@@ -163,7 +175,6 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>*.txt</include>
-                    <include>*.properties</include>
                     <include>/WEB-INF</include>
                 </includes>
             </resource>

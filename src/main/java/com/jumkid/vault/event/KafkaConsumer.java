@@ -24,7 +24,7 @@ public class KafkaConsumer {
     }
 
     @KafkaListener(topics = "${spring.kafka.topic.name.vehicle.create}", groupId = "${spring.kafka.consumer.group-id}",
-                containerFactory = "vehicleKafkaListenerContainerFactory")
+                containerFactory = "kafkaListenerContainerFactory")
     public void listenVehicleCreate(@Payload String message) {
         try {
             Vehicle vehicle = objectMapper.readValue(message, Vehicle.class);
@@ -40,7 +40,7 @@ public class KafkaConsumer {
     }
 
     @KafkaListener(topics = "${spring.kafka.topic.name.vehicle.delete}", groupId = "${spring.kafka.consumer.group-id}",
-            containerFactory = "vehicleKafkaListenerContainerFactory")
+            containerFactory = "kafkaListenerContainerFactory")
     public void listenVehicleDelete(@Payload String message) {
         try {
             Vehicle vehicle = objectMapper.readValue(message, Vehicle.class);

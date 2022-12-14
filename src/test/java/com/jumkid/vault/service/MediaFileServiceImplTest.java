@@ -20,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
+@EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:10092", "port=10092" })
 public class MediaFileServiceImplTest extends TestsSetup {
 
     @Mock
@@ -140,7 +142,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         final MediaFileMetadata mediaFileMetadata = this.buildMetadata(null);
 
         when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
-        when(metadataStorage.updateMetadata(mediaFileId, eq(mediaFileMetadata))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.updateMetadata(mediaFileId, mediaFileMetadata)).thenReturn(mediaFileMetadata);
 
         MediaFile savedMediaFile = mediaFileService.updateMediaFile(mediaFileId, mediaFile, null);
 
@@ -174,7 +176,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         final String galleryId = gallery.getUuid();
 
         when(metadataStorage.getMetadata(galleryId)).thenReturn(Optional.of(galleryMetadata));
-        when(metadataStorage.updateMetadata(galleryId, eq(galleryMetadata))).thenReturn(galleryMetadata);
+        when(metadataStorage.updateMetadata(galleryId, galleryMetadata)).thenReturn(galleryMetadata);
 
         MediaFile savedGallery = mediaFileService.updateMediaGallery(galleryId, gallery);
 
