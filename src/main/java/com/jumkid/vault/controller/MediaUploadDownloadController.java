@@ -9,6 +9,8 @@ import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.service.MediaFileService;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
 import com.jumkid.vault.util.ResponseMediaFileWriter;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,8 +21,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

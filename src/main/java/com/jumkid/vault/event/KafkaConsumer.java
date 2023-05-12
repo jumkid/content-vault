@@ -3,7 +3,7 @@ package com.jumkid.vault.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jumkid.vault.controller.dto.external.Vehicle;
+import com.jumkid.share.event.ContentEvent;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -23,31 +23,16 @@ public class KafkaConsumer {
         this.objectMapper = new ObjectMapper();
     }
 
-    @KafkaListener(topics = "${spring.kafka.topic.name.vehicle.create}", groupId = "${spring.kafka.consumer.group-id}",
-                containerFactory = "kafkaListenerContainerFactory")
-    public void listenVehicleCreate(@Payload String message) {
-        try {
-            Vehicle vehicle = objectMapper.readValue(message, Vehicle.class);
-            log.debug("Received kafka topic vehicle.create with payload : {}", vehicle);
-        } catch (JsonMappingException jme) {
-            jme.printStackTrace();
-            log.error("failed to map message to json object: {}", jme.getMessage());
-        } catch (JsonProcessingException jpe) {
-            jpe.printStackTrace();
-            log.error("failed to map process json message: {}", jpe.getMessage());
-        }
-
-    }
-
-    @KafkaListener(topics = "${spring.kafka.topic.name.vehicle.delete}", groupId = "${spring.kafka.consumer.group-id}",
+    @KafkaListener(topics = "${spring.kafka.topic.name.content.delete}",
+            groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory")
-    public void listenVehicleDelete(@Payload String message) {
+    public void listenContentDelete(@Payload String message) {
         try {
-            Vehicle vehicle = objectMapper.readValue(message, Vehicle.class);
-            log.debug("Received kafka topic vehicle.delete with payload : {}", vehicle);
+            ContentEvent contentEvent = objectMapper.readValue(message, ContentEvent.class);
+            log.debug("Received kafka topic vehicle.delete with payload : {}", contentEvent);
 
-            if (vehicle != null && vehicle.getMediaGalleryId() != null) {
-                mediaFileService.trashMediaFile(vehicle.getMediaGalleryId());
+            if (contentEvent != null && contentEvent.getContentId() != null) {
+                mediaFileService.trashMediaFile(contentEvent.getContentId());
             }
         } catch (JsonMappingException jme) {
             jme.printStackTrace();
