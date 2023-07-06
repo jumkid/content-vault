@@ -3,6 +3,7 @@ package com.jumkid.vault.controller;
 import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.controller.dto.MediaFileProp;
+import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
@@ -88,31 +89,23 @@ public class MediaGalleryController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
             " && @securityService.isOwner(authentication, #galleryId)")
-    public MediaFile updateItems(@NotNull @PathVariable("id") String galleryId,
-                            @RequestParam(value = "featuredId", required = false) String featuredId,
-                            @RequestParam(value = "mediaFileIds", required = false) List<String> childIds,
-                            @RequestParam(value = "files", required = false) MultipartFile[] files) {
+    public MediaFile uploadItems(@NotNull @PathVariable("id") String galleryId,
+                                 @RequestParam(value = "featuredId", required = false) String featuredId,
+                                 @RequestParam(value = "files", required = false) MultipartFile[] files) {
+
         MediaFile partialMediaFile = MediaFile.builder().uuid(galleryId).build();
-
         boolean hasUpdate = false;
-        if (childIds != null && !childIds.isEmpty()) {
-            List<MediaFile> mediaFileList = childIds.stream()
-                    .map(childId -> MediaFile.builder().uuid(childId).build())
-                    .toList();
-
-            partialMediaFile.setChildren(mediaFileList);
-
-            hasUpdate = true;
-        }
 
         if (files != null) {
             MediaFile galleryMeta = mediaService.getMediaFile(galleryId);
 
-            List<MediaFile> childList = processNewChildren(files, galleryMeta.getAccessScope());
-            if (partialMediaFile.getChildren() != null) {
-                partialMediaFile.getChildren().addAll(childList);
+            List<MediaFile> newItemsList = this.storeGalleryItems(files, galleryMeta.getAccessScope());
+            List<MediaFile> newReferences = this.buildGalleryReferences(newItemsList);
+            if (galleryMeta.getChildren() != null) {
+                partialMediaFile.setChildren(galleryMeta.getChildren());
+                partialMediaFile.getChildren().addAll(newReferences);
             } else {
-                partialMediaFile.setChildren(childList);
+                partialMediaFile.setChildren(newReferences);
             }
             hasUpdate = true;
         }
@@ -137,25 +130,43 @@ public class MediaGalleryController {
         return mediaService.updateMediaGallery(galleryId, partialMediaFile);
     }
 
-    private List<MediaFile> processNewChildren(MultipartFile[] files, AccessScope accessScope){
-        List<MediaFile> newChildList = new ArrayList<>();
+    private List<MediaFile> storeGalleryItems(MultipartFile[] files, AccessScope accessScope){
+        List<MediaFile> itemList = new ArrayList<>();
         try {
             if (files != null) {
                 for (MultipartFile file : files) {
-                    MediaFile newChild = MediaFile.builder()
+                    MediaFile mediaFile = MediaFile.builder()
                             .accessScope(accessScope)
                             .filename(file.getOriginalFilename())
                             .size((int)file.getSize())
                             .mimeType(file.getContentType())
                             .build();
-                    newChild.setFile(file.getBytes());
-                    newChildList.add(newChild);
+                    mediaFile.setFile(file.getBytes());
+
+                    mediaFile = mediaService.addMediaFile(mediaFile, MediaFileModule.FILE);
+
+                    itemList.add(mediaFile);
                 }
             }
         } catch (IOException ioe) {
-            log.error("Failed to update file");
+            log.error("Failed to upload file {}", ioe.getMessage());
         }
-        return newChildList;
+
+        return itemList;
+    }
+
+    private List<MediaFile> buildGalleryReferences(List<MediaFile> galleryItems) {
+        List<MediaFile> galleryReferences = new ArrayList<>();
+        for (MediaFile galleryItem : galleryItems) {
+            galleryReferences.add(MediaFile.builder()
+                    .uuid(galleryItem.getUuid())
+                    .module(MediaFileModule.REFERENCE)
+                    .mimeType(galleryItem.getMimeType())
+                    .activated(galleryItem.getActivated())
+                    .build()
+            );
+        }
+        return galleryReferences;
     }
 
 }

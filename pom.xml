@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.jumkid.vault</groupId>
     <artifactId>content-vault</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <name>content media services</name>
     <description>content storing and managing spring boot application</description>
 
@@ -25,7 +25,7 @@
 
         <elasticsearch.version>8.3.3</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
-        <thumbnailator.version>0.4.18</thumbnailator.version>
+        <thumbnailator.version>0.4.19</thumbnailator.version>
         <tika.version>2.4.1</tika.version>
         <testcontainers.kafka.version>1.17.6</testcontainers.kafka.version>
 

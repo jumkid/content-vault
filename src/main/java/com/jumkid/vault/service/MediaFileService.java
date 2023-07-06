@@ -50,8 +50,8 @@ public interface MediaFileService {
     /**
      * Clone an existing media gallery by copying its properties and children
      *
-     * @param galleryId
-     * @param title
+     * @param galleryId media gallery identity
+     * @param title title of media gallery
      * @return MediaFile
      */
     MediaFile cloneMediaGallery(String galleryId, String title);
