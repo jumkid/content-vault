@@ -113,6 +113,15 @@ public interface MediaFileService {
     Integer trashMediaFile(String mediaFileId);
 
     /**
+     * Move gallery items to trash
+     *
+     * @param galleryId gallery id
+     * @param itemsId list of gallery items id
+     * @return list of none trashed items
+     */
+    List<MediaFile> trashMediaGalleryItems(String galleryId, String[] itemsId);
+
+    /**
      * Get all media files
      *
      * @return List of mediaFile

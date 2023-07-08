@@ -47,33 +47,45 @@ public class MediaGalleryController {
                 .tags(tags)
                 .build();
 
-        List<MediaFile> mediaFileList = new ArrayList<>();
-        MediaFile mediaFile = null;
+        List<MediaFile> galleryItemsList = new ArrayList<>();
+        MediaFile galleryItem = null;
         try {
             if (files != null) {
                 for (MultipartFile file : files) {
-                    mediaFile = MediaFile.builder()
+                    galleryItem = MediaFile.builder()
                             .accessScope(accessScope)
                             .filename(file.getOriginalFilename())
                             .size((int)file.getSize())
                             .mimeType(file.getContentType())
                             .build();
 
-                    mediaFile.setFile(file.getBytes());
+                    galleryItem.setFile(file.getBytes());
 
-                    mediaFileList.add(mediaFile);
+                    galleryItemsList.add(galleryItem);
                 }
 
-                gallery.setChildren(mediaFileList);
+                gallery.setChildren(galleryItemsList);
                 log.debug("media gallery {} created with {} children", gallery.getTitle(), gallery.getChildren().size());
             }
         } catch (IOException ioe) {
-            throw new FileStoreServiceException("Failed to update file ", mediaFile);
+            throw new FileStoreServiceException("Failed to upload gallery item {} ", galleryItem);
         }
 
-        gallery = mediaService.addMediaGallery(gallery);
+        return mediaService.addMediaGallery(gallery);
+    }
 
-        return gallery;
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
+            " && @securityService.isOwner(authentication, #galleryId)")
+    public List<MediaFile> delete(@NotNull @PathVariable("id") String galleryId,
+                              @NotNull @RequestParam(required = false) String[] items) {
+        if (items == null || items.length == 0) {
+            mediaService.trashMediaFile(galleryId);
+            return Collections.emptyList();
+        } else {
+            return mediaService.trashMediaGalleryItems(galleryId, items);
+        }
     }
 
     @PostMapping("/clone/{id}")
@@ -93,12 +105,12 @@ public class MediaGalleryController {
                                  @RequestParam(value = "featuredId", required = false) String featuredId,
                                  @RequestParam(value = "files", required = false) MultipartFile[] files) {
 
-        MediaFile partialMediaFile = MediaFile.builder().uuid(galleryId).build();
+        MediaFile partialMediaFile = MediaFile.builder()
+                .uuid(galleryId).children(Collections.emptyList())
+                .build();
         boolean hasUpdate = false;
-
         if (files != null) {
             MediaFile galleryMeta = mediaService.getMediaFile(galleryId);
-
             List<MediaFile> newItemsList = this.storeGalleryItems(files, galleryMeta.getAccessScope());
             List<MediaFile> newReferences = this.buildGalleryReferences(newItemsList);
             if (galleryMeta.getChildren() != null) {
@@ -117,8 +129,11 @@ public class MediaGalleryController {
             hasUpdate = true;
         }
 
-        if (hasUpdate) return mediaService.updateMediaGallery(galleryId, partialMediaFile);
-        else return null;
+        if (hasUpdate) {
+            mediaService.updateMediaGallery(galleryId, partialMediaFile);
+        }
+
+        return partialMediaFile;
     }
 
     @PutMapping("{id}")

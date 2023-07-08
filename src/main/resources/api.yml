@@ -374,6 +374,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
 
+    delete:
+      tags:
+        - v1
+      operationId: delete
+      description: delete items from the gallary or the entire gallery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: gallery identifier
+          schema:
+            type: string
+        - name: items
+          in: query
+          required: false
+          schema:
+            type: array
+            format: string    
+
+      responses:
+        '202':
+          description: successfully delete items from the gallery
+          content:
+            application/json:
+              schema:
+                type: array
+                format: '#/components/schemas/MediaFile'
+
   '/gallery/clone/{id}':
     post:
       tags:
@@ -402,7 +430,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MediaFile'
 
-  /file/upload:
+  '/file/upload':
     post:
       tags:
         - v1
