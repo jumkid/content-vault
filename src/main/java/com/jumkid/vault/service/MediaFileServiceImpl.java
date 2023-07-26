@@ -320,26 +320,20 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Override
     @Transactional
-    public List<MediaFile> trashMediaGalleryItems(String galleryId, String[] itemsId) {
-        MediaFileMetadata galleryMetadata = metadataStorage.getMetadata(galleryId)
-                .orElseThrow(() -> new FileNotFoundException(galleryId));
+    public List<MediaFile> trashMediaGalleryItems(String galleryId, String[] itemsId) throws FileNotFoundException{
+        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(galleryId);
+
+        if (optional.isEmpty()) {
+            throw new FileNotFoundException(galleryId);
+        }
 
         List<String> removeList = new ArrayList<>();
         for (String itemId : itemsId) {
-            if (trashChild(galleryId, itemId) == 1) {
-                removeList.add(itemId);
-            }
+            trashChild(galleryId, itemId);
+            removeList.add(itemId);
         }
-        List<MediaFileMetadata> remainChildMetadata = galleryMetadata.getChildren().stream()
-                .filter(child -> removeList.stream().anyMatch(value -> !value.equals(child.getId())))
-                .toList();
 
-        List<MediaFile> remainChild = mediaFileMapper.metadataListToDTOList(remainChildMetadata);
-        this.updateMediaGallery(galleryId, MediaFile.builder()
-                .children(remainChild)
-                .build());
-
-        return remainChild;
+        return mediaFileMapper.metadataListToDTOList(metadataStorage.deleteChildrenByChildId(galleryId, removeList));
     }
 
     private Integer trashGallery(MediaFileMetadata galleryMetadata) {
@@ -360,13 +354,13 @@ public class MediaFileServiceImpl implements MediaFileService {
         return 0;
     }
 
-    private Integer trashChild(String parentId, String childId) {
+    private boolean trashChild(String parentId, String childId) {
         List<MediaFileMetadata> galleryList = metadataStorage.findChildrenInOtherGallery(parentId, childId, 1);
-        if (!galleryList.isEmpty()) {
+        if (galleryList.isEmpty()) {
             trashMediaFile(childId);
-            return 1;
+            return true;
         } else {
-            return 0;
+            return false;
         }
     }
 

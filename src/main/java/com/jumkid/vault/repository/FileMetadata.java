@@ -10,7 +10,11 @@ package com.jumkid.vault.repository;
  * (c)2019 Jumkid Innovation All rights reserved.
  */
 
+import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.model.MediaFileMetadata;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,6 +98,16 @@ public interface FileMetadata<T> {
      * Remove all inactive metadata
      */
     Long deleteInactiveMetadata();
+
+
+    /**
+     * Remove objects in children array by give a list of child id
+     *
+     * @param mediaFileId parent metadata id
+     * @param childIdList id list in children object
+     * @return number of deleted children
+     */
+    List<MediaFileMetadata> deleteChildrenByChildId(String mediaFileId, List<String> childIdList) throws FileNotFoundException;
 
     /**
      * Find reference children in other gallery

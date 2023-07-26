@@ -13,14 +13,14 @@ package com.jumkid.vault.repository;
  */
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.Conflicts;
-import co.elastic.clients.elasticsearch._types.Refresh;
-import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import com.jumkid.vault.enums.MediaFileModule;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 
@@ -120,6 +120,34 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
+    public List<MediaFileMetadata> deleteChildrenByChildId(String mediaFileId, List<String> childIdList) {
+        try {
+            UpdateRequest<MediaFileMetadata, MediaFileMetadata> updateRequest = new UpdateRequest.Builder<MediaFileMetadata, MediaFileMetadata>()
+                    .index(ES_INDEX_MFILE)
+                    .id(mediaFileId)
+                    .refresh(Refresh.True)
+                    .script(new Script.Builder()
+                            .inline(new InlineScript.Builder()
+                                    .lang("painless")
+                                    .source("ctx._source.children.removeIf(child -> params.child_ids.stream()" +
+                                            ".anyMatch(child_id -> child_id == child.id))")
+                                    .params("child_ids", JsonData.of(childIdList))
+                                    .build())
+                            .build())
+                    .build();
+
+            esClient.update(updateRequest, MediaFileMetadata.class);
+            log.info("Updated media file with id {} ", mediaFileId);
+
+            return getMetadata(mediaFileId).orElseThrow(() -> new FileNotFoundException(mediaFileId)).getChildren();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            log.error("failed to update by query for media file {} due to: {}", mediaFileId, ioe.getMessage());
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
     public List<MediaFileMetadata> findChildrenInOtherGallery (String parentId, String childId, Integer size) {
         SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
                 .index(ES_INDEX_MFILE)
@@ -127,7 +155,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
         BoolQuery.Builder booleanQueryBuilder = new BoolQuery.Builder()
                 .must(q -> q.term(t -> t.field(MODULE.value()).value(MediaFileModule.GALLERY.value())))
-                .must(q -> q.term(t -> t.field(ACTIVATED.value()).value(Boolean.TRUE)))
+                .must(q -> q.term(t -> t.field(CHILDREN.value()+'.'+ID.value()).value(childId)))
                 .mustNot(q -> q.term(t -> t.field(ID.value()).value(parentId)));
 
         searchRequestBuilder.query(booleanQueryBuilder.build()._toQuery());

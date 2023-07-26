@@ -23,7 +23,7 @@
         <jaxb.version>2.3.0</jaxb.version>
         <jakarta.json.version>2.1.0</jakarta.json.version>
 
-        <elasticsearch.version>8.3.3</elasticsearch.version>
+        <elasticsearch.version>8.8.2</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.19</thumbnailator.version>
         <tika.version>2.4.1</tika.version>
