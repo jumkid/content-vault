@@ -88,13 +88,18 @@ public class MediaGalleryController {
         }
     }
 
-    @PostMapping("/clone/{id}")
+    @PostMapping("/{id}/clone")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
-            " && (@securityService.isPublic(#galleryId) || @securityService.isOwner(authentication, #galleryId))")
+            " && (hasAuthority('ADMIN_ROLE') || @securityService.isOwner(authentication, #toMediaGalleryId))")
     public MediaFile clone(@NotNull @PathVariable("id") String galleryId,
-                           @NotNull @RequestParam(required = false) String title) {
-        return mediaService.cloneMediaGallery(galleryId, title);
+                           @NotNull @RequestParam(required = false) String title,
+                           @NotNull @RequestParam(required = false) String toMediaGalleryId) {
+        if (toMediaGalleryId == null || toMediaGalleryId.isEmpty()) {
+            return mediaService.cloneMediaGallery(galleryId, title);
+        } else {
+            return mediaService.cloneMediaGalleryTo(galleryId, toMediaGalleryId, title);
+        }
     }
 
     @PostMapping(value = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

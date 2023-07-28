@@ -402,7 +402,7 @@ paths:
                 type: array
                 format: '#/components/schemas/MediaFile'
 
-  '/gallery/clone/{id}':
+  '/gallery/{id}/clone':
     post:
       tags:
         - v1
@@ -420,11 +420,17 @@ paths:
           required: false
           description: title of gallery
           schema:
+            type: string
+        - name: toMediaGalleryId
+          in: query
+          required: false
+          description: target empty media gallery id
+          schema:
             type: string    
 
       responses:
         '202':
-          description: clone a gallery
+          description: accpeted
           content:
             application/json:
               schema:

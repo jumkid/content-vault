@@ -73,8 +73,8 @@ public class GalleryTest extends TestsSetup{
     @Test
     @WithMockUser(username="test", password="test", authorities="USER_ROLE")
     public void shouldUpdateGalleryWithChild() throws Exception {
-        when(metadataStorage.getMetadata(eq(DUMMY_ID))).thenReturn(Optional.of(galleryMetadata));
-        when(metadataStorage.updateMetadata(eq(DUMMY_ID), eq(galleryMetadata))).thenReturn(galleryMetadata);
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
+        when(metadataStorage.updateMetadata(DUMMY_ID, galleryMetadata)).thenReturn(galleryMetadata);
 
         mockMvc.perform(post("/gallery/" + DUMMY_ID)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -83,12 +83,12 @@ public class GalleryTest extends TestsSetup{
     }
 
     @Test
-    @WithMockUser(username="test", password="test", authorities="USER_ROLE")
+    @WithMockUser(username="test", password="test", authorities="ADMIN_ROLE")
     public void shouldCloneGallery() throws Exception {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(galleryMetadata);
 
-        mockMvc.perform(post("/gallery/clone/" + DUMMY_ID)
+        mockMvc.perform(post("/gallery/" + DUMMY_ID + "/clone")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }

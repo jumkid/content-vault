@@ -20,10 +20,7 @@ import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.StorageMode;
 import com.jumkid.vault.enums.ThumbnailNamespace;
-import com.jumkid.vault.exception.FileNotAvailableException;
-import com.jumkid.vault.exception.FileNotFoundException;
-import com.jumkid.vault.exception.FileStoreServiceException;
-import com.jumkid.vault.exception.GalleryNotFoundException;
+import com.jumkid.vault.exception.*;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.FileMetadata;
 import com.jumkid.vault.repository.FileStorage;
@@ -257,28 +254,57 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public MediaFile cloneMediaGallery(String galleryId, String title) throws GalleryNotFoundException {
-        Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(galleryId);
-        if (optional.isPresent()) {
-            MediaFileMetadata existingGallery = optional.get();
+    public MediaFile cloneMediaGalleryTo(String galleryId, String toGalleryId, String title)
+            throws GalleryNotFoundException, GalleryNotEmptyException {
+        try {
+            MediaFileMetadata sourceGallery = metadataStorage.getMetadata(galleryId)
+                    .orElseThrow(() -> new GalleryNotFoundException(galleryId));
+            MediaFileMetadata toGallery = metadataStorage.getMetadata(toGalleryId)
+                    .orElseThrow(() -> new GalleryNotFoundException(toGalleryId));
 
-            existingGallery.setId(null);
-            if (title != null && !title.isBlank()) existingGallery.setTitle(title);
+            if (toGallery.getChildren() != null && !toGallery.getChildren().isEmpty()) {
+                throw new GalleryNotEmptyException(toGalleryId);
+            }
+
+            MediaFileMetadata partialMediaFileMetadata = MediaFileMetadata.builder()
+                    .title(title)
+                    .children(sourceGallery.getChildren())
+                    .build();
+            metadataStorage.updateMetadata(toGalleryId, partialMediaFileMetadata);
+            return mediaFileMapper.metadataToDto(metadataStorage.getMetadata(toGalleryId).orElseThrow());
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            log.error("failed to clone media gallery due to {}", ioe.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MediaFile cloneMediaGallery(String galleryId, String title) throws GalleryNotFoundException {
+	    try {
+            MediaFileMetadata sourceGallery = metadataStorage.getMetadata(galleryId)
+                    .orElseThrow(() -> new GalleryNotFoundException(galleryId));
+
+            sourceGallery.setId(null);
+            if (title != null && !title.isBlank()) sourceGallery.setTitle(title);
 
             String currentUserId = securityService.getCurrentUserId();
-            existingGallery.setCreatedBy(currentUserId);
-            existingGallery.setCreationDate(LocalDateTime.now());
+            sourceGallery.setCreatedBy(currentUserId);
+            sourceGallery.setCreationDate(LocalDateTime.now());
 
-            existingGallery.setModifiedBy(null);
-            existingGallery.setModificationDate(null);
+            sourceGallery.setModifiedBy(null);
+            sourceGallery.setModificationDate(null);
 
-            MediaFileMetadata newGallery = metadataStorage.saveMetadata(existingGallery);
+            MediaFileMetadata newGallery = metadataStorage.saveMetadata(sourceGallery);
             log.debug("Saved new gallery by copy an existing gallery");
 
             return mediaFileMapper.metadataToDto(newGallery);
-        } else {
-            throw new GalleryNotFoundException(galleryId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("failed to clone media gallery due to {}", e.getMessage());
+            return null;
         }
+
     }
 
     /**

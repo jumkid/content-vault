@@ -223,7 +223,7 @@ public class MediaFileServiceImplTest extends TestsSetup {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class)))
                 .thenReturn(mediaFileMapper.dtoToMetadata(gallery));
 
-        MediaFile newGallery = mediaFileService.cloneMediaGallery(galleryId, null);
+        MediaFile newGallery = mediaFileService.cloneMediaGallery(galleryId, "test");
         Assertions.assertThat(newGallery.getChildren().size()).isSameAs(gallery.getChildren().size());
     }
 
