@@ -1,10 +1,7 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.share.controller.response.CustomErrorResponse;
-import com.jumkid.vault.exception.FileNotAvailableException;
-import com.jumkid.vault.exception.FileNotFoundException;
-import com.jumkid.vault.exception.FileStoreServiceException;
-import com.jumkid.vault.exception.InvalidFieldException;
+import com.jumkid.vault.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.validation.FieldError;
@@ -74,6 +71,12 @@ public class ExceptionHandlingAdvice {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public CustomErrorResponse handle(ConversionFailedException ex) {
         log.info("Failed to convert value {}", ex.getMessage());
+        return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
+    }
+
+    @ExceptionHandler(GalleryNotEmptyException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public CustomErrorResponse handle(GalleryNotEmptyException ex) {
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
     }
 

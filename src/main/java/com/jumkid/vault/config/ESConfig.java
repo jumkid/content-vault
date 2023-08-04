@@ -38,7 +38,9 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 
 /**
  * Created at 17 Sep, 2018$
@@ -66,6 +68,9 @@ public class ESConfig {
 
     @Value("${elasticsearch.keystore.path}")
     private String esKeystorePath;
+
+    @Value("${elasticsearch.keystore.format}")
+    private String esKeystoreFormat;
 
     @Value("${elasticsearch.keystore.pass}")
     private String esKeyStorePass;
@@ -106,12 +111,18 @@ public class ESConfig {
     private SSLContext buildContext() throws KeyStoreException, IOException, CertificateException,
             NoSuchAlgorithmException, KeyManagementException {
         Path trustStorePath = Paths.get(esKeystorePath);
-        KeyStore truststore = KeyStore.getInstance("pkcs12");
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        KeyStore trustStore = KeyStore.getInstance(esKeystoreFormat);
+
+        Certificate trustedCa;
         try (InputStream is = Files.newInputStream(trustStorePath)) {
-            truststore.load(is, esKeyStorePass.toCharArray());
+            trustedCa = factory.generateCertificate(is);
         }
+        trustStore.load(null, null);
+        trustStore.setCertificateEntry("ca", trustedCa);
+
         SSLContextBuilder sslBuilder = SSLContexts.custom()
-                .loadTrustMaterial(truststore, null);
+                .loadTrustMaterial(trustStore, null);
         return sslBuilder.build();
     }
 
