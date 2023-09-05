@@ -13,6 +13,7 @@ package com.jumkid.vault.controller;
 
 import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.controller.dto.MediaFileProp;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.exception.FileNotFoundException;
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.Optional;
 
+import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
+
 @Slf4j
 @RestController
 @RequestMapping("/content")
@@ -42,16 +45,20 @@ public class MediaContentController {
 
     private final ResponseMediaFileWriter responseMFileWriter;
 
+    private final ThumbnailAPIHelper thumbnailAPIHelper;
+
     @Autowired
-    public MediaContentController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter) {
+    public MediaContentController(MediaFileService fileService, ResponseMediaFileWriter responseMFileWriter, ThumbnailAPIHelper thumbnailAPIHelper) {
         this.fileService = fileService;
         this.responseMFileWriter = responseMFileWriter;
+        this.thumbnailAPIHelper = thumbnailAPIHelper;
     }
 
     @GetMapping(value = "{id}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
-            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || @securityService.isPublic(#mediaFileId)" +
+            " || @securityService.isOwner(authentication, #mediaFileId)")
     public String getPlainContent(@PathVariable("id") String mediaFileId,
                                   @RequestParam(required = false) Boolean ignoreTitle){
         return getContent(mediaFileId, ignoreTitle);
@@ -108,8 +115,9 @@ public class MediaContentController {
 
     @GetMapping(value="/stream/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
-            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || @securityService.isPublic(#mediaFileId)" +
+            " || @securityService.isOwner(authentication, #mediaFileId)")
     public void stream(@PathVariable("id") String mediaFileId,
                        HttpServletRequest request, HttpServletResponse response){
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
@@ -150,32 +158,32 @@ public class MediaContentController {
     }
 
     @GetMapping(value="/thumbnail/{id}")
-    @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
-            " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || @securityService.isPublic(#mediaFileId)" +
+            " || @securityService.isOwner(authentication, #mediaFileId)")
     public void thumbnail(@PathVariable("id") String mediaFileId,
                           @RequestParam(value = "size", required = false) ThumbnailNamespace thumbnailNamespace,
                           HttpServletResponse response){
-        if (thumbnailNamespace == null) thumbnailNamespace = ThumbnailNamespace.SMALL;
-        Optional<byte[]> optional = fileService.getThumbnail(mediaFileId, thumbnailNamespace);
-        if (optional.isPresent()) {
-            MediaFile mediaFile = MediaFile.builder()
-                                            .uuid(mediaFileId)
-                                            .mimeType("image/png")
-                                            .build();
-            responseMFileWriter.write(mediaFile, optional.get(), response);
-        } else {
-            log.warn("File thumbnail {} is unavailable", mediaFileId);
+        final ThumbnailNamespace size = thumbnailNamespace == null ? ThumbnailNamespace.SMALL : thumbnailNamespace;
 
-            MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
-            optional = fileService.getFileSource(mediaFileId);
-            if (optional.isPresent()) {
-                responseMFileWriter.write(mediaFile, optional.get(), response);
-            } else if (mediaFile != null) {
-                responseMFileWriter.write(mediaFile, response);
-            } else {
-                throw new FileNotFoundException(mediaFileId);
-            }
+        MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
+
+        if (mediaFile == null) { throw new FileNotFoundException(mediaFileId); }
+
+        String targetMediaFileId = mediaFileId;
+        if (mediaFile.getModule().equals(MediaFileModule.GALLERY)
+                && mediaFile.getProps() != null && mediaFile.getChildren()!= null) {
+            //get feature image as thumbnail
+            MediaFileProp featuredIdProp = mediaFile.getProps()
+                    .stream()
+                    .filter(prop -> prop.getName().equals(PROP_FEATURED_ID))
+                    .findFirst()
+                    .orElseGet(() -> null);
+            targetMediaFileId = featuredIdProp != null ? featuredIdProp.getTextValue() : mediaFileId;
         }
+
+        thumbnailAPIHelper.response(targetMediaFileId, size, response);
     }
 
 }

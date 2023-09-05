@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.NotNull;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -25,11 +26,11 @@ import static com.jumkid.vault.util.Constants.PROP_FEATURED_ID;
 @RequestMapping("/gallery")
 public class MediaGalleryController {
 
-    private final MediaFileService mediaService;
+    private final MediaFileService fileService;
 
     @Autowired
-    public MediaGalleryController(MediaFileService mediaService) {
-        this.mediaService = mediaService;
+    public MediaGalleryController(MediaFileService fileService) {
+        this.fileService = fileService;
     }
 
     @PostMapping
@@ -71,7 +72,7 @@ public class MediaGalleryController {
             throw new FileStoreServiceException("Failed to upload gallery item {} ", galleryItem);
         }
 
-        return mediaService.addMediaGallery(gallery);
+        return fileService.addMediaGallery(gallery);
     }
 
     @DeleteMapping("/{id}")
@@ -81,24 +82,24 @@ public class MediaGalleryController {
     public List<MediaFile> delete(@NotNull @PathVariable("id") String galleryId,
                               @NotNull @RequestParam(required = false) String[] items) {
         if (items == null || items.length == 0) {
-            mediaService.trashMediaFile(galleryId);
+            fileService.trashMediaFile(galleryId);
             return Collections.emptyList();
         } else {
-            return mediaService.trashMediaGalleryItems(galleryId, items);
+            return fileService.trashMediaGalleryItems(galleryId, items);
         }
     }
 
     @PostMapping("/{id}/clone")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
-            " && (hasAuthority('ADMIN_ROLE') || @securityService.isOwner(authentication, #toMediaGalleryId))")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
+            " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #toMediaGalleryId))")
     public MediaFile clone(@NotNull @PathVariable("id") String galleryId,
                            @NotNull @RequestParam(required = false) String title,
                            @NotNull @RequestParam(required = false) String toMediaGalleryId) {
         if (toMediaGalleryId == null || toMediaGalleryId.isEmpty()) {
-            return mediaService.cloneMediaGallery(galleryId, title);
+            return fileService.cloneMediaGallery(galleryId, title);
         } else {
-            return mediaService.cloneMediaGalleryTo(galleryId, toMediaGalleryId, title);
+            return fileService.cloneMediaGalleryTo(galleryId, toMediaGalleryId, title);
         }
     }
 
@@ -115,7 +116,7 @@ public class MediaGalleryController {
                 .build();
         boolean hasUpdate = false;
         if (files != null) {
-            MediaFile galleryMeta = mediaService.getMediaFile(galleryId);
+            MediaFile galleryMeta = fileService.getMediaFile(galleryId);
             List<MediaFile> newItemsList = this.storeGalleryItems(files, galleryMeta.getAccessScope());
             List<MediaFile> newReferences = this.buildGalleryReferences(newItemsList);
             if (galleryMeta.getChildren() != null) {
@@ -135,7 +136,7 @@ public class MediaGalleryController {
         }
 
         if (hasUpdate) {
-            mediaService.updateMediaGallery(galleryId, partialMediaFile);
+            fileService.updateMediaGallery(galleryId, partialMediaFile);
         }
 
         return partialMediaFile;
@@ -147,7 +148,7 @@ public class MediaGalleryController {
             " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #galleryId))")
     public MediaFile update(@PathVariable(value = "id") String galleryId,
                             @NotNull @RequestBody MediaFile partialMediaFile) {
-        return mediaService.updateMediaGallery(galleryId, partialMediaFile);
+        return fileService.updateMediaGallery(galleryId, partialMediaFile);
     }
 
     private List<MediaFile> storeGalleryItems(MultipartFile[] files, AccessScope accessScope){
@@ -163,7 +164,7 @@ public class MediaGalleryController {
                             .build();
                     mediaFile.setFile(file.getBytes());
 
-                    mediaFile = mediaService.addMediaFile(mediaFile, MediaFileModule.FILE);
+                    mediaFile = fileService.addMediaFile(mediaFile, MediaFileModule.FILE);
 
                     itemList.add(mediaFile);
                 }

@@ -252,6 +252,7 @@ paths:
       responses:
         '200':
           description: binary stream as response
+
   '/content/thumbnail/{id}':
     get:
       tags:
@@ -270,7 +271,7 @@ paths:
           description: binary as response
 
 ## Gallery API
-  /gallery:
+  '/gallery':
     post:
       tags:
         - v1

@@ -348,10 +348,7 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Transactional
     public List<MediaFile> trashMediaGalleryItems(String galleryId, String[] itemsId) throws FileNotFoundException{
         Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(galleryId);
-
-        if (optional.isEmpty()) {
-            throw new FileNotFoundException(galleryId);
-        }
+        if (optional.isEmpty()) { throw new FileNotFoundException(galleryId); }
 
         List<String> removeList = new ArrayList<>();
         for (String itemId : itemsId) {

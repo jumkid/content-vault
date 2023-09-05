@@ -15,6 +15,7 @@ package com.jumkid.vault.repository;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.NestedQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -151,11 +152,16 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     public List<MediaFileMetadata> findChildrenInOtherGallery (String parentId, String childId, Integer size) {
         SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
                 .index(ES_INDEX_MFILE)
-                .size(size == null ? 10 : size);
+                .size(size == null ? 5 : size);
+
+        NestedQuery nestedQuery = new NestedQuery.Builder()
+                .path(CHILDREN.value())
+                .query(q -> q.match(m -> m.field(CHILDREN.value()+'.'+ID.value()).query(childId)))
+                .build();
 
         BoolQuery.Builder booleanQueryBuilder = new BoolQuery.Builder()
                 .must(q -> q.term(t -> t.field(MODULE.value()).value(MediaFileModule.GALLERY.value())))
-                .must(q -> q.term(t -> t.field(CHILDREN.value()+'.'+ID.value()).value(childId)))
+                .must(q -> q.nested(nestedQuery))
                 .mustNot(q -> q.term(t -> t.field(ID.value()).value(parentId)));
 
         searchRequestBuilder.query(booleanQueryBuilder.build()._toQuery());
