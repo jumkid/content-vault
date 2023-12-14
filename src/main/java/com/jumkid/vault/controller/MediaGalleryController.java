@@ -94,8 +94,8 @@ public class MediaGalleryController {
     @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
             " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #toMediaGalleryId))")
     public MediaFile clone(@NotNull @PathVariable("id") String galleryId,
-                           @NotNull @RequestParam(required = false) String title,
-                           @NotNull @RequestParam(required = false) String toMediaGalleryId) {
+                           @RequestParam(required = false) String title,
+                           @RequestParam(required = false) String toMediaGalleryId) {
         if (toMediaGalleryId == null || toMediaGalleryId.isEmpty()) {
             return fileService.cloneMediaGallery(galleryId, title);
         } else {

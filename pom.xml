@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.6</version>
+        <version>3.2.0</version>
         <relativePath/>
     </parent>
     <groupId>com.jumkid.vault</groupId>
@@ -15,18 +15,20 @@
     <description>content storing and managing spring boot application</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>20</java.version>
 
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <org.projectlombok.version>1.18.26</org.projectlombok.version>
-        <junit.version>4.13.2</junit.version>
+        <org.projectlombok.version>1.18.30</org.projectlombok.version>
         <jaxb.version>2.3.0</jaxb.version>
         <jakarta.json.version>2.1.0</jakarta.json.version>
 
-        <elasticsearch.version>8.8.2</elasticsearch.version>
+        <elasticsearch.version>8.11.2</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
         <thumbnailator.version>0.4.19</thumbnailator.version>
-        <tika.version>2.4.1</tika.version>
+        <tika.version>2.9.1</tika.version>
+
+        <junit.jupiter.version>5.10.1</junit.jupiter.version>
+        <junit.platform.version>1.10.1</junit.platform.version>
         <testcontainers.kafka.version>1.17.6</testcontainers.kafka.version>
 
         <!-- jumkid modules -->
@@ -77,13 +79,19 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
-        <!-- TEST -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>${elasticsearch.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.client.version}</version>
+        </dependency>
+
+        <!-- TEST -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -106,21 +114,28 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
-            <groupId>co.elastic.clients</groupId>
-            <artifactId>elasticsearch-java</artifactId>
-            <version>${elasticsearch.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-            <version>${hadoop.client.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <version>${junit.platform.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- file libs -->

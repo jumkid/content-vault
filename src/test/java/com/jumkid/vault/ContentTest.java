@@ -6,10 +6,10 @@ import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.util.FileUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,21 +18,21 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.FileInputStream;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class ContentTest extends TestsSetup {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ContentTest {
 
     @Value("file:src/test/resources/icon_file.png")
     private Resource fileResource;
@@ -48,23 +48,23 @@ public class ContentTest extends TestsSetup {
 
     private MediaFileMetadata mediaFileMetadata;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         try {
-            mediaFileMetadata = buildMetadata(null);
+            mediaFileMetadata = TestsSetup.buildMetadata(null);
 
-            when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
+            when(metadataStorage.getMetadata(TestsSetup.DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
             when(localFileStorage.getFileBinary(mediaFileMetadata))
                     .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
         } catch (Exception e) {
-            Assert.fail();
+            fail();
         }
 
     }
 
     @Test
     @WithMockUser(username="test", password="test", authorities="USER_ROLE")
-    public void shouldSaveHtmlContent_whenGivenTitleAndContent() throws Exception{
+    void shouldSaveHtmlContent_whenGivenTitleAndContent() throws Exception{
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
         mockMvc.perform(post("/content")
@@ -79,34 +79,34 @@ public class ContentTest extends TestsSetup {
 
     @Test
     @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
-    public void shouldGetTextContentWithTitle_whenGivenId() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/"+DUMMY_ID)
+    void shouldGetTextContentWithTitle_whenGivenId() throws Exception {
+        MvcResult result = mockMvc.perform(get("/content/" + TestsSetup.DUMMY_ID)
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        Assert.assertTrue(content.contains("test.title"));
-        Assert.assertTrue(content.contains("test.content"));
+        assertTrue(content.contains("test.title"));
+        assertTrue(content.contains("test.content"));
     }
 
     @Test
     @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
-    public void shouldGetTextContentWithoutTitle_whenGivenIdAndIgnoreTitle() throws Exception {
-        MvcResult result = mockMvc.perform(get("/content/"+DUMMY_ID)
+    void shouldGetTextContentWithoutTitle_whenGivenIdAndIgnoreTitle() throws Exception {
+        MvcResult result = mockMvc.perform(get("/content/" + TestsSetup.DUMMY_ID)
                 .contentType(MediaType.TEXT_PLAIN)
                 .queryParam("ignoreTitle", "true"))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        Assert.assertFalse(content.contains("test.title"));
-        Assert.assertTrue(content.contains("test.content"));
+        assertFalse(content.contains("test.title"));
+        assertTrue(content.contains("test.content"));
     }
 
     @Test
     @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
-    public void shouldGet404WithInvalidId_whenGivenInvalidId() throws Exception {
+    void shouldGet404WithInvalidId_whenGivenInvalidId() throws Exception {
         mockMvc.perform(get("/content/InvalidId")
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isNotFound());
@@ -114,7 +114,7 @@ public class ContentTest extends TestsSetup {
 
     @Test
     @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
-    public void shouldGet400WithoutId() throws Exception {
+    void shouldGet400WithoutId() throws Exception {
         mockMvc.perform(get("/content")
                 .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().is4xxClientError());
@@ -122,24 +122,24 @@ public class ContentTest extends TestsSetup {
 
     @Test
     @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
-    public void shouldGetThumbnail()throws Exception {
-        MediaFileMetadata mediaFileMetadata = buildMetadata(null);
+    void shouldGetThumbnail()throws Exception {
+        MediaFileMetadata mediaFileMetadata = TestsSetup.buildMetadata(null);
         Optional<byte[]> fileByte = Optional.empty();
         try (FileInputStream fin = new FileInputStream(fileResource.getFile())) {
             fileByte = FileUtils.fileChannelToBytes(fin.getChannel());
         } catch(Exception e) {
-            Assert.fail();
+            fail();
         }
         when(localFileStorage.getThumbnail(eq(mediaFileMetadata), any(ThumbnailNamespace.class))).thenReturn(fileByte);
 
-        MvcResult result = mockMvc.perform(get("/content/thumbnail/" + DUMMY_ID)
+        MvcResult result = mockMvc.perform(get("/content/thumbnail/" + TestsSetup.DUMMY_ID)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
                 .andExpect(status().isOk())
                 .andReturn();
 
         byte[] responseFile = result.getResponse().getContentAsByteArray();
-        Assert.assertTrue(fileByte.isPresent());
-        Assert.assertEquals(responseFile.length, fileByte.get().length);
+        assertTrue(fileByte.isPresent());
+        assertEquals(responseFile.length, fileByte.get().length);
     }
 
 }

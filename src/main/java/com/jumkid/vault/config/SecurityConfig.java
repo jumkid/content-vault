@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -35,23 +36,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> {
-            try {
-                auth.anyRequest().authenticated()
-                        .and()
-                        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        .and()
-                        .addFilterBefore(new BearerTokenRequestFilter(enableTokenCheck, enableTokenValidation, tokenIntrospectUrl, restTemplate),
-                                UsernamePasswordAuthenticationFilter.class)
-                        .csrf().disable();  // enable this if the authorization service exposure to public
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.error("Failed to initiate security policies due to {}", e.getMessage());
-            }
-        });
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .addFilterBefore(new BearerTokenRequestFilter(enableTokenCheck, enableTokenValidation,
+                                tokenIntrospectUrl, restTemplate), UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+        return httpSecurity.build();
     }
 
 }

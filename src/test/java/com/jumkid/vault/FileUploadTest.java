@@ -4,10 +4,9 @@ import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,23 +14,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "jwt.token.enable = false" })
 @AutoConfigureMockMvc
-public class FileUploadTest extends TestsSetup {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class FileUploadTest {
 
     @Value("file:src/test/resources/upload-test.html")
     private Resource resource;
@@ -47,19 +46,18 @@ public class FileUploadTest extends TestsSetup {
 
     private MediaFileMetadata mediaFileMetadata;
 
-    @Before
-    public void setup() {
+    @BeforeAll
+    void setup() {
         try {
-            mediaFileMetadata = buildMetadata(null);
+            mediaFileMetadata = TestsSetup.buildMetadata(null);
         } catch (Exception e) {
-            Assert.fail();
+            fail();
         }
-
     }
 
     @Test
     @WithMockUser(username="test", password="test", authorities="USER_ROLE")
-    public void whenGivenFile_shouldUploadFile() throws Exception {
+    void whenGivenFile_shouldUploadFile() throws Exception {
 
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
@@ -76,7 +74,7 @@ public class FileUploadTest extends TestsSetup {
 
     @Test
     @WithMockUser(username="test", password="test", authorities="USER_ROLE")
-    public void whenGivenFile_shouldUploadMultipleFile() throws Exception {
+    void whenGivenFile_shouldUploadMultipleFile() throws Exception {
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(any(), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
         when(metadataStorage.updateMetadata(any(), any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
