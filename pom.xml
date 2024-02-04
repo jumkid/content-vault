@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0</version>
+        <version>3.2.2</version>
         <relativePath/>
     </parent>
     <groupId>com.jumkid.vault</groupId>
@@ -22,9 +22,9 @@
         <jaxb.version>2.3.0</jaxb.version>
         <jakarta.json.version>2.1.0</jakarta.json.version>
 
-        <elasticsearch.version>8.11.2</elasticsearch.version>
+        <elasticsearch.version>8.10.4</elasticsearch.version>
         <hadoop.client.version>3.2.1</hadoop.client.version>
-        <thumbnailator.version>0.4.19</thumbnailator.version>
+        <thumbnailator.version>0.4.20</thumbnailator.version>
         <tika.version>2.9.1</tika.version>
 
         <junit.jupiter.version>5.10.1</junit.jupiter.version>
@@ -66,6 +66,11 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.3.0</version>
+        </dependency>
 
         <!-- use mapstruct-jdk8 for Java 8 or higher -->
         <dependency>
@@ -91,6 +96,23 @@
             <version>${hadoop.client.version}</version>
         </dependency>
 
+        <!-- file libs -->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>${thumbnailator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parsers-standard-package</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+
         <!-- TEST -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -108,9 +130,30 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
             <version>${testcontainers.kafka.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>1.19.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -137,23 +180,10 @@
             <version>${junit.platform.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- file libs -->
         <dependency>
-            <groupId>net.coobird</groupId>
-            <artifactId>thumbnailator</artifactId>
-            <version>${thumbnailator.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <version>${tika.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers-standard-package</artifactId>
-            <version>${tika.version}</version>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>spring-mock-mvc</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

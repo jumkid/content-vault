@@ -1,6 +1,6 @@
 package com.jumkid.vault.service;
 
-import com.jumkid.vault.TestsSetup;
+import com.jumkid.vault.TestObjectsBuilder;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.exception.FileNotAvailableException;
@@ -13,12 +13,13 @@ import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.service.enrich.MetadataEnricher;
 import com.jumkid.vault.service.mapper.MediaFileMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 
 import java.io.IOException;
@@ -30,19 +31,19 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest
-@EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:10092", "port=10092" })
+//@EmbeddedKafka(partitions = 1, controlledShutdown = false, brokerProperties = { "listeners=PLAINTEXT://localhost:10092", "port=10092" })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MediaFileServiceImplTest {
+class MediaFileServiceImplTest implements TestObjectsBuilder{
 
-    @Mock
+    @MockBean
     private MetadataStorage metadataStorage;
-    @Mock
+    @MockBean
     private HadoopFileStorage hadoopFileStorage;
-    @Mock
+    @MockBean
     private LocalFileStorage localFileStorage;
     @Autowired
     private MetadataEnricher metadataEnricher;
-    @Mock
+    @MockBean
     private MediaFileSecurityService securityService;
 
     private MediaFileServiceImpl mediaFileService;
@@ -51,173 +52,188 @@ class MediaFileServiceImplTest {
     private MediaFileMapper mediaFileMapper;
 
     private MediaFile mediaFile;
+    private MediaFileMetadata mediaFileMetadata;
 
-    @BeforeEach
+    @BeforeAll
     void setup(){
-        mediaFile = TestsSetup.buildMediaFile(null);
+        mediaFile = buildMediaFile(null);
+        mediaFileMetadata = buildMetadata(null);
 
         mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage,
                 mediaFileMapper, securityService, metadataEnricher);
         mediaFileService.setStorageMode("local");
-
-        when(securityService.getCurrentUserName()).thenReturn("admin");
-        when(metadataStorage.getMetadata(mediaFile.getUuid())).thenReturn(Optional.of(mediaFileMapper.dtoToMetadata(mediaFile)));
     }
 
     @Test
     void shouldGetMediaFile() {
-        MediaFileMetadata mediaFileMetadata = TestsSetup.buildMetadata(null);
+        //given
+        MediaFileMetadata mediaFileMetadata = buildMetadata(null);
         String mediaFileId = mediaFile.getUuid();
 
         when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
-
-        MediaFile mediaFile1 = mediaFileService.getMediaFile(mediaFileId);
-
-        assertEquals(mediaFile, mediaFile1);
+        //when
+        MediaFile result = mediaFileService.getMediaFile(mediaFileId);
+        //then
+        assertEquals(mediaFile, result);
     }
 
     @Test
     void shouldThrowException_WhenGetMediaFileWithInvalidId() {
+        //given
         String invalidId = "invalidId";
 
         when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
-
+        //then
         assertThrowsExactly(FileNotFoundException.class, () -> mediaFileService.getMediaFile(invalidId));
     }
 
     @Test
     void shouldThrowException_WhenGetInactivatedMediaFile() {
-        MediaFileMetadata mediaFileMetadata = TestsSetup.buildMetadata(null);
+        //given
+        MediaFileMetadata mediaFileMetadata = buildMetadata(null);
         String mediaFileId = mediaFileMetadata.getId();
         mediaFileMetadata.setActivated(false);
 
         when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
-
+        //then
         assertThrowsExactly(FileNotAvailableException.class, () -> mediaFileService.getMediaFile(mediaFileId));
     }
 
     @Test
     void shouldAddMediaFileWithoutBytes() {
-        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(TestsSetup.buildMetadata(null));
+        //given
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(buildMetadata(null));
+        //when
         MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, MediaFileModule.TEXT);
-
+        //then
         assertEquals(mediaFile, savedMediaFile);
     }
 
     @Test
     void shouldAddMediaFileWithBytes() {
-        final MediaFileMetadata mediaFileMetadata = TestsSetup.buildMetadata(null);
-
+        //given
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
         when(localFileStorage.saveFile(eq(mediaFile.getFile()), any(MediaFileMetadata.class))).thenReturn(Optional.of(mediaFileMetadata));
-
+        //when
         MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, MediaFileModule.TEXT);
-
+        //then
         assertEquals(mediaFile, savedMediaFile);
     }
 
     @Test
     void shouldAddMediaGalleryWithBytes() {
-        final MediaFile mediaGallery = TestsSetup.buildMediaGallery(null);
-        final MediaFileMetadata mediaFileMetadata = TestsSetup.buildGalleryMetadata(null);
+        //given
+        final MediaFile mediaGallery = buildMediaGallery(null);
+        final MediaFileMetadata mediaFileMetadata = buildGalleryMetadata(null);
         MediaFileMetadata child1 = mediaFileMetadata.getChildren().get(0);
         MediaFileMetadata child2 = mediaFileMetadata.getChildren().get(1);
 
         when(metadataStorage.saveMetadata(mediaFileMetadata)).thenReturn(mediaFileMetadata);
         when(metadataStorage.saveMetadata(child1)).thenReturn(child1);
         when(metadataStorage.saveMetadata(child2)).thenReturn(child2);
-
+        //when
         MediaFile savedMediaFile = mediaFileService.addMediaGallery(mediaGallery);
-
+        //then
         assertEquals(mediaGallery, savedMediaFile);
     }
 
     @Test
     void shouldUpdateMediaFile() throws IOException {
+        //given
         final String mediaFileId = mediaFile.getUuid();
-        final MediaFileMetadata mediaFileMetadata = TestsSetup.buildMetadata(null);
+        final MediaFileMetadata mediaFileMetadata = buildMetadata(null);
 
         when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
         when(metadataStorage.updateMetadata(mediaFileId, mediaFileMetadata)).thenReturn(mediaFileMetadata);
-
+        //when
         MediaFile savedMediaFile = mediaFileService.updateMediaFile(mediaFileId, mediaFile, null);
-
+        //then
         assertEquals(mediaFile, savedMediaFile);
     }
 
     @Test
     void shouldThrowException_WhenUpdateMediaFileWithInvalidId() {
+        //given
         String invalidId = "invalid_id";
 
         when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
-
+        //then
         assertThrowsExactly(GalleryNotFoundException.class,
                 () -> mediaFileService.updateMediaGallery(invalidId, mediaFile));
     }
 
     @Test
     void shouldGetNull_WhenUpdateNullMediaFile() throws IOException {
+        //given
         final String mediaFileId = mediaFile.getUuid();
-
+        //when
         MediaFile savedGallery = mediaFileService.updateMediaGallery(mediaFileId, null);
-
+        //then
         assertNull(savedGallery);
     }
 
     @Test
     void shouldUpdateMediaGallery_ByGivenAMediaFileObject() throws IOException {
-        final MediaFile gallery = TestsSetup.buildMediaGallery(null);
-        final MediaFileMetadata galleryMetadata = TestsSetup.buildGalleryMetadata(null);
+        //given
+        final MediaFile gallery = buildMediaGallery(null);
+        final MediaFileMetadata galleryMetadata = buildGalleryMetadata(null);
         final String galleryId = gallery.getUuid();
 
         when(metadataStorage.getMetadata(galleryId)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(galleryId, galleryMetadata)).thenReturn(galleryMetadata);
-
+        //when
         MediaFile savedGallery = mediaFileService.updateMediaGallery(galleryId, gallery);
-
+        //then
         assertEquals(gallery, savedGallery);
     }
 
     @Test
     void shouldThrowException_WhenUpdateGalleryWithInvalidId() {
+        //given
         String invalidId = "invalid_id";
-        final MediaFile gallery = TestsSetup.buildMediaGallery(null);
+        final MediaFile gallery = buildMediaGallery(null);
 
         when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
-
+        //then
         assertThrowsExactly(GalleryNotFoundException.class,
                 () -> mediaFileService.updateMediaGallery(invalidId, gallery));
     }
 
     @Test
     void shouldGetNull_WhenUpdateNullGallery() {
-        final MediaFile gallery = TestsSetup.buildMediaGallery(null);
+        //given
+        final MediaFile gallery = buildMediaGallery(null);
         final String galleryId = gallery.getUuid();
-
+        //when
         MediaFile savedGallery = mediaFileService.updateMediaGallery(galleryId, null);
-
+        //then
         assertNull(savedGallery);
     }
 
     @Test
     void shouldGetTrue_WhenUpdateMediaFile() throws IOException {
-        when(metadataStorage.updateMetadata(eq(mediaFile.getUuid()), any(MediaFileMetadata.class)))
+        //given
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
+        when(metadataStorage.updateMetadata(eq(DUMMY_ID), any(MediaFileMetadata.class)))
                 .thenReturn(mediaFileMapper.dtoToMetadata(mediaFile));
-
+        //when
         MediaFile updateMediaFile = mediaFileService.updateMediaFile(mediaFile.getUuid(), mediaFile, null);
+        //then
         assertNotNull(updateMediaFile);
     }
 
     @Test
     void shouldGetNewGallery_WhenCloneMediaGallery() {
-        final MediaFile gallery = TestsSetup.buildMediaGallery(null);
+        //given
+        final MediaFile gallery = buildMediaGallery(null);
         final String galleryId = gallery.getUuid();
 
         when(metadataStorage.getMetadata(galleryId)).thenReturn(Optional.of(mediaFileMapper.dtoToMetadata(gallery)));
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class)))
                 .thenReturn(mediaFileMapper.dtoToMetadata(gallery));
-
+        //when
         MediaFile newGallery = mediaFileService.cloneMediaGallery(galleryId, "test");
+        //then
         assertEquals(gallery.getChildren().size(), newGallery.getChildren().size());
     }
 

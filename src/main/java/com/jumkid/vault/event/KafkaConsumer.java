@@ -23,7 +23,7 @@ public class KafkaConsumer {
         this.objectMapper = new ObjectMapper();
     }
 
-    @KafkaListener(topics = "${spring.kafka.topic.name.content.delete}",
+    @KafkaListener(topics = "${com.jumkid.events.content.content-delete}",
             groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory")
     public void listenContentDelete(@Payload String message) {

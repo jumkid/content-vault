@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum MediaFileModule {
 
-    FILE("file"), TEXT("text"), HTML("html"), GALLERY("GALLERY"), REFERENCE("REFERENCE");
+    FILE("FILE"), TEXT("TEXT"), HTML("HTML"), GALLERY("GALLERY"), REFERENCE("REFERENCE");
 
     @JsonValue
     private final String value;

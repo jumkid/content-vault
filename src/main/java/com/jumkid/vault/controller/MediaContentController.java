@@ -87,7 +87,7 @@ public class MediaContentController {
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public MediaFile addTextContent(@RequestParam(required = false) String title,
                                     @RequestParam AccessScope accessScope,
-                                    @NotBlank String content) {
+                                    @RequestBody @NotBlank String content) {
         MediaFile mediaFile = MediaFile.builder()
                 .accessScope(accessScope)
                 .title(title).content(content)

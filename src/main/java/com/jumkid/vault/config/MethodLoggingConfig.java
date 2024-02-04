@@ -20,21 +20,21 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @Aspect
 public class MethodLoggingConfig extends AbstractMethodLoggingConfig {
 
+    @Override
     @Pointcut("execution(* com.jumkid.vault.repository.FileMetadata.*(..))" +
             "|| execution(* com.jumkid.vault.repository.FileStorage.*(..))")
-    public void monitor() {
-        //custom log message if needed here
-    }
+    public void monitorPointCut() { /* empty method */ }
 
+    @Override
     @Before("execution(* com.jumkid.vault.controller.*Controller.*(..))")
-    public void log4AllControllers(JoinPoint joinPoint) {
-        super.log(joinPoint);
+    public void controllerJoinPoint(JoinPoint joinPoint) {
+        super.logForJourneyId(joinPoint);
     }
 
     @Bean
     public Advisor performanceMonitorAdvisor() {
         AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-        pointcut.setExpression("com.jumkid.vault.config.MethodLoggingConfig.monitor()");
+        pointcut.setExpression("com.jumkid.vault.config.MethodLoggingConfig.monitorPointCut()");
         return new DefaultPointcutAdvisor(pointcut, new CustomPerformanceMonitorInterceptor(false));
     }
 

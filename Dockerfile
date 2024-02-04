@@ -1,5 +1,5 @@
 # Docker for Content Vault microserivce 
-FROM openjdk:17-oracle
+FROM openjdk:20
 ARG env
 # local file storage path
 RUN mkdir -p /opt/content-vault/logs
