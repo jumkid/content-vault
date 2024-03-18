@@ -28,7 +28,7 @@ public class MethodLoggingConfig extends AbstractMethodLoggingConfig {
     @Override
     @Before("execution(* com.jumkid.vault.controller.*Controller.*(..))")
     public void controllerJoinPoint(JoinPoint joinPoint) {
-        super.logForJourneyId(joinPoint);
+        super.log(joinPoint);
     }
 
     @Bean

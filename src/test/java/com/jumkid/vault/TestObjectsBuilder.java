@@ -10,14 +10,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface TestObjectsBuilder {
+public class TestObjectsBuilder {
 
-    int DEFAULT_SIZE = 100;
-    LocalDateTime now = LocalDateTime.now();
+    public static int DEFAULT_SIZE = 100;
+    static LocalDateTime now = LocalDateTime.now();
 
-    String DUMMY_ID = "dummy-id";
+    public static String DUMMY_ID = "dummy-id";
 
-    default MediaFile buildMediaFile(String uuid) {
+    public static MediaFile buildMediaFile(String uuid) {
         MediaFile mediaFile = MediaFile.builder()
                 .uuid(uuid == null ? DUMMY_ID : uuid)
                 .title("test.title")
@@ -34,7 +34,7 @@ public interface TestObjectsBuilder {
         return mediaFile;
     }
 
-    default MediaFile buildMediaGallery(String mediaGalleryId) {
+    public static MediaFile buildMediaGallery(String mediaGalleryId) {
         MediaFile mediaFile = MediaFile.builder()
                 .uuid(mediaGalleryId == null ? DUMMY_ID : mediaGalleryId)
                 .title("gallery")
@@ -55,7 +55,7 @@ public interface TestObjectsBuilder {
         return mediaFile;
     }
 
-    default MediaFileMetadata buildMetadata(String metadataId) {
+    public static MediaFileMetadata buildMetadata(String metadataId) {
         List<MediaFilePropMetadata> props = new ArrayList<>();
         props.add(MediaFilePropMetadata.builder()
                 .name("author").textValue("Mr nobody")
@@ -76,14 +76,14 @@ public interface TestObjectsBuilder {
                 .build();
     }
 
-    default List<MediaFileMetadata> buildListOfMetadata() {
+    public static List<MediaFileMetadata> buildListOfMetadata() {
         final List<MediaFileMetadata> metadataLst = new ArrayList<>();
         metadataLst.add(buildMetadata(null));
         metadataLst.add(buildMetadata("dummy-id-1"));
         return metadataLst;
     }
 
-    default MediaFileMetadata buildGalleryMetadata(String mediaGalleryId) {
+    public static MediaFileMetadata buildGalleryMetadata(String mediaGalleryId) {
         MediaFileMetadata metadata = MediaFileMetadata.builder()
                 .id(mediaGalleryId == null ? DUMMY_ID : mediaGalleryId)
                 .title("gallery")

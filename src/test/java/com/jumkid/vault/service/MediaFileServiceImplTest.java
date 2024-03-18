@@ -28,12 +28,13 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static com.jumkid.vault.TestObjectsBuilder.DUMMY_ID;
 
 @Slf4j
 @SpringBootTest
 //@EmbeddedKafka(partitions = 1, controlledShutdown = false, brokerProperties = { "listeners=PLAINTEXT://localhost:10092", "port=10092" })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MediaFileServiceImplTest implements TestObjectsBuilder{
+class MediaFileServiceImplTest {
 
     @MockBean
     private MetadataStorage metadataStorage;
@@ -56,8 +57,8 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
 
     @BeforeAll
     void setup(){
-        mediaFile = buildMediaFile(null);
-        mediaFileMetadata = buildMetadata(null);
+        mediaFile = TestObjectsBuilder.buildMediaFile(null);
+        mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
 
         mediaFileService = new MediaFileServiceImpl(metadataStorage, hadoopFileStorage, localFileStorage,
                 mediaFileMapper, securityService, metadataEnricher);
@@ -67,7 +68,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldGetMediaFile() {
         //given
-        MediaFileMetadata mediaFileMetadata = buildMetadata(null);
+        MediaFileMetadata mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
         String mediaFileId = mediaFile.getUuid();
 
         when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
@@ -90,7 +91,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldThrowException_WhenGetInactivatedMediaFile() {
         //given
-        MediaFileMetadata mediaFileMetadata = buildMetadata(null);
+        MediaFileMetadata mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
         String mediaFileId = mediaFileMetadata.getId();
         mediaFileMetadata.setActivated(false);
 
@@ -102,7 +103,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldAddMediaFileWithoutBytes() {
         //given
-        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(buildMetadata(null));
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(TestObjectsBuilder.buildMetadata(null));
         //when
         MediaFile savedMediaFile = mediaFileService.addMediaFile(mediaFile, MediaFileModule.TEXT);
         //then
@@ -123,8 +124,8 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldAddMediaGalleryWithBytes() {
         //given
-        final MediaFile mediaGallery = buildMediaGallery(null);
-        final MediaFileMetadata mediaFileMetadata = buildGalleryMetadata(null);
+        final MediaFile mediaGallery = TestObjectsBuilder.buildMediaGallery(null);
+        final MediaFileMetadata mediaFileMetadata = TestObjectsBuilder.buildGalleryMetadata(null);
         MediaFileMetadata child1 = mediaFileMetadata.getChildren().get(0);
         MediaFileMetadata child2 = mediaFileMetadata.getChildren().get(1);
 
@@ -141,7 +142,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     void shouldUpdateMediaFile() throws IOException {
         //given
         final String mediaFileId = mediaFile.getUuid();
-        final MediaFileMetadata mediaFileMetadata = buildMetadata(null);
+        final MediaFileMetadata mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
 
         when(metadataStorage.getMetadata(mediaFileId)).thenReturn(Optional.of(mediaFileMetadata));
         when(metadataStorage.updateMetadata(mediaFileId, mediaFileMetadata)).thenReturn(mediaFileMetadata);
@@ -175,8 +176,8 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldUpdateMediaGallery_ByGivenAMediaFileObject() throws IOException {
         //given
-        final MediaFile gallery = buildMediaGallery(null);
-        final MediaFileMetadata galleryMetadata = buildGalleryMetadata(null);
+        final MediaFile gallery = TestObjectsBuilder.buildMediaGallery(null);
+        final MediaFileMetadata galleryMetadata = TestObjectsBuilder.buildGalleryMetadata(null);
         final String galleryId = gallery.getUuid();
 
         when(metadataStorage.getMetadata(galleryId)).thenReturn(Optional.of(galleryMetadata));
@@ -191,7 +192,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     void shouldThrowException_WhenUpdateGalleryWithInvalidId() {
         //given
         String invalidId = "invalid_id";
-        final MediaFile gallery = buildMediaGallery(null);
+        final MediaFile gallery = TestObjectsBuilder.buildMediaGallery(null);
 
         when(metadataStorage.getMetadata(invalidId)).thenReturn(Optional.empty());
         //then
@@ -202,7 +203,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldGetNull_WhenUpdateNullGallery() {
         //given
-        final MediaFile gallery = buildMediaGallery(null);
+        final MediaFile gallery = TestObjectsBuilder.buildMediaGallery(null);
         final String galleryId = gallery.getUuid();
         //when
         MediaFile savedGallery = mediaFileService.updateMediaGallery(galleryId, null);
@@ -225,7 +226,7 @@ class MediaFileServiceImplTest implements TestObjectsBuilder{
     @Test
     void shouldGetNewGallery_WhenCloneMediaGallery() {
         //given
-        final MediaFile gallery = buildMediaGallery(null);
+        final MediaFile gallery = TestObjectsBuilder.buildMediaGallery(null);
         final String galleryId = gallery.getUuid();
 
         when(metadataStorage.getMetadata(galleryId)).thenReturn(Optional.of(mediaFileMapper.dtoToMetadata(gallery)));

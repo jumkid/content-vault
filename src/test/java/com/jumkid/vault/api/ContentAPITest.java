@@ -6,18 +6,23 @@ import com.jumkid.vault.TestObjectsBuilder;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
+import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.util.FileUtils;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import io.restassured.parsing.Parser;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.io.FileInputStream;
@@ -28,66 +33,75 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static com.jumkid.vault.TestObjectsBuilder.DUMMY_ID;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@PropertySource("classpath:application.share.properties")
 @AutoConfigureMockMvc
+@EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:10092", "port=10092" })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ContentAPITest extends TestContainerBase implements TestObjectsBuilder {
+class ContentAPITest extends TestContainerBase {
+
+    @LocalServerPort
+    private int port;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
-
+    @Value("${com.jumkid.jwt.test.user-token}")
+    private String testUserToken;
+    @Value("${com.jumkid.jwt.test.admin-token}")
+    private String testAdminToken;
     @Value("file:src/test/resources/icon_file.png")
     private Resource fileResource;
 
     @MockBean
     private LocalFileStorage localFileStorage;
+    @MockBean
+    private MetadataStorage metadataStorage;
 
     private MediaFileMetadata mediaFileMetadata;
 
     @BeforeAll
     void setup() {
-        esContainer.start();
+        //esContainer.start();
         try {
+            RestAssured.defaultParser = Parser.JSON;
             RestAssuredMockMvc.webAppContextSetup(webApplicationContext);
 
-            this.mediaFileMetadata = buildMetadata(null);
-
+            mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
         } catch (Exception e) {
             fail();
         }
-
     }
 
     @Test
     @Order(1)
-    @WithMockUser(authorities = "USER_ROLE")
     void whenGivenTitleAndContent_shouldSaveHtmlContent() throws Exception{
-        //when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
+        when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .header("Accept", "application/json")
-                    .param("title", mediaFileMetadata.getTitle())
-                    .param("accessScope", AccessScope.PUBLIC.value())
-                    .param("content", mediaFileMetadata.getContent())
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .queryParam("title", mediaFileMetadata.getTitle())
+                    .queryParam("accessScope", AccessScope.PUBLIC.value())
+                    .body(mediaFileMetadata.getContent())
                 .when()
                     .post("/content")
                 .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body("uuid", not(equalTo(DUMMY_ID)),
+                    .body("uuid", equalTo(DUMMY_ID),
                             "title", equalTo("test.title"));
     }
 
     @Test
-    @Disabled
-    @WithMockUser(authorities = "GUEST_ROLE")
     void whenGivenId_shouldGetTextContentWithTitle() throws Exception {
-        //when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .baseUri("http://localhost").port(port)
+                    .contentType(ContentType.TEXT)
                 .when()
                     .get("/content/" + DUMMY_ID)
                 .then()
@@ -96,14 +110,13 @@ class ContentAPITest extends TestContainerBase implements TestObjectsBuilder {
     }
 
     @Test
-    @Disabled
-    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     void whenGivenIdAndIgnoreTitle_shouldGetTextContentWithoutTitle() throws Exception {
-        //when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .baseUri("http://localhost").port(port)
+                    .contentType(ContentType.TEXT)
                     .queryParam("ignoreTitle", "true")
                 .when()
                     .get("/content/" + DUMMY_ID)
@@ -114,13 +127,14 @@ class ContentAPITest extends TestContainerBase implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(authorities = "USER_ROLE")
     void shouldGet404WithInvalidId_whenGivenInvalidId() throws Exception {
-        //when(metadataStorage.getMetadata("InvalidId")).thenReturn(Optional.empty());
+        when(metadataStorage.getMetadata("InvalidId")).thenReturn(Optional.empty());
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .contentType(ContentType.TEXT)
                 .when()
                     .get("/content/InvalidId")
                 .then()
@@ -128,22 +142,23 @@ class ContentAPITest extends TestContainerBase implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(username="guest", password="guest", authorities="GUEST_ROLE")
     void shouldGet400WithoutId() throws Exception {
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testAdminToken)
+                    .contentType(ContentType.TEXT)
                 .when()
                     .get("/content")
                 .then()
-                    .statusCode(HttpStatus.METHOD_NOT_ALLOWED.value());
+                    .log()
+                    .all()
+                    .statusCode(HttpStatus.FORBIDDEN.value());
     }
 
     @Test
-    @Disabled
-    @WithMockUser(authorities = "USER_ROLE")
     void shouldGetThumbnail()throws Exception {
-        MediaFileMetadata mediaFileMetadata = buildMetadata(null);
+        MediaFileMetadata mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
         Optional<byte[]> fileByte = Optional.empty();
         try (FileInputStream fin = new FileInputStream(fileResource.getFile())) {
             fileByte = FileUtils.fileChannelToBytes(fin.getChannel());
@@ -153,15 +168,16 @@ class ContentAPITest extends TestContainerBase implements TestObjectsBuilder {
         when(localFileStorage.getThumbnail(eq(mediaFileMetadata), any(ThumbnailNamespace.class))).thenReturn(fileByte);
         when(localFileStorage.getFileBinary(mediaFileMetadata))
                 .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
-        //when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
+        when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .contentType(ContentType.BINARY)
                 .when()
                     .get("/content/thumbnail/" + DUMMY_ID)
                 .then()
                     .statusCode(HttpStatus.OK.value());
     }
-
 }

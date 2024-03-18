@@ -1,22 +1,26 @@
 package com.jumkid.vault.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jumkid.vault.TestContainerBase;
 import com.jumkid.vault.TestObjectsBuilder;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import io.restassured.parsing.Parser;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -26,12 +30,21 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static com.jumkid.vault.TestObjectsBuilder.DUMMY_ID;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@PropertySource("classpath:application.share.properties")
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MetadataAPITest implements TestObjectsBuilder {
+class MetadataAPITest {
+
+    @LocalServerPort
+    private int port;
+
+    @Value("${com.jumkid.jwt.test.user-token}")
+    private String testUserToken;
+    @Value("${com.jumkid.jwt.test.admin-token}")
+    private String testAdminToken;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -47,9 +60,10 @@ class MetadataAPITest implements TestObjectsBuilder {
     @BeforeAll
     void setup() {
         try {
+            RestAssured.defaultParser = Parser.JSON;
             RestAssuredMockMvc.webAppContextSetup(webApplicationContext);
 
-            this.mediaFileMetadata = buildMetadata(null);
+            mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
             when(localFileStorage.getFileBinary(mediaFileMetadata))
                     .thenReturn(Optional.of(mediaFileMetadata.getContent().getBytes()));
         } catch (Exception e) {
@@ -59,13 +73,14 @@ class MetadataAPITest implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(authorities = "USER_ROLE")
     void whenGivenId_shouldGetMetadata() {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .header("Accept", "application/json")
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .contentType(ContentType.JSON)
                 .when()
                     .get("/metadata/" + DUMMY_ID)
                 .then()
@@ -75,16 +90,15 @@ class MetadataAPITest implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(authorities = "USER_ROLE")
     void whenSearch_shouldGetListOfMetadata() {
-        RestAssuredMockMvc.webAppContextSetup(webApplicationContext);
-
         when(metadataStorage.searchMetadata(anyString(), anyInt(), anyList(), anyString()))
-                .thenReturn(buildListOfMetadata());
+                .thenReturn(TestObjectsBuilder.buildListOfMetadata());
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .header("Accept", "application/json")
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .contentType(ContentType.JSON)
                 .when()
                     .get("/metadata?q=test&size=1")
                 .then()
@@ -95,19 +109,20 @@ class MetadataAPITest implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(authorities = {"USER_ROLE"})
     void whenGivenMetadata_shouldSaveContentWithPros() throws Exception {
-        MediaFile mediaFile = buildMediaFile(null);
+        MediaFile mediaFile = TestObjectsBuilder.buildMediaFile(null);
         when(metadataStorage.saveMetadata(ArgumentMatchers.any(MediaFileMetadata.class))).thenReturn(mediaFileMetadata);
 
-        RestAssuredMockMvc
-                .given()
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .queryParam("mediaFileModule", MediaFileModule.FILE.value())
-                    .body(new ObjectMapper().writeValueAsBytes(mediaFile))
-        .when()
+        RestAssured
+            .given()
+                .baseUri("http://localhost").port(port)
+                .headers("Authorization", "Bearer " + testUserToken)
+                .contentType(ContentType.JSON)
+                .queryParam("mediaFileModule", MediaFileModule.FILE.value())
+                .body(new ObjectMapper().writeValueAsBytes(mediaFile))
+            .when()
                 .post("/metadata")
-        .then()
+            .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("title", equalTo(mediaFileMetadata.getTitle()));
     }
@@ -118,30 +133,31 @@ class MetadataAPITest implements TestObjectsBuilder {
     void whenGivenMetadata_shouldUpdateMetadata() throws Exception {
         when(metadataStorage.updateMetadata(DUMMY_ID, mediaFileMetadata)).thenReturn(mediaFileMetadata);
 
-        RestAssuredMockMvc
-                .given()
-                    .header("Accept", "application/json")
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .body(new ObjectMapper().writeValueAsBytes(mediaFileMetadata))
-                .when()
-                    .put("/metadata/" + DUMMY_ID)
-                .then()
-                    .statusCode(HttpStatus.OK.value())
-                    .body("uuid", equalTo(DUMMY_ID),
-                            "title", "test.title");
+        RestAssured
+            .given()
+                .baseUri("http://localhost").port(port)
+                .headers("Authorization", "Bearer " + testUserToken)
+                .contentType(ContentType.JSON)
+                .body(new ObjectMapper().writeValueAsBytes(mediaFileMetadata))
+            .when()
+                .put("/metadata/" + DUMMY_ID)
+            .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("uuid", equalTo(DUMMY_ID),
+                        "title", "test.title");
     }
 
     @Test
-    @WithMockUser(authorities = "ADMIN_ROLE")
     void whenGivenId_shouldDeleteMetadata() {
-        RestAssuredMockMvc
-                .given()
-                    .header("Accept", "application/json")
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .when()
-                    .delete("/metadata/" + DUMMY_ID)
-                .then()
-                    .statusCode(HttpStatus.NO_CONTENT.value());
+        RestAssured
+            .given()
+                .baseUri("http://localhost").port(port)
+                .headers("Authorization", "Bearer " + testAdminToken)
+                .contentType(ContentType.JSON)
+            .when()
+                .delete("/metadata/" + DUMMY_ID)
+            .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
     }
 
 }

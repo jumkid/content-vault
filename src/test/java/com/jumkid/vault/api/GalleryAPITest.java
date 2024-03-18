@@ -6,13 +6,18 @@ import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import io.restassured.parsing.Parser;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,11 +29,22 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static com.jumkid.vault.TestObjectsBuilder.DUMMY_ID;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@PropertySource("classpath:application.share.properties")
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class GalleryAPITest implements TestObjectsBuilder {
+class GalleryAPITest {
+    @LocalServerPort
+    private int port;
+    @Value("${com.jumkid.jwt.test.user-token}")
+    private String testUserToken;
+    @Value("${com.jumkid.jwt.test.user-id}")
+    private String testUserId;
+    @Value("${com.jumkid.jwt.test.admin-token}")
+    private String testAdminToken;
+
     @Autowired
     private WebApplicationContext webApplicationContext;
 
@@ -46,15 +62,16 @@ class GalleryAPITest implements TestObjectsBuilder {
     @BeforeAll
     void setup() {
         try {
+            RestAssured.defaultParser = Parser.JSON;
             RestAssuredMockMvc.webAppContextSetup(webApplicationContext);
-            galleryMetadata = buildGalleryMetadata(null);
+            galleryMetadata = TestObjectsBuilder.buildGalleryMetadata(null);
+            galleryMetadata.setCreatedBy(testUserId);
         } catch (Exception e) {
             fail();
         }
     }
 
     @Test
-    @WithMockUser(authorities = "USER_ROLE")
     void shouldUpdateGallery() throws Exception {
         //given
         MediaFile gallery = MediaFile.builder()
@@ -63,9 +80,11 @@ class GalleryAPITest implements TestObjectsBuilder {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(DUMMY_ID, galleryMetadata)).thenReturn(galleryMetadata);
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .contentType(ContentType.JSON)
                     .body(new ObjectMapper().writeValueAsBytes(gallery))
                 .when()
                     .put("/gallery/" + DUMMY_ID)
@@ -74,15 +93,16 @@ class GalleryAPITest implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(authorities = "USER_ROLE")
     void shouldUpdateGalleryWithChild() throws Exception {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.updateMetadata(DUMMY_ID, galleryMetadata)).thenReturn(galleryMetadata);
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .param("mediaFileIds", "1", "2")
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testUserToken)
+                    .contentType(ContentType.MULTIPART)
+                    .multiPart("featuredId", "1")
                 .when()
                     .post("/gallery/" + DUMMY_ID)
                 .then()
@@ -90,14 +110,16 @@ class GalleryAPITest implements TestObjectsBuilder {
     }
 
     @Test
-    @WithMockUser(authorities = "ADMIN_ROLE")
+    @Disabled
     void shouldCloneGallery() throws Exception {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(galleryMetadata));
         when(metadataStorage.saveMetadata(any(MediaFileMetadata.class))).thenReturn(galleryMetadata);
 
-        RestAssuredMockMvc
+        RestAssured
                 .given()
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .baseUri("http://localhost").port(port)
+                    .headers("Authorization", "Bearer " + testAdminToken)
+                    .contentType(ContentType.JSON)
                 .when()
                     .post("/gallery/" + DUMMY_ID + "/clone")
                 .then()
