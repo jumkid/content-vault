@@ -51,5 +51,4 @@ public class ContentVaultApplication implements CommandLineRunner {
     public void run(String... args) {
         log.info("{} service v{} started at port {} ", appName, version, appPort);
     }
-
 }
