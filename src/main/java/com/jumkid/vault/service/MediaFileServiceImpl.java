@@ -290,10 +290,10 @@ public class MediaFileServiceImpl implements MediaFileService {
 
             String currentUserId = securityService.getCurrentUserId();
             sourceGallery.setCreatedBy(currentUserId);
-            sourceGallery.setCreationDate(LocalDateTime.now());
+            sourceGallery.setCreatedOn(LocalDateTime.now());
 
             sourceGallery.setModifiedBy(null);
-            sourceGallery.setModificationDate(null);
+            sourceGallery.setModifiedOn(null);
 
             MediaFileMetadata newGallery = metadataStorage.saveMetadata(sourceGallery);
             log.debug("Saved new gallery by copy an existing gallery");
@@ -430,7 +430,7 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (oldMetadata != null) {
             dto.setModifiedBy(currentUserId);
             dto.setCreatedBy(oldMetadata.getCreatedBy());
-            dto.setCreationDate(oldMetadata.getCreationDate());
+            dto.setCreationDate(oldMetadata.getCreatedOn());
         } else {
             dto.setCreatedBy(currentUserId);
             dto.setCreationDate(now);

@@ -1,6 +1,7 @@
 package com.jumkid.vault.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumkid.vault.EnableTestContainers;
 import com.jumkid.vault.TestObjectsBuilder;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
@@ -9,20 +10,20 @@ import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import io.restassured.parsing.Parser;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.Optional;
 
@@ -33,8 +34,10 @@ import static org.mockito.Mockito.when;
 import static com.jumkid.vault.TestObjectsBuilder.DUMMY_ID;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@PropertySource("classpath:application.share.properties")
-@AutoConfigureMockMvc
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
+@EnableTestContainers
+@TestPropertySource("/application.share.properties")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MetadataAPITest {
 
@@ -45,9 +48,6 @@ class MetadataAPITest {
     private String testUserToken;
     @Value("${com.jumkid.jwt.test.admin-token}")
     private String testAdminToken;
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
 
     @MockBean
     private MetadataStorage metadataStorage;
@@ -61,7 +61,6 @@ class MetadataAPITest {
     void setup() {
         try {
             RestAssured.defaultParser = Parser.JSON;
-            RestAssuredMockMvc.webAppContextSetup(webApplicationContext);
 
             mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
             when(localFileStorage.getFileBinary(mediaFileMetadata))

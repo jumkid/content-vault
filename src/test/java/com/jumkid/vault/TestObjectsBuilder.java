@@ -94,8 +94,8 @@ public class TestObjectsBuilder {
                 .module(MediaFileModule.GALLERY)
                 .accessScope(AccessScope.PUBLIC)
                 .tags(List.of("test", "gallery"))
-                .creationDate(now)
-                .modificationDate(now)
+                .createdOn(now)
+                .modifiedOn(now)
                 .build();
 
         List<MediaFileMetadata> children = new ArrayList<>();

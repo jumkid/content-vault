@@ -11,14 +11,11 @@ import org.testcontainers.utility.DockerImageName;
 @TestConfiguration(proxyBeanMethods = false)
 public class TestContentVaultApplication {
 
-    @Value("${spring.testcontainers.elasticsearch-image}")
-    private String elasticsearchImage;
-
     @Bean
     @RestartScope
     //@ServiceConnection
     ElasticsearchContainer elasticsearchContainer() {
-        return new ElasticsearchContainer(DockerImageName.parse(elasticsearchImage)).withReuse(true);
+        return new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.10.4")).withReuse(true);
     }
 
     public static void main(String... args) {

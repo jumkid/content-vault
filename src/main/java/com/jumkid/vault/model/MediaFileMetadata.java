@@ -27,11 +27,7 @@ import java.util.List;
 
 import static com.jumkid.share.util.Constants.YYYYMMDDTHHMMSS3S;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-@Builder
-@EqualsAndHashCode(of = {"id"}, callSuper = false)
+@Builder @Data @NoArgsConstructor @AllArgsConstructor @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MediaFileMetadata {
 
@@ -66,14 +62,14 @@ public class MediaFileMetadata {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = YYYYMMDDTHHMMSS3S)
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-	private LocalDateTime creationDate;
+	private LocalDateTime createdOn;
 
 	private String modifiedBy;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = YYYYMMDDTHHMMSS3S)
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-	private LocalDateTime modificationDate;
+	private LocalDateTime modifiedOn;
 
 	public void addProp(String name, String value) {
 		if (isPropNotExist(name)) {

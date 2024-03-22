@@ -14,10 +14,7 @@ import java.time.LocalDateTime;
 
 import static com.jumkid.share.util.Constants.YYYYMMDDTHHMMSS3S;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-@Builder
+@Builder @Data @NoArgsConstructor @AllArgsConstructor
 public class MediaFilePropMetadata {
 
     private String name;

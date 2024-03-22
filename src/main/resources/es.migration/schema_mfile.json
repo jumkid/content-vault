@@ -66,13 +66,13 @@
           }
         }
       },
-      "creationDate": {
+      "createdOn": {
         "type": "date"
       },
       "createdBy": {
         "type": "keyword"
       },
-      "modificationDate": {
+      "modifiedOn": {
         "type": "date"
       },
       "modifiedBy": {

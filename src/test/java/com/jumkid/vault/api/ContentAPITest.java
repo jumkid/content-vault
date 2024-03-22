@@ -1,7 +1,7 @@
 package com.jumkid.vault.api;
 
 import com.jumkid.share.security.AccessScope;
-import com.jumkid.vault.TestContainerBase;
+import com.jumkid.vault.EnableTestContainers;
 import com.jumkid.vault.TestObjectsBuilder;
 import com.jumkid.vault.enums.ThumbnailNamespace;
 import com.jumkid.vault.model.MediaFileMetadata;
@@ -10,20 +10,20 @@ import com.jumkid.vault.repository.MetadataStorage;
 import com.jumkid.vault.util.FileUtils;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import io.restassured.parsing.Parser;
 import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.context.TestPropertySource;
 
 import java.io.FileInputStream;
 import java.util.Optional;
@@ -36,17 +36,17 @@ import static org.mockito.Mockito.*;
 import static com.jumkid.vault.TestObjectsBuilder.DUMMY_ID;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@PropertySource("classpath:application.share.properties")
-@AutoConfigureMockMvc
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:10092", "port=10092" })
+@EnableTestContainers
+@TestPropertySource("/application.share.properties")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ContentAPITest extends TestContainerBase {
+class ContentAPITest {
 
     @LocalServerPort
     private int port;
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
     @Value("${com.jumkid.jwt.test.user-token}")
     private String testUserToken;
     @Value("${com.jumkid.jwt.test.admin-token}")
@@ -63,11 +63,8 @@ class ContentAPITest extends TestContainerBase {
 
     @BeforeAll
     void setup() {
-        //esContainer.start();
         try {
             RestAssured.defaultParser = Parser.JSON;
-            RestAssuredMockMvc.webAppContextSetup(webApplicationContext);
-
             mediaFileMetadata = TestObjectsBuilder.buildMetadata(null);
         } catch (Exception e) {
             fail();
