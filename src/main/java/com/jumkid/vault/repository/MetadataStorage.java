@@ -56,7 +56,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
     @Override
     public List<MediaFileMetadata> searchMetadata(String query, Integer size,
-                                                  List<String> currentUserRole, String currentUserId) {
+                                                  List<String> currentUserRole, String currentUserId) throws FileStoreServiceException {
         SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
                     .index(ES_INDEX_MFILE)
                     .size(size == null ? 50 : size);
@@ -82,7 +82,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public List<MediaFileMetadata> getInactiveMetadata() {
+    public List<MediaFileMetadata> getInactiveMetadata() throws FileStoreServiceException {
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(ES_IDX_ENDPOINT)
                 .query(q -> q.term(new TermQuery.Builder()
@@ -101,7 +101,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public Long deleteInactiveMetadata() {
+    public Long deleteInactiveMetadata() throws FileStoreServiceException {
         DeleteByQueryRequest deleteRequest = new DeleteByQueryRequest.Builder()
                 .index(ES_INDEX_MFILE)
                 .query(q -> q.term(new TermQuery.Builder()
@@ -121,7 +121,8 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public List<MediaFileMetadata> deleteChildrenByChildId(String mediaFileId, List<String> childIdList) {
+    public List<MediaFileMetadata> deleteChildrenByChildId(String mediaFileId, List<String> childIdList)
+            throws FileStoreServiceException, FileNotFoundException {
         try {
             UpdateRequest<MediaFileMetadata, MediaFileMetadata> updateRequest = new UpdateRequest.Builder<MediaFileMetadata, MediaFileMetadata>()
                     .index(ES_INDEX_MFILE)
@@ -142,7 +143,6 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
             return getMetadata(mediaFileId).orElseThrow(() -> new FileNotFoundException(mediaFileId)).getChildren();
         } catch (IOException ioe) {
-            ioe.printStackTrace();
             log.error("failed to update by query for media file {} due to: {}", mediaFileId, ioe.getMessage());
         }
         return Collections.emptyList();
@@ -191,7 +191,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public Optional<MediaFileMetadata> getMetadata(String mediaFileId) {
+    public Optional<MediaFileMetadata> getMetadata(String mediaFileId) throws FileStoreServiceException {
 
         GetRequest request = new GetRequest.Builder()
                 .index(ES_INDEX_MFILE)
@@ -214,7 +214,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
 
 
     @Override
-    public MediaFileMetadata saveMetadata(MediaFileMetadata mediaFileMetadata) {
+    public MediaFileMetadata saveMetadata(MediaFileMetadata mediaFileMetadata) throws FileStoreServiceException {
         IndexRequest<MediaFileMetadata> request = new IndexRequest.Builder<MediaFileMetadata>()
                 .index(ES_INDEX_MFILE)
                 .document(mediaFileMetadata)
@@ -228,7 +228,8 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
             return mediaFileMetadata;
         } catch (IOException ioe) {
             log.error("failed to save metadata {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to save media file into Elasticsearch, please contact system administrator.", mediaFileMapper.metadataToDto(mediaFileMetadata));
+            throw new FileStoreServiceException("Not able to save media file into Elasticsearch, " +
+                    "please contact system administrator.", mediaFileMapper.metadataToDto(mediaFileMetadata));
         }
     }
 
@@ -272,7 +273,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public Optional<byte[]> getBinary(String mediaFileId) {
+    public Optional<byte[]> getBinary(String mediaFileId) throws FileStoreServiceException {
         GetRequest request = new GetRequest.Builder()
                 .index(ES_INDEX_MFILE)
                 .id(mediaFileId)
@@ -290,7 +291,7 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
     }
 
     @Override
-    public boolean deleteMetadata(String mediaFileId) {
+    public boolean deleteMetadata(String mediaFileId) throws FileStoreServiceException {
         DeleteRequest deleteRequest = new DeleteRequest.Builder()
                 .index(ES_INDEX_MFILE)
                 .id(mediaFileId)
@@ -302,7 +303,8 @@ public class MetadataStorage implements FileMetadata<MediaFileMetadata> {
             return deleteResponse.result().equals(Result.Deleted);
         } catch (IOException ioe) {
             log.error("failed to delete media file {} ", ioe.getMessage());
-            throw new FileStoreServiceException("Not able to delete media file id[" + mediaFileId + "] from Elasticsearch, please contact system administrator.");
+            throw new FileStoreServiceException(String.format("Not able to delete media file id[%s] from Elasticsearch, " +
+                    "please contact system administrator.", mediaFileId));
         }
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumkid.share.event.ContentEvent;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -35,11 +36,11 @@ public class KafkaConsumer {
                 mediaFileService.trashMediaFile(contentEvent.getContentId());
             }
         } catch (JsonMappingException jme) {
-            jme.printStackTrace();
             log.error("failed to map message to json object: {}", jme.getMessage());
         } catch (JsonProcessingException jpe) {
-            jpe.printStackTrace();
             log.error("failed to map process json message: {}", jpe.getMessage());
+        } catch (FileStoreServiceException fsse) {
+            log.error("failed to trash media file: {}", fsse.getMessage());
         }
 
     }

@@ -6,18 +6,18 @@ import com.fasterxml.jackson.annotation.JsonInclude.*;
 import com.jumkid.share.security.AccessScope;
 import com.jumkid.share.service.dto.GenericDTO;
 import com.jumkid.vault.enums.MediaFileModule;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
-@NoArgsConstructor
-@Data
-@EqualsAndHashCode(of = {"uuid", "title"}, callSuper = false)
+
+@SuperBuilder
+@Data @NoArgsConstructor @EqualsAndHashCode(of = {"uuid", "title"}, callSuper = false)
 @JsonInclude(Include.NON_NULL)
 public class MediaFile extends GenericDTO {
 
@@ -48,29 +48,4 @@ public class MediaFile extends GenericDTO {
     private List<MediaFile> children;
 
     private List<MediaFileProp> props;
-
-    /**
-     * This constructor is for lombok builder only since it is subclass of generic DTO
-     *
-     */
-    @Builder
-    public MediaFile(String uuid, String filename, String mimeType, Integer size, String title, String content,
-                     Boolean activated, List<String> tags, MediaFileModule module,
-                     List<MediaFileProp> props, List<MediaFile> children, AccessScope accessScope,
-                     String createdBy, LocalDateTime creationDate, String modifiedBy, LocalDateTime modificationDate) {
-        super(createdBy, creationDate, modifiedBy, modificationDate);
-
-        this.uuid = uuid;
-        this.title = title;
-        this.filename = filename;
-        this.mimeType = mimeType;
-        this.size = size;
-        this.content = content;
-        this.accessScope = accessScope;
-        this.activated = activated;
-        this.tags = tags;
-        this.module = module;
-        this.props = props;
-        this.children = children;
-    }
 }

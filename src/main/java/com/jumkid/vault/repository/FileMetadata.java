@@ -11,6 +11,7 @@ package com.jumkid.vault.repository;
  */
 
 import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 
 import java.io.IOException;
@@ -30,28 +31,28 @@ public interface FileMetadata<T> {
      *
      * @param t generic type of file
      */
-    T saveMetadata(T t);
+    T saveMetadata(T t) throws FileStoreServiceException;
 
     /**
      * Get type from repository by given identifier
      *
      * @param mediaFileId identity of media
      */
-    Optional<T> getMetadata(String mediaFileId);
+    Optional<T> getMetadata(String mediaFileId) throws FileStoreServiceException;
 
     /**
      * Get file from repository
      *
      * @param mediaFileId identity of media
      */
-    Optional<byte[]> getBinary(String mediaFileId);
+    Optional<byte[]> getBinary(String mediaFileId) throws FileStoreServiceException;
 
     /**
      * Remove file from search
      *
      * @param mediaFileId identity of media file
      */
-    boolean deleteMetadata(String mediaFileId);
+    boolean deleteMetadata(String mediaFileId) throws FileStoreServiceException;
 
     /**
      * update the metadata of give type
@@ -85,19 +86,19 @@ public interface FileMetadata<T> {
      * @param currentUserId current user id
      * @return List of type
      */
-    List<T> searchMetadata(String query, Integer size, List<String> currentUserRole, String currentUserId);
+    List<T> searchMetadata(String query, Integer size, List<String> currentUserRole, String currentUserId) throws FileStoreServiceException;
 
     /**
      * Get all trashed metadata from repository
      *
      * @return List of type
      */
-    List<T> getInactiveMetadata();
+    List<T> getInactiveMetadata() throws FileStoreServiceException;
 
     /**
      * Remove all inactive metadata
      */
-    Long deleteInactiveMetadata();
+    Long deleteInactiveMetadata() throws FileStoreServiceException;
 
 
     /**
@@ -107,7 +108,7 @@ public interface FileMetadata<T> {
      * @param childIdList id list in children object
      * @return number of deleted children
      */
-    List<MediaFileMetadata> deleteChildrenByChildId(String mediaFileId, List<String> childIdList) throws FileNotFoundException;
+    List<MediaFileMetadata> deleteChildrenByChildId(String mediaFileId, List<String> childIdList) throws FileNotFoundException, FileStoreServiceException;
 
     /**
      * Find reference children in other gallery

@@ -4,6 +4,8 @@ import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.controller.dto.MediaFileProp;
 import com.jumkid.vault.enums.MediaFileModule;
+import com.jumkid.vault.exception.FileNotAvailableException;
+import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +42,7 @@ public class MediaGalleryController {
                          @RequestParam AccessScope accessScope,
                          @RequestParam(required = false) String content,
                          @RequestParam(required = false) List<String> tags,
-                         @RequestParam(required = false) MultipartFile[] files) {
+                         @RequestParam(required = false) MultipartFile[] files) throws FileStoreServiceException {
         MediaFile gallery = MediaFile.builder()
                 .accessScope(accessScope)
                 .title(title)
@@ -80,7 +82,8 @@ public class MediaGalleryController {
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')" +
             " && @securityService.isOwner(authentication, #galleryId)")
     public List<MediaFile> delete(@NotNull @PathVariable("id") String galleryId,
-                              @NotNull @RequestParam(required = false) String[] items) {
+                              @NotNull @RequestParam(required = false) String[] items)
+            throws FileStoreServiceException, FileNotFoundException {
         if (items == null || items.length == 0) {
             fileService.trashMediaFile(galleryId);
             return Collections.emptyList();
@@ -109,7 +112,8 @@ public class MediaGalleryController {
             " && @securityService.isOwner(authentication, #galleryId)")
     public MediaFile uploadItems(@NotNull @PathVariable("id") String galleryId,
                                  @RequestParam(value = "featuredId", required = false) String featuredId,
-                                 @RequestParam(value = "files", required = false) MultipartFile[] files) {
+                                 @RequestParam(value = "files", required = false) MultipartFile[] files)
+            throws FileNotAvailableException, FileStoreServiceException, FileNotFoundException {
 
         MediaFile partialMediaFile = MediaFile.builder()
                 .uuid(galleryId).children(Collections.emptyList())
@@ -147,7 +151,7 @@ public class MediaGalleryController {
     @PreAuthorize("hasAuthority('ADMIN_ROLE')" +
             " || (hasAuthority('USER_ROLE') && @securityService.isOwner(authentication, #galleryId))")
     public MediaFile update(@PathVariable(value = "id") String galleryId,
-                            @NotNull @RequestBody MediaFile partialMediaFile) {
+                            @NotNull @RequestBody MediaFile partialMediaFile) throws FileStoreServiceException {
         return fileService.updateMediaGallery(galleryId, partialMediaFile);
     }
 
@@ -169,7 +173,7 @@ public class MediaGalleryController {
                     itemList.add(mediaFile);
                 }
             }
-        } catch (IOException ioe) {
+        } catch (IOException | FileStoreServiceException ioe) {
             log.error("Failed to upload file {}", ioe.getMessage());
         }
 

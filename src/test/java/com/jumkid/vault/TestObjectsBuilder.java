@@ -26,7 +26,7 @@ public class TestObjectsBuilder {
                 .activated(true)
                 .content("test.content")
                 .size(DEFAULT_SIZE)
-                .creationDate(now).modificationDate(now)
+                .createdOn(now).modifiedOn(now)
                 .build();
 
         mediaFile.setFile(new byte[DEFAULT_SIZE]);
@@ -44,7 +44,7 @@ public class TestObjectsBuilder {
                 .accessScope(AccessScope.PUBLIC)
                 .activated(true)
                 .content("test.gallery").size(DEFAULT_SIZE)
-                .creationDate(now).modificationDate(now)
+                .createdOn(now).modifiedOn(now)
                 .build();
 
         List<MediaFile> children = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.jumkid.vault.service;
 import com.jumkid.share.security.AccessScope;
 import com.jumkid.vault.exception.FileNotAvailableException;
 import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.MetadataStorage;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +31,14 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
     }
 
     @Override
-    public boolean isPublic(String mediaFileId) {
+    public boolean isPublic(String mediaFileId) throws FileStoreServiceException, FileNotFoundException {
         MediaFileMetadata metadata = getMetadata(mediaFileId);
         return AccessScope.PUBLIC.equals(metadata.getAccessScope());
     }
 
     @Override
-    public boolean isOwner(Authentication authentication, String mediaFileId) {
+    public boolean isOwner(Authentication authentication, String mediaFileId)
+            throws FileNotAvailableException, FileStoreServiceException, FileNotFoundException {
         MediaFileMetadata metadata = getMetadata(mediaFileId);
 
         if (Boolean.FALSE.equals(metadata.getActivated())) throw new FileNotAvailableException();
@@ -85,7 +87,7 @@ public class MediaFileSecurityServiceImpl implements MediaFileSecurityService{
         }
     }
 
-    private MediaFileMetadata getMetadata(String mediaFileId){
+    private MediaFileMetadata getMetadata(String mediaFileId) throws FileNotFoundException, FileStoreServiceException {
         Optional<MediaFileMetadata> optional = metadataStorage.getMetadata(mediaFileId);
 
         if (optional.isEmpty()) throw new FileNotFoundException(mediaFileId);

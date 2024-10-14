@@ -5,6 +5,7 @@ import com.jumkid.vault.EnableTestContainers;
 import com.jumkid.vault.TestObjectsBuilder;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.repository.LocalFileStorage;
 import com.jumkid.vault.repository.MetadataStorage;
@@ -72,7 +73,7 @@ class MetadataAPITest {
     }
 
     @Test
-    void whenGivenId_shouldGetMetadata() {
+    void whenGivenId_shouldGetMetadata() throws FileStoreServiceException {
         when(metadataStorage.getMetadata(DUMMY_ID)).thenReturn(Optional.of(mediaFileMetadata));
 
         RestAssured
@@ -89,7 +90,7 @@ class MetadataAPITest {
     }
 
     @Test
-    void whenSearch_shouldGetListOfMetadata() {
+    void whenSearch_shouldGetListOfMetadata() throws FileStoreServiceException {
         when(metadataStorage.searchMetadata(anyString(), anyInt(), anyList(), anyString()))
                 .thenReturn(TestObjectsBuilder.buildListOfMetadata());
 

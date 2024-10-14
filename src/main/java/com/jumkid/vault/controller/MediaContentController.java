@@ -16,6 +16,7 @@ import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.controller.dto.MediaFileProp;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
+import com.jumkid.vault.exception.FileNotAvailableException;
 import com.jumkid.vault.exception.FileNotFoundException;
 import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
@@ -60,11 +61,13 @@ public class MediaContentController {
             " || @securityService.isPublic(#mediaFileId)" +
             " || @securityService.isOwner(authentication, #mediaFileId)")
     public String getPlainContent(@PathVariable("id") String mediaFileId,
-                                  @RequestParam(required = false) Boolean ignoreTitle){
+                                  @RequestParam(required = false) Boolean ignoreTitle)
+            throws FileNotAvailableException, FileStoreServiceException, FileNotFoundException {
         return getContent(mediaFileId, ignoreTitle);
     }
 
-    private String getContent(String mediaFileId, Boolean ignoreTitle){
+    private String getContent(String mediaFileId, Boolean ignoreTitle)
+            throws FileNotAvailableException, FileStoreServiceException, FileNotFoundException {
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
         StringBuilder sb = new StringBuilder();
         boolean addedTitle = false;
@@ -87,7 +90,7 @@ public class MediaContentController {
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public MediaFile addTextContent(@RequestParam(required = false) String title,
                                     @RequestParam AccessScope accessScope,
-                                    @RequestBody @NotBlank String content) {
+                                    @RequestBody @NotBlank String content) throws FileStoreServiceException {
         MediaFile mediaFile = MediaFile.builder()
                 .accessScope(accessScope)
                 .title(title).content(content)
@@ -102,7 +105,7 @@ public class MediaContentController {
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public MediaFile addHtmlContent(@RequestParam(required = false) String title,
                                     @NotBlank @RequestBody String content,
-                                    @RequestParam AccessScope accessScope) {
+                                    @RequestParam AccessScope accessScope) throws FileStoreServiceException {
         MediaFile mediaFile = MediaFile.builder()
                 .accessScope(accessScope)
                 .title(title)
@@ -119,7 +122,8 @@ public class MediaContentController {
             " || @securityService.isPublic(#mediaFileId)" +
             " || @securityService.isOwner(authentication, #mediaFileId)")
     public void stream(@PathVariable("id") String mediaFileId,
-                       HttpServletRequest request, HttpServletResponse response){
+                       HttpServletRequest request, HttpServletResponse response)
+            throws FileNotAvailableException, FileStoreServiceException, FileNotFoundException {
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
         String mimeType = mediaFile.getMimeType();
 
@@ -133,7 +137,7 @@ public class MediaContentController {
                     log.error("File is blank. There is nothing to stream");
                     throw new FileNotFoundException(mediaFileId);
                 }
-            } catch (IOException ex) {
+            } catch (IOException | FileNotFoundException ex) {
                 log.error("failed to stream file resource {}", ex.getMessage());
             } finally {
                 try{
@@ -164,12 +168,11 @@ public class MediaContentController {
             " || @securityService.isOwner(authentication, #mediaFileId)")
     public void thumbnail(@PathVariable("id") String mediaFileId,
                           @RequestParam(value = "size", required = false) ThumbnailNamespace thumbnailNamespace,
-                          HttpServletResponse response){
+                          HttpServletResponse response)
+            throws FileNotAvailableException, FileNotFoundException, FileStoreServiceException {
         final ThumbnailNamespace size = thumbnailNamespace == null ? ThumbnailNamespace.SMALL : thumbnailNamespace;
 
         MediaFile mediaFile = fileService.getMediaFile(mediaFileId);
-
-        if (mediaFile == null) { throw new FileNotFoundException(mediaFileId); }
 
         String targetMediaFileId = mediaFileId;
         if (mediaFile.getModule().equals(MediaFileModule.GALLERY)

@@ -2,7 +2,9 @@ package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.ThumbnailNamespace;
+import com.jumkid.vault.exception.FileNotAvailableException;
 import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import com.jumkid.vault.util.ResponseMediaFileWriter;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,7 +26,8 @@ public class ThumbnailAPIHelper {
         this.responseMFileWriter = responseMFileWriter;
     }
 
-    public void response(String mediaFileId, ThumbnailNamespace thumbnailNamespace, HttpServletResponse response) {
+    public void response(String mediaFileId, ThumbnailNamespace thumbnailNamespace, HttpServletResponse response)
+            throws FileNotAvailableException, FileNotFoundException, FileStoreServiceException {
         Optional<byte[]> optional = fileService.getThumbnail(mediaFileId, thumbnailNamespace);
         if (optional.isPresent()) {
             MediaFile mediaFile = MediaFile.builder()

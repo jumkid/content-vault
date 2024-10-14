@@ -4,7 +4,7 @@ import com.jumkid.vault.controller.dto.MediaFile;
 import lombok.Getter;
 
 @Getter
-public class FileStoreServiceException extends RuntimeException {
+public class FileStoreServiceException extends Exception {
 
     private final MediaFile mediaFile;
 

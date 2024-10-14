@@ -14,6 +14,9 @@ package com.jumkid.vault.service;
 import com.jumkid.vault.controller.dto.MediaFile;
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
+import com.jumkid.vault.exception.FileNotAvailableException;
+import com.jumkid.vault.exception.FileNotFoundException;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 
 import java.nio.channels.FileChannel;
@@ -28,7 +31,7 @@ public interface MediaFileService {
      * @param mediaFile media file info
      * @return MediaFile
      */
-    MediaFile addMediaFile(MediaFile mediaFile, MediaFileModule mediaFileModule);
+    MediaFile addMediaFile(MediaFile mediaFile, MediaFileModule mediaFileModule) throws FileStoreServiceException;
 
     /**
      * Add new media gallery and binaries
@@ -36,7 +39,7 @@ public interface MediaFileService {
      * @param mediaGallery media file for gallery
      * @return MediaFile
      */
-    MediaFile addMediaGallery(MediaFile mediaGallery);
+    MediaFile addMediaGallery(MediaFile mediaGallery) throws FileStoreServiceException;
 
     /**
      * Update an existing gallery
@@ -45,7 +48,7 @@ public interface MediaFileService {
      * @param partialMediaGallery media file for gallery
      * @return MediaFile
      */
-    MediaFile updateMediaGallery(String galleryId, MediaFile partialMediaGallery);
+    MediaFile updateMediaGallery(String galleryId, MediaFile partialMediaGallery) throws FileStoreServiceException;
 
     /**
      * Clone an existing media gallery to target media gallery by copying its properties and children
@@ -74,7 +77,7 @@ public interface MediaFileService {
      * @param file binary of file
      * @return MediaFile
      */
-    MediaFile updateMediaFile(String mediaFileId, MediaFile partialMediaFile, byte[] file);
+    MediaFile updateMediaFile(String mediaFileId, MediaFile partialMediaFile, byte[] file) throws FileNotFoundException, FileStoreServiceException;
 
     /**
      * Retrieve media file by id
@@ -82,7 +85,7 @@ public interface MediaFileService {
      * @param mediaFileId media file identity
      * @return MediaFile
      */
-    MediaFile getMediaFile(String mediaFileId);
+    MediaFile getMediaFile(String mediaFileId) throws FileNotAvailableException, FileNotFoundException, FileStoreServiceException;
 
     /**
      * Retrieve media file by id
@@ -90,7 +93,7 @@ public interface MediaFileService {
      * @param mediaFileId media file identity
      * @return MediaFileMetadata
      */
-    MediaFileMetadata getMediaFileMetadata(String mediaFileId);
+    MediaFileMetadata getMediaFileMetadata(String mediaFileId) throws FileNotFoundException, FileStoreServiceException;
 
     /**
      * Retrieve media file binary by id
@@ -98,7 +101,7 @@ public interface MediaFileService {
      * @param mediaFileId media file identity
      * @return FileChannel
      */
-    Optional<byte[]> getFileSource(String mediaFileId);
+    Optional<byte[]> getFileSource(String mediaFileId) throws FileStoreServiceException;
 
     /**
      * Get thumbnail of media file by id
@@ -106,7 +109,7 @@ public interface MediaFileService {
      * @param mediaFileId media file identity
      * @return optional of binary
      */
-    Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace);
+    Optional<byte[]> getThumbnail(String mediaFileId, ThumbnailNamespace thumbnailNamespace) throws FileStoreServiceException;
 
     /**
      * Retrieve media file source by id
@@ -114,13 +117,13 @@ public interface MediaFileService {
      * @param mediaFileId media file identity
      * @return FileChannel
      */
-    FileChannel getFileChannel(String mediaFileId);
+    FileChannel getFileChannel(String mediaFileId) throws FileStoreServiceException;
 
     /**
      *
      * @param mediaFileId media file identity
      */
-    Integer trashMediaFile(String mediaFileId);
+    Integer trashMediaFile(String mediaFileId) throws FileStoreServiceException;
 
     /**
      * Move gallery items to trash
@@ -129,24 +132,24 @@ public interface MediaFileService {
      * @param itemsId list of gallery items id
      * @return list of none trashed items
      */
-    List<MediaFile> trashMediaGalleryItems(String galleryId, String[] itemsId);
+    List<MediaFile> trashMediaGalleryItems(String galleryId, String[] itemsId) throws FileNotFoundException, FileStoreServiceException;
 
     /**
      * Get all media files
      *
      * @return List of mediaFile
      */
-    List<MediaFile> searchMediaFile(String query, Integer size);
+    List<MediaFile> searchMediaFile(String query, Integer size) throws FileStoreServiceException;
 
     /**
      * Get all trashed media files
      *
      * @return List of mediaFile
      */
-    List<MediaFile> getTrash();
+    List<MediaFile> getTrash() throws FileStoreServiceException;
 
     /**
      * Empty the entire trash and clean up file stored in trash
      */
-    long emptyTrash();
+    long emptyTrash() throws FileStoreServiceException;
 }

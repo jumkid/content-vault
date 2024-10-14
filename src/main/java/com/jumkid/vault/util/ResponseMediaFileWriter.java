@@ -203,7 +203,7 @@ public class ResponseMediaFileWriter {
         // Prepare some variables. The ETag is an unique identifier of the file.
         String fileName = mediaFile.getFilename();
         long length = mediaFile.getSize();
-        long lastModified = Timestamp.valueOf(mediaFile.getCreationDate()).getTime();
+        long lastModified = Timestamp.valueOf(mediaFile.getCreatedOn()).getTime();
         String eTag = fileName + "_" + length + "_" + lastModified;
         long expires = System.currentTimeMillis() + DEFAULT_EXPIRE_TIME;
 

@@ -23,7 +23,7 @@ public class FileTrashManager {
         this.fileZipUtils = fileZipUtils;
     }
 
-    public void moveToTrash(Path filePath, String mediaFileId) {
+    public void moveToTrash(Path filePath, String mediaFileId) throws FileStoreServiceException {
         try{
             checkTrashPath();
             Path trashTargetPath = Paths.get(filePathManager.getDataHomePath(),
@@ -37,7 +37,7 @@ public class FileTrashManager {
         }
     }
 
-    public void emptyTrash() {
+    public void emptyTrash() throws FileStoreServiceException {
         try {
             Path trashPath = Paths.get(filePathManager.getDataHomePath(), filePathManager.getTrashPath());
             FileUtils.deleteDirectoryStream(trashPath);

@@ -6,14 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Builder
-public class MediaFileProp {
+@Builder @Data @NoArgsConstructor @AllArgsConstructor
+public class MediaFileProp implements Serializable {
 
     private String name;
 

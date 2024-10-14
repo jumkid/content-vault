@@ -1,6 +1,7 @@
 package com.jumkid.vault.controller;
 
 import com.jumkid.vault.controller.dto.MediaFile;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +26,13 @@ public class MediaTrashController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
-    public List<MediaFile> getAllTrash(){
+    public List<MediaFile> getAllTrash() throws FileStoreServiceException {
         return fileService.getTrash();
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ADMIN_ROLE')")
-    public long emptyTrash() { return fileService.emptyTrash(); }
+    public long emptyTrash() throws FileStoreServiceException { return fileService.emptyTrash(); }
 
 }

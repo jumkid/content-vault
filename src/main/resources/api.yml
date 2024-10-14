@@ -605,7 +605,7 @@ components:
           $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/LocalDateTime
         modifiedBy:
           type: string
-        modificationDate:
+        modifiedOn:
           $ref: https://raw.githubusercontent.com/jumkid/share-jar/master/src/main/resources/share.yaml#/components/schemas/LocalDateTime
         props:
           type: array

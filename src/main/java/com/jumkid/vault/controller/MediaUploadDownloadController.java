@@ -52,7 +52,7 @@ public class MediaUploadDownloadController {
                             @RequestParam(required = false) String title,
                             @RequestParam(required = false) String content,
                             @RequestParam(required = false) List<String> tags,
-                            @RequestParam AccessScope accessScope) {
+                            @RequestParam AccessScope accessScope) throws FileStoreServiceException {
         MediaFile mediaFile = null;
         try {
             mediaFile = MediaFile.builder()
@@ -81,7 +81,7 @@ public class MediaUploadDownloadController {
     @PreAuthorize("hasAnyAuthority('USER_ROLE', 'ADMIN_ROLE')")
     public List<MediaFile> multipleUpload(@NotNull @RequestParam("files") MultipartFile[] files,
                                           @RequestParam(required = false) List<String> tags,
-                                          @RequestParam AccessScope accessScope) {
+                                          @RequestParam AccessScope accessScope) throws FileStoreServiceException {
         MediaFile mediaFile = null;
         List<MediaFile> mediaFileList = new ArrayList<>();
         try {
@@ -122,7 +122,7 @@ public class MediaUploadDownloadController {
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyAuthority('GUEST_ROLE', 'USER_ROLE', 'ADMIN_ROLE')" +
             " && (@securityService.isPublic(#mediaFileId) || @securityService.isOwner(authentication, #mediaFileId))")
-    public void download(@PathVariable("id") String mediaFileId, HttpServletResponse response){
+    public void download(@PathVariable("id") String mediaFileId, HttpServletResponse response) throws FileStoreServiceException {
         MediaFileMetadata mediaFileMetadata = null;
         Optional<byte[]> opt = fileService.getFileSource(mediaFileId);
         try {
@@ -135,6 +135,8 @@ public class MediaUploadDownloadController {
             }
         } catch (IOException ioe) {
             throw new FileStoreServiceException("Failed to download file", mediaFileMapper.metadataToDto(mediaFileMetadata));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 

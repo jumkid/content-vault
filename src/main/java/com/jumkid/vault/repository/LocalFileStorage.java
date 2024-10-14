@@ -53,7 +53,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public Optional<byte[]> getFileBinary(MediaFileMetadata mediaFileMetadata) {
+	public Optional<byte[]> getFileBinary(MediaFileMetadata mediaFileMetadata) throws FileStoreServiceException {
 		FileChannel fc = getFileChannel(mediaFileMetadata);
 		if (fc != null) {
 			return FileUtils.fileChannelToBytes(fc);
@@ -69,12 +69,13 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public Optional<FileChannel> getFileRandomAccess(MediaFileMetadata mediaFileMetadata) {
+	public Optional<FileChannel> getFileRandomAccess(MediaFileMetadata mediaFileMetadata) throws FileStoreServiceException {
 		return Optional.ofNullable(this.getRandomAccessFile(mediaFileMetadata));
 	}
 
 	@Override
-	public Optional<MediaFileMetadata> saveFile(byte[] bytes, MediaFileMetadata mediaFile) {
+	public Optional<MediaFileMetadata> saveFile(byte[] bytes, MediaFileMetadata mediaFile)
+			throws FileStoreServiceException {
 		
 		if(bytes == null) return Optional.empty();
 
@@ -120,7 +121,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		return Optional.empty();
 	}
 
-	private FileChannel getFileChannel(MediaFileMetadata mediaFile) {
+	private FileChannel getFileChannel(MediaFileMetadata mediaFile) throws FileStoreServiceException {
 		if (mediaFile == null || mediaFile.getLogicalPath() == null) return null;
 
 		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId());
@@ -139,7 +140,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 		}
 	}
 
-	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) {
+	private FileChannel getRandomAccessFile(MediaFileMetadata mediaFile) throws FileStoreServiceException {
 
 		Path path = Paths.get(filePathManager.getDataHomePath(), mediaFile.getLogicalPath(), mediaFile.getId());
 
@@ -177,7 +178,8 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 	}
 
 	@Override
-	public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
+	public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace)
+			throws FileStoreServiceException {
 		return thumbnailFileManager.getThumbnail(mediaFileMetadata, thumbnailNamespace);
 	}
 
@@ -190,7 +192,7 @@ public class LocalFileStorage implements FileStorage<MediaFileMetadata>{
 
 
     @Override
-    public void emptyTrash() {
+    public void emptyTrash() throws FileStoreServiceException {
 		log.info("clean up entire trash file store");
 		fileTrashManager.emptyTrash();
 	}

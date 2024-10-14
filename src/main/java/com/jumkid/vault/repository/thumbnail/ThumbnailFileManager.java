@@ -2,6 +2,7 @@ package com.jumkid.vault.repository.thumbnail;
 
 import com.jumkid.vault.enums.MediaFileModule;
 import com.jumkid.vault.enums.ThumbnailNamespace;
+import com.jumkid.vault.exception.FileStoreServiceException;
 import com.jumkid.vault.model.MediaFileMetadata;
 import com.jumkid.vault.model.MediaFilePropMetadata;
 import com.jumkid.vault.repository.FileMetadata;
@@ -57,7 +58,8 @@ public class ThumbnailFileManager {
         this.metadataStorage = metadataStorage;
     }
 
-    public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace) {
+    public Optional<byte[]> getThumbnail(MediaFileMetadata mediaFileMetadata, ThumbnailNamespace thumbnailNamespace)
+            throws FileStoreServiceException {
         String filePath;
 
         if (mediaFileMetadata.getModule().equals(MediaFileModule.GALLERY)) {
@@ -82,7 +84,7 @@ public class ThumbnailFileManager {
 
     }
 
-    public Optional<MediaFileMetadata> getThumbnailFileForGallery(MediaFileMetadata galleryMetadata) {
+    public Optional<MediaFileMetadata> getThumbnailFileForGallery(MediaFileMetadata galleryMetadata) throws FileStoreServiceException {
         Optional<MediaFilePropMetadata> optional = galleryMetadata.getProps().stream()
                 .filter(prop -> prop.getName().equals(PROP_FEATURED_ID))
                 .findFirst();
@@ -95,7 +97,9 @@ public class ThumbnailFileManager {
         }
     }
 
-    private String getThumbnailFilePathForGallery(MediaFileMetadata galleryMetadata, ThumbnailNamespace thumbnailNamespace) {
+    private String getThumbnailFilePathForGallery(MediaFileMetadata galleryMetadata,
+                                                  ThumbnailNamespace thumbnailNamespace)
+            throws FileStoreServiceException {
         if (galleryMetadata.getProps() != null && !galleryMetadata.getProps().isEmpty()) {
             Optional<MediaFileMetadata> featuredOptional = getThumbnailFileForGallery(galleryMetadata);
 

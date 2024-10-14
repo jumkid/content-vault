@@ -1,10 +1,12 @@
-package com.jumkid.vault.controller;
+package com.jumkid.vault.exception;
 
 import com.jumkid.share.controller.response.CustomErrorResponse;
-import com.jumkid.vault.exception.*;
+import com.jumkid.share.security.exception.UserProfileNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,19 +16,23 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.*;
 
 @RestControllerAdvice
 @Slf4j
 public class ExceptionHandlingAdvice {
+    @ExceptionHandler({UserProfileNotFoundException.class, AccessDeniedException.class})
+    @ResponseStatus(FORBIDDEN)
+    public CustomErrorResponse handleUserProfileNotFound(RuntimeException ex) {
+        return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
+    }
 
     @ExceptionHandler({FileNotFoundException.class, FileNotAvailableException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public CustomErrorResponse handle(RuntimeException ex) {
+    public CustomErrorResponse handleFileException(Exception ex) {
         log.info(ex.getMessage());
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
     }
@@ -38,11 +44,10 @@ public class ExceptionHandlingAdvice {
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
     }
 
-    @ExceptionHandler(InvalidFieldException.class)
+    @ExceptionHandler({InvalidFieldException.class, HttpRequestMethodNotSupportedException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public CustomErrorResponse handle(InvalidFieldException ife) {
-        log.info("Invalid field value {}", ife.getMessage());
-        return new CustomErrorResponse(Calendar.getInstance().getTime(), ife.getMessage());
+    public CustomErrorResponse handleBadRequest(RuntimeException e) {
+        return new CustomErrorResponse(Calendar.getInstance().getTime(), e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -79,5 +84,4 @@ public class ExceptionHandlingAdvice {
     public CustomErrorResponse handle(GalleryNotEmptyException ex) {
         return new CustomErrorResponse(Calendar.getInstance().getTime(), ex.getMessage());
     }
-
 }

@@ -1,6 +1,6 @@
 package com.jumkid.vault.exception;
 
-public class FileNotFoundException extends RuntimeException {
+public class FileNotFoundException extends Exception {
 
     private static final String ERROR = "Can not find media file with Id: ";
 
